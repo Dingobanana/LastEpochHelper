@@ -15,6 +15,9 @@ Shown inside the app after an update. One section per version: `## <version> - <
 - Build tree: icons now load when the tree is opened with the game's P/S keys (they only appeared when it was opened by hotkey).
 - Build tree: follows the skill you open several times a second instead of once a second.
 - Build tree: the order numbers and the "+N points" tags can be switched off separately.
+- Build tree: reads your real points from the game. While the passive panel (or a skill tree) is open, the counts under the game's nodes are read off the screen and shown in the overlay; "next" skips what you already have and points outside the plan are ringed red.
+- Build tree: opens and closes with the game's panel by looking at the screen, so it no longer ends up inverted.
+- Build tree: a slider at the bottom sets how many points the plan places (passive points, or a skill's level); click a node to add a point, right-click to remove one.
 - The build's per-level text lines are now off by default (settings: "List the build's per-level steps"); the reminders for your level stay.
 - Fixed: on a fresh install, settings (such as the overlay's position) were not saved.
 - Re-import your Maxroll build once so the filter generator has the data it needs.

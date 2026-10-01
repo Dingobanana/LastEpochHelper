@@ -476,6 +476,48 @@ public sealed class Session
     }
     private bool _passivesTaken;
 
+    /// <summary>
+    /// Takes over the points the game shows for one tree. Only nodes that were read are changed:
+    /// a node hidden behind a tooltip keeps what it had.
+    /// </summary>
+    /// <returns>True if anything changed.</returns>
+    public bool SetReadPoints(TreeDef tree, IReadOnlyDictionary<int, int> read)
+    {
+        if (Tree is null || read.Count == 0) return false;
+        var actual = Profile.Actual ??= new ActualTrees { Fetched = DateTime.Now, Level = Profile.Level };
+        Dictionary<int, int> points;
+        if (tree.Kind == TreeDef.PassiveKind) { points = actual.Passives; _passivesTaken = true; }
+        else if (!actual.Skills.TryGetValue(BuildTree.SkillKey(tree), out points!))
+            actual.Skills[BuildTree.SkillKey(tree)] = points = new Dictionary<int, int>();
+
+        bool changed = false;
+        foreach (var (node, have) in read)
+        {
+            if (points.GetValueOrDefault(node) == have) continue;
+            if (have == 0) points.Remove(node); else points[node] = have;
+            changed = true;
+        }
+        if (!changed) return false;
+        actual.Fetched = DateTime.Now;
+        Save();
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Sets how many points a tree has to place when it follows the plan (the slider in the tree view).</summary>
+    public void SetTreePoints(TreeDef tree, int points)
+    {
+        points = Math.Max(0, points);
+        if (tree.Kind == TreeDef.PassiveKind)
+            Profile.PassiveOffset = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+        else Profile.SkillPoints[tree.Name] = points;
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Passive points the character's level and quest rewards give, before any correction.</summary>
+    public int PassivePointsByLevel() => BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+
     /// <summary>True when this tree shows hand-set (or imported) points instead of the plan's assumption.</summary>
     public bool HasActual(TreeDef tree) => Profile.Actual is { } actual &&
         (tree.Kind == TreeDef.PassiveKind ? actual.Passives.Count > 0 || _passivesTaken : actual.Skills.ContainsKey(BuildTree.SkillKey(tree)));

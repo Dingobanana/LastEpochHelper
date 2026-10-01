@@ -415,6 +415,8 @@ public partial class MainWindow : Window
         _screenReader ??= new ScreenReader();
         if (!_screenReader.Available) return;
 
+        // While a panel is open, look at the whole window now and then to pick up newly spent points.
+        if (shown && DateTime.UtcNow - _lastFullRead > TimeSpan.FromSeconds(1.5)) _forceFullRead = true;
         bool quick = shown && _panelRegion is not null && !_forceFullRead;
         // A panel this machine has never recognised is not worth reading the whole screen for, over and over.
         if (!quick && !verifying && !SeenOnScreen(_treeWindow?.CurrentKind)) return;
@@ -433,7 +435,9 @@ public partial class MainWindow : Window
 
             var tabs = (_treeWindow?.PassiveTabNames ?? PassiveTabNamesOf(_session.Tree)).ToList();
             var skills = _session.Tree.Trees.Where(t => t.Kind == TreeDef.SkillKind).Select(t => t.Name).ToList();
-            var lines = await _screenReader.ReadAsync(quick ? _panelRegion!.Value : _game.GameBounds, masks);
+            List<ScreenLine> lines, words = new();
+            if (quick) lines = await _screenReader.ReadAsync(_panelRegion!.Value, masks);
+            else (lines, words) = await _screenReader.ReadBothAsync(_game.GameBounds, masks);
             var reading = PanelDetector.Detect(lines, tabs, skills, _expectedPanel);
             if (!quick && verifying) WritePanelDiagnostics(lines, reading);
 
@@ -448,6 +452,7 @@ public partial class MainWindow : Window
                 if (!_treeWanted) ShowTree(true, kind);                       // the game opened a panel we missed
                 else if (_treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
                 if (reading.Skill is not null) _treeWindow?.SelectSkill(reading.Skill);
+                if (!quick) ReadNodePoints(words, reading);
             }
             else if (quick)
             {
@@ -462,6 +467,30 @@ public partial class MainWindow : Window
             }
         }
         finally { _reading = false; }
+    }
+
+    /// <summary>
+    /// Takes the "2/6" labels under the game's nodes and stores them as the character's real points.
+    /// For passives the labels themselves say which tab is showing; for a skill, its heading does.
+    /// </summary>
+    private void ReadNodePoints(List<ScreenLine> words, PanelReading reading)
+    {
+        if (!Settings.ReadPointsFromScreen || _session.Tree is not { } build) return;
+        var tokens = TreeReader.Tokens(words);
+        if (tokens.Count < 4) return;
+
+        if (reading.Panel == GamePanel.Passives)
+        {
+            if (TreeReader.ReadBest(tokens, build.Trees.Where(t => t.Kind == TreeDef.PassiveKind)) is { } fit)
+            {
+                _session.SetReadPoints(fit.Tree, fit.Points);
+                // Show the same tab the game is showing.
+                _treeWindow?.SelectTab(fit.Tree);
+            }
+        }
+        else if (reading.Skill is not null && build.Trees.FirstOrDefault(t => t.Kind == TreeDef.SkillKind && t.Name == reading.Skill) is { } skill
+                 && TreeReader.Read(tokens, skill) is { } points)
+            _session.SetReadPoints(skill, points);
     }
 
     /// <summary>Has the game's panel for this kind of tree ever been recognised here?</summary>

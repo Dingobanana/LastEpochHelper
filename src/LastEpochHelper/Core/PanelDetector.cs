@@ -27,19 +27,30 @@ public static class PanelDetector
                 .OrderByDescending(t => t.Line.Height).Select(t => t.Line).FirstOrDefault();
         }
 
-        // Passive panel: its tabs name the class and the masteries side by side. One name alone can
-        // be anywhere (the character sheet, chat), so ask for two - or the word "passive" with one.
-        var tabLines = passiveTabs.Select(LineWith).Where(l => l is not null).Select(l => l!).ToList();
-        bool saysPassive = text.Any(t => t.Letters.Contains("passive", StringComparison.Ordinal));
-        PanelReading? passives = tabLines.Count >= 2 || (tabLines.Count == 1 && saysPassive)
-            ? new PanelReading(GamePanel.Passives, Anchor: tabLines.OrderBy(l => l.Y).First())
-            : null;
+        // The game's own headings are the best evidence (1.5): "PASSIVES" with "N UNSPENT POINTS"
+        // on the passive panel, "SKILLS & SPECIALIZATIONS" on the skill overview.
+        var passiveHeading = text.Where(t => t.Letters == "passives" || t.Letters.Contains("unspentpoint", StringComparison.Ordinal))
+            .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
+        var skillsHeading = text.Where(t => t.Letters.Contains("skillsspecializations", StringComparison.Ordinal) || t.Letters == "skillsandspecializations")
+            .Select(t => t.Line).FirstOrDefault();
 
-        // Skill panel: an open tree has the skill's name as a heading; the overview lists several.
+        // Without a heading, fall back on the tabs naming the class and its masteries - but the skill
+        // overview prints those names too ("Unlocked by spending points in the Shaman passive tree").
+        PanelReading? passives = null;
+        if (passiveHeading is not null) passives = new PanelReading(GamePanel.Passives, Anchor: passiveHeading);
+        else if (skillsHeading is null)
+        {
+            var tabLines = passiveTabs.Select(LineWith).Where(l => l is not null).Select(l => l!).ToList();
+            if (tabLines.Count >= 2) passives = new PanelReading(GamePanel.Passives, Anchor: tabLines.OrderBy(l => l.Y).First());
+        }
+
+        // Skill panel: an open tree has the skill's name as a heading; the overview lists them all.
         PanelReading? skillPanel = null;
-        if (SkillTitleMatcher.PickLine(lines, skills) is { } heading)
-            skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line);
-        else
+        // One skill name standing out in bigger letters is an open tree, with or without the overview's heading.
+        var openTree = passiveHeading is null ? SkillTitleMatcher.PickLine(lines, skills) : null;
+        if (openTree is { } heading) skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line);
+        else if (skillsHeading is not null) skillPanel = new PanelReading(GamePanel.Skills, Anchor: skillsHeading);
+        else if (passiveHeading is null)
         {
             var named = skills.Select(LineWith).Where(l => l is not null).Select(l => l!).ToList();
             if (named.Count >= 2) skillPanel = new PanelReading(GamePanel.Skills, Anchor: named.OrderBy(l => l.Y).First());

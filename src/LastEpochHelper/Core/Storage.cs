@@ -55,6 +55,8 @@ public sealed class Settings
     /// the screen decides whether that tree view shows; before that, key presses do. Kept per
     /// panel, so trouble recognising one never makes the other close by itself.
     /// </summary>
+    /// <summary>Take the point counts under the game's nodes as the character's real points.</summary>
+    public bool ReadPointsFromScreen { get; set; } = true;
     public bool PanelSeenPassives { get; set; }
     public bool PanelSeenSkills { get; set; }
     /// <summary>Green rings and numbers marking the next points, per kind of tree.</summary>

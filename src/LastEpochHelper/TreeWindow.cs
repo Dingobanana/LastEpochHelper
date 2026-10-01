@@ -39,6 +39,11 @@ internal sealed class TreeWindow : Window
     private Border _amounts = null!;
     private Border _reset = null!;
     private Border _minus = null!, _plus = null!;
+    private readonly Slider _slider = new() { Minimum = 0, Maximum = 20, Width = 260, IsSnapToTickEnabled = true, TickFrequency = 1, Focusable = false, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _sliderLabel = new() { Foreground = Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+    private readonly TextBlock _sliderValue = new() { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Width = 150, Margin = new Thickness(8, 0, 0, 0) };
+    private DockPanel _sliderRow = null!;
+    private bool _settingSlider;
     private readonly TextBlock _empty = new()
     {
         Foreground = Muted, TextWrapping = TextWrapping.Wrap, Width = 420, TextAlignment = TextAlignment.Center,
@@ -96,16 +101,28 @@ internal sealed class TreeWindow : Window
         adjust.Children.Add(_reset);
         adjust.Children.Add(_markers);
         adjust.Children.Add(_amounts);
-        adjust.Children.Add(minus);
-        adjust.Children.Add(plus);
         DockPanel.SetDock(adjust, Dock.Right);
         footer.Children.Add(adjust);
         footer.Children.Add(_points);
+
+        // How many points the plan should place: by default what the level gives, adjustable here.
+        _sliderRow = new DockPanel { Margin = new Thickness(0, 5, 0, 0), LastChildFill = false };
+        _slider.ValueChanged += (_, _) =>
+        {
+            if (_settingSlider || Current() is not { } tree) return;
+            _session.SetTreePoints(tree, (int)_slider.Value);
+        };
+        foreach (var element in new UIElement[] { _sliderLabel, minus, _slider, plus, _sliderValue })
+        {
+            DockPanel.SetDock(element, Dock.Left);
+            _sliderRow.Children.Add(element);
+        }
 
         var body = new StackPanel();
         body.Children.Add(header);
         body.Children.Add(new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) });
         body.Children.Add(_next);
+        body.Children.Add(_sliderRow);
         body.Children.Add(footer);
 
         Content = new Border
@@ -258,6 +275,12 @@ internal sealed class TreeWindow : Window
         Render();
     }
 
+    /// <summary>Switches to the given tab (if it is not the one showing).</summary>
+    public void SelectTab(TreeDef tree)
+    {
+        if (tree != Current()) Select(tree);
+    }
+
     private void Select(TreeDef tree)
     {
         _session.Profile.TreeTab = tree.Name;
@@ -325,10 +348,26 @@ internal sealed class TreeWindow : Window
             : passive
                 ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
                 : $"{state.Points} of {state.StagePoints} points in {tree.Name}";
+        source = source.Replace(", set by you", ", as in the game (read from its panel or set by clicking)");
         source += "  ·  click a node +1, right-click −1";
-        // Once the tree holds real points, the plan pointer buttons have nothing to move.
+        // Once the tree holds real points there is nothing for the slider to place.
         _reset.Visibility = state.FromGame ? Visibility.Visible : Visibility.Collapsed;
-        _minus.Visibility = _plus.Visibility = state.FromGame ? Visibility.Collapsed : Visibility.Visible;
+        _sliderRow.Visibility = state.FromGame ? Visibility.Collapsed : Visibility.Visible;
+        if (!state.FromGame)
+        {
+            int byLevel = _session.PassivePointsByLevel();
+            _settingSlider = true;
+            _slider.Maximum = Math.Max(Math.Max(state.StagePoints, state.Points), passive ? build.Stages.Max(s => s.Passives.Count) : 20);
+            _slider.Value = state.Points;
+            _settingSlider = false;
+            _sliderLabel.Text = passive ? "Passive points" : "Skill level";
+            _sliderValue.Text = passive
+                ? state.Points == byLevel ? $"{state.Points}  (your level {_session.Profile.Level})" : $"{state.Points}  (level {_session.Profile.Level} gives {byLevel})"
+                : $"{state.Points}";
+            _slider.ToolTip = passive
+                ? "How many passive points to place. Follows your level and quest rewards unless you move it."
+                : "This skill's level = the points it has to spend. Move it as the skill levels up.";
+        }
         _points.Text = $"{state.Stage}  ·  {source}";
         _points.TextTrimming = TextTrimming.CharacterEllipsis;
     }
