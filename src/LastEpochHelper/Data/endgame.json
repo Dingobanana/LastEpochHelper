@@ -1,0 +1,822 @@
+{
+ "knowledgeNeeded": 5,
+ "timelines": [
+  {
+   "name": "Fall of the Outcasts",
+   "level": 62,
+   "boss": "Abomination",
+   "knowledge": 1,
+   "echoes": "The Ransacked Camp 80/200; Maj'elka Streets 160/400; The Altar of Flesh 240/800",
+   "harbinger": "Harbinger of Defilement",
+   "rewards": "Bows or Quiver",
+   "blessings": [
+    {
+     "name": "Winds of Fortune",
+     "effect": "(10% to 15%) Increased Unique Drop Rate",
+     "grand": "(16% to 22%) Increased Unique Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Strength of Mind",
+     "effect": "(4% to 6%) Increased Experience",
+     "grand": "(7% to 10%) Increased Experience",
+     "recommended": true
+    },
+    {
+     "name": "Scales of Greed",
+     "effect": "(25% to 40%) Increased Gold Drop Rate",
+     "grand": "(45% to 70%) Increased Gold Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Pride of Rebellion",
+     "effect": "(30% to 50%) Increased Grand Idol Drop Rate",
+     "grand": "(51% to 100%) Increased Grand Idol Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Sight of the Outcasts",
+     "effect": "(30% to 50%) Increased Large Idol Drop Rate",
+     "grand": "(51% to 100%) Increased Large Idol Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Curse of Flesh",
+     "effect": "(30% to 50%) Increased Huge Idol Drop Rate",
+     "grand": "(51% to 100%) Increased Huge Idol Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Favor of Souls",
+     "effect": "(30% to 50%) Increased Ornate Idol Drop Rate",
+     "grand": "(51% to 100%) Increased Ornate Idol Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Mark of Agony",
+     "effect": "(30% to 50%) Increased Adorned Idol Drop Rate",
+     "grand": "(51% to 100%) Increased Adorned Idol Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Memory of the Living",
+     "effect": "(10% to 15%) Increased Glyph Drop Rate",
+     "grand": "(16% to 25%) Increased Glyph Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Sign of Torment",
+     "effect": "(10% to 15%) Increased Rune Drop Rate",
+     "grand": "(16% to 25%) Increased Rune Drop Rate",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Stolen Lance",
+   "level": 66,
+   "boss": "God Hunter Argentus",
+   "knowledge": 1,
+   "echoes": "Wengari Stronghold 50/150; The Siege of Farwood 150/400; Argentum Spire 250/800",
+   "harbinger": "Harbinger of Pride",
+   "rewards": "Staff or Sceptre, Wand or Catalyst",
+   "blessings": [
+    {
+     "name": "Arrogance of Argentus",
+     "effect": "(10% to 20%) Increased Helmet Drop Rate",
+     "grand": "(22% to 50%) Increased Helmet Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Embrace of Ice",
+     "effect": "(10% to 20%) Increased Body Armor Drop Rate",
+     "grand": "(22% to 50%) Increased Body Armor Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Grip of the Lance",
+     "effect": "(15% to 30%) Increased Gloves Drop Rate",
+     "grand": "(35% to 75%) Increased Gloves Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Right of Conquest",
+     "effect": "(15% to 30%) Increased Boots Drop Rate",
+     "grand": "(35% to 75%) Increased Boots Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Reach of Flame",
+     "effect": "(15% to 30%) Increased Off-Hand Catalyst Drop Rate",
+     "grand": "(35% to 75%) Increased Off-Hand Catalyst Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Binds of Sanctuary",
+     "effect": "(15% to 30%) Increased Shield Drop Rate",
+     "grand": "(35% to 75%) Increased Shield Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Slumber of Morditas",
+     "effect": "(12% to 25%) Increased Relic Drop Rate",
+     "grand": "(30% to 60%) Increased Relic Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Talon of Grandeur",
+     "effect": "(15% to 30%) Increased Ring Drop Rate",
+     "grand": "(35% to 75%) Increased Ring Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Vision of the Aurora",
+     "effect": "(15% to 30%) Increased Amulet Drop Rate",
+     "grand": "(35% to 75%) Increased Amulet Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Might of the Siege",
+     "effect": "(15% to 30%) Increased Belt Drop Rate",
+     "grand": "(35% to 75%) Increased Belt Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Apex of Fortune",
+     "effect": "(15% to 30%) Increased Quiver Drop Rate",
+     "grand": "(41% to 60%) Increased Quiver Drop Rate",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Black Sun",
+   "level": 70,
+   "boss": "Rahyeh, The Black Sun",
+   "knowledge": 1,
+   "echoes": "The Fall of Ledria 50/150; The Dark Ascent 150/450; The Ruins of Solarum 250/800",
+   "harbinger": "Harbinger of Hatred",
+   "rewards": "Helmet, Shield",
+   "blessings": [
+    {
+     "name": "Memory of Light",
+     "effect": "+(30 to 42) Health",
+     "grand": "+(45 to 70) Health",
+     "recommended": false
+    },
+    {
+     "name": "Echo of Solarum",
+     "effect": "+(25% to 40%) Void Resistance",
+     "grand": "+(55% to 75%) Void Resistance",
+     "recommended": false
+    },
+    {
+     "name": "Shadow of the Eclipse",
+     "effect": "+(60 to 100) Dodge Rating",
+     "grand": "+(101 to 200) Dodge Rating",
+     "recommended": false
+    },
+    {
+     "name": "Wrath of Rahyeh",
+     "effect": "+(1.2% to 2%) of Throwing Damage Leeched as Health",
+     "grand": "+(2.2% to 3.5%) of Throwing Damage Leeched as Health",
+     "recommended": false
+    },
+    {
+     "name": "Whisper of Orobyss",
+     "effect": "+(40% to 60%) increased Void Damage",
+     "grand": "+(65% to 100%) increased Void Damage",
+     "recommended": false
+    },
+    {
+     "name": "Flames of the Black Sun",
+     "effect": "+(40% to 60%) Chance to Ignite on Hit",
+     "grand": "+(65% to 100%) Chance to Ignite on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Hunger of the Void",
+     "effect": "+(1.2% to 2%) of Spell Damage Leeched as Health",
+     "grand": "+(2.2% to 3.5%) of Spell Damage Leeched as Health",
+     "recommended": false
+    },
+    {
+     "name": "Strength of the Mountain",
+     "effect": "(10 to 14) Health Gain on Block",
+     "grand": "(15 to 22) Health Gain on Block",
+     "recommended": false
+    },
+    {
+     "name": "Winds of Oblivion",
+     "effect": "+(30% to 50%) increased Critical Strike Chance",
+     "grand": "+(51% to 80%) increased Critical Strike Chance",
+     "recommended": false
+    },
+    {
+     "name": "Depths of Infinity",
+     "effect": "+(10% to 20%) Chance to Shred Void Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Void Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Greed of Darkness",
+     "effect": "(6 to 10) Ward Gain on Kill; +(60 to 100) Ward Decay Threshold",
+     "grand": "(12 to 18) Ward Gain on Kill; +(120 to 200) Ward Decay Threshold",
+     "recommended": false
+    },
+    {
+     "name": "Emptiness of Ash",
+     "effect": "+(20% to 26%) Critical Strike Multiplier",
+     "grand": "+(27% to 40%) Critical Strike Multiplier",
+     "recommended": false
+    },
+    {
+     "name": "Thirst of the Sun",
+     "effect": "(20% to 30%) Increased Leech Rate",
+     "grand": "(35% to 50%) Increased Leech Rate",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Reign of Dragons",
+   "level": 85,
+   "boss": "Emperor of Corpses",
+   "knowledge": 2,
+   "echoes": "Heorot's Sanctum 50/150; Dragons' Grotto 250/450; The Rotting Hoard 400/850",
+   "harbinger": "Harbinger of Destruction",
+   "rewards": "Sword or Dagger, Axe Mace or Polearm",
+   "blessings": [
+    {
+     "name": "Resolve of Humanity",
+     "effect": "+(7% to 12%) to All Resistances",
+     "grand": "+(13% to 20%) to All Resistances",
+     "recommended": false
+    },
+    {
+     "name": "Survival of Might",
+     "effect": "+(30% to 45%) Critical Strike Avoidance; +(30 to 50) Dodge Rating",
+     "grand": "+(50% to 70%) Critical Strike Avoidance; +(51 to 90) Dodge Rating",
+     "recommended": true
+    },
+    {
+     "name": "Dream of Eterra",
+     "effect": "+(25% to 40%) Necrotic Resistance",
+     "grand": "+(45% to 75%) Necrotic Resistance",
+     "recommended": false
+    },
+    {
+     "name": "Binds of Nature",
+     "effect": "+(40% to 60%) increased Poison Damage",
+     "grand": "+(65% to 100%) increased Poison Damage",
+     "recommended": false
+    },
+    {
+     "name": "Despair of Flesh",
+     "effect": "+(40% to 60%) increased Necrotic Damage",
+     "grand": "+(65% to 100%) increased Necrotic Damage",
+     "recommended": false
+    },
+    {
+     "name": "Cruelty of Strength",
+     "effect": "+(40% to 60%) increased Physical Damage",
+     "grand": "+(65% to 100%) increased Physical Damage",
+     "recommended": false
+    },
+    {
+     "name": "Hemmorage of Marrow",
+     "effect": "+(40% to 60%) Chance to apply a Bleed on Hit",
+     "grand": "+(65% to 100%) Chance to apply a Bleed on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Taste of Venom",
+     "effect": "+(40% to 60%) Chance to Poison on Hit",
+     "grand": "+(65% to 100%) Chance to Poison on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Hunger of Dragons",
+     "effect": "+(2% to 4%) of Melee Damage Leeched as Health",
+     "grand": "+(4.5% to 7%) of Melee Damage Leeched as Health",
+     "recommended": false
+    },
+    {
+     "name": "Virtue of Command",
+     "effect": "+(8% to 15%) to Minion All Resistances",
+     "grand": "+(16% to 25%) to Minion All Resistances",
+     "recommended": false
+    },
+    {
+     "name": "Persistance of Will",
+     "effect": "+(25% to 40%) Poison Resistance",
+     "grand": "+(55% to 75%) Poison Resistance",
+     "recommended": false
+    },
+    {
+     "name": "Guile of Wyrms",
+     "effect": "+(60% to 90%) Chance to Shred Poison Resistance on Hit",
+     "grand": "+(100% to 150%) Chance to Shred Poison Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Allure of Apathy",
+     "effect": "+(40% to 60%) Chance to Slow on Hit",
+     "grand": "+(65% to 100%) Chance to Slow on Hit",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Age of Winter",
+   "level": 90,
+   "boss": "Heorot",
+   "knowledge": 0,
+   "echoes": "The Frozen Fortress 50/150; The Frozen Harbor 250/550; The Frozen Citadel 400/900",
+   "harbinger": "Harbinger of Tyranny",
+   "rewards": "Ring, Amulet",
+   "blessings": [
+    {
+     "name": "Resolve of Grael",
+     "effect": "+(25% to 40%) Physical Resistance",
+     "grand": "+(55% to 75%) Physical Resistance",
+     "recommended": true
+    },
+    {
+     "name": "Protection of Heorot",
+     "effect": "+(25% to 40%) Cold Resistance",
+     "grand": "+(55% to 75%) Cold Resistance",
+     "recommended": true
+    },
+    {
+     "name": "Vigor of Jormun",
+     "effect": "+(40 to 70) Endurance Threshold",
+     "grand": "+(80 to 150) Endurance Threshold",
+     "recommended": false
+    },
+    {
+     "name": "Maw of Artor",
+     "effect": "+(40% to 60%) Chance to apply Frostbite on Hit",
+     "grand": "+(65% to 100%) Chance to apply Frostbite on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Winds of Frost",
+     "effect": "+(30% to 50%) Freeze Rate per stack of Chill",
+     "grand": "+(55% to 80%) Freeze Rate per stack of Chill",
+     "recommended": false
+    },
+    {
+     "name": "Rage of Winter",
+     "effect": "+(10% to 20%) Chance to Shred Cold Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Cold Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Fury of the North",
+     "effect": "+(10% to 20%) Chance to Shred Physical Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Physical Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Heart of Ice",
+     "effect": "+(20% to 35%) Chance to Chill on Hit",
+     "grand": "+(40% to 60%) Chance to Chill on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Bones of Eternity",
+     "effect": "+(3% to 4%) Block Chance; +(100 to 140) Block Effectiveness",
+     "grand": "+(5% to 8%) Block Chance; +(180 to 240) Block Effectiveness",
+     "recommended": false
+    },
+    {
+     "name": "Bulwark of the Tundra",
+     "effect": "+(12% to 24%) increased Armor",
+     "grand": "+(25% to 55%) increased Armor",
+     "recommended": true
+    },
+    {
+     "name": "Defiance of Yulia",
+     "effect": "+(5 to 10) Spell Cold Damage While Channelling",
+     "grand": "+(11 to 20) Spell Cold Damage While Channelling",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Spirits of Fire",
+   "level": 90,
+   "boss": "Volcanic Shaman",
+   "knowledge": 0,
+   "echoes": "Ash Covered Maj'elka 50/150; The Magma Caverns 220/450; The Caldera of Souls 400/900",
+   "harbinger": "Harbinger of Ash",
+   "rewards": "Boots",
+   "blessings": [
+    {
+     "name": "Heart of the Caldera",
+     "effect": "+(25% to 40%) Fire Resistance",
+     "grand": "+(55% to 75%) Fire Resistance",
+     "recommended": true
+    },
+    {
+     "name": "Body of Obsidian",
+     "effect": "+(120 to 180) Armor",
+     "grand": "+(200 to 320) Armor",
+     "recommended": true
+    },
+    {
+     "name": "Curse of Sulphur",
+     "effect": "+(20% to 35%) Chance to apply Frailty on Hit",
+     "grand": "+(40% to 60%) Chance to apply Frailty on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Embers of Immortality",
+     "effect": "+(10% to 14%) Endurance",
+     "grand": "+(18% to 30%) Endurance",
+     "recommended": true
+    },
+    {
+     "name": "Swiftness of Logi",
+     "effect": "+(15% to 35%) increased Dodge Rating",
+     "grand": "+(40% to 70%) increased Dodge Rating",
+     "recommended": false
+    },
+    {
+     "name": "Breath of Cinders",
+     "effect": "+(10% to 20%) Chance to Shred Fire Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Fire Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Promise of Death",
+     "effect": "+(10% to 20%) Chance to Shred Necrotic Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Necrotic Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Spirit of Command",
+     "effect": "+(40% to 60%) increased Minion Damage",
+     "grand": "+(65% to 100%) increased Minion Damage",
+     "recommended": false
+    },
+    {
+     "name": "Might of Bhuldar",
+     "effect": "(20% to 30%) Increased Stun Duration",
+     "grand": "(32% to 50%) Increased Stun Duration",
+     "recommended": false
+    },
+    {
+     "name": "Flames of Calamity",
+     "effect": "+(40% to 60%) increased Fire Damage",
+     "grand": "+(65% to 100%) increased Fire Damage",
+     "recommended": false
+    },
+    {
+     "name": "Patience of Herkir",
+     "effect": "+(200 to 350) Armor While Channelling",
+     "grand": "+(400 to 650) Armor While Channelling",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Last Ruin",
+   "level": 90,
+   "boss": "The Husk of Elder Gaspar",
+   "knowledge": 0,
+   "echoes": "The Defiled Wood 50/150; The Voidscarred Archive 200/500; The Chambers of Ruin 400/900",
+   "harbinger": "Harbinger of Fear",
+   "rewards": "Relic",
+   "blessings": [
+    {
+     "name": "Temple of the Mind",
+     "effect": "(12% to 20%) Increased Helmet Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Helmet Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Bastion of the Heart",
+     "effect": "(12% to 20%) Increased Body Armor Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Body Armor Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Binding of Ruin",
+     "effect": "(20% to 30%) Increased Belt Shard Drop Rate",
+     "grand": "(32% to 50%) Increased Belt Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Refuge of Despair",
+     "effect": "(20% to 30%) Increased Shield Shard Drop Rate",
+     "grand": "(32% to 50%) Increased Shield Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Comfort of the End",
+     "effect": "(12% to 20%) Increased Suffix Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Suffix Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Memory of Masters",
+     "effect": "(10% to 18%) Increased Class Specific Shard Drop Rate",
+     "grand": "(20% to 30%) Increased Class Specific Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Grasp of Hope",
+     "effect": "(20% to 30%) Increased Gloves Shard Drop Rate",
+     "grand": "(32% to 50%) Increased Gloves Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Remnants of the Elders",
+     "effect": "(20% to 30%) Increased Off-Hand Catalyst Shard Drop Rate",
+     "grand": "(32% to 50%) Increased Off-Hand Catalyst Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Knowledge of Skill",
+     "effect": "(12% to 20%) Increased Skill Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Skill Shard Drop Rate",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Blood, Frost, and Death",
+   "level": 74,
+   "boss": "Frost Lich Formosus",
+   "knowledge": 1,
+   "echoes": "Wengari Battleground 50/150; Occupied Heoborea 150/450; The Lair of Formosus 300/800",
+   "harbinger": "Harbinger of War",
+   "rewards": "Body Armour",
+   "blessings": [
+    {
+     "name": "Cruelty of Formosus",
+     "effect": "(30% to 45%) Increased Wand Drop Rate",
+     "grand": "(50% to 90%) Increased Wand Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Savior of the North",
+     "effect": "(30% to 45%) Increased Sceptre Drop Rate",
+     "grand": "(50% to 90%) Increased Sceptre Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Chill of Death",
+     "effect": "(30% to 45%) Increased Two-Handed Staff Drop Rate",
+     "grand": "(50% to 90%) Increased Two-Handed Staff Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Enmity of the Clans",
+     "effect": "(30% to 45%) Increased One-Handed Sword Drop Rate",
+     "grand": "(50% to 90%) Increased One-Handed Sword Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Ambition of the Empire",
+     "effect": "(30% to 45%) Increased Two-Handed Sword Drop Rate",
+     "grand": "(50% to 90%) Increased Two-Handed Sword Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Scars of Blood",
+     "effect": "(30% to 45%) Increased One-Handed Axe Drop Rate",
+     "grand": "(50% to 90%) Increased One-Handed Axe Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Favor of the Wengari",
+     "effect": "(30% to 45%) Increased Two-Handed Axe Drop Rate",
+     "grand": "(50% to 90%) Increased Two-Handed Axe Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Resolve of Frost",
+     "effect": "(30% to 45%) Increased One-Handed Mace Drop Rate",
+     "grand": "(50% to 90%) Increased One-Handed Mace Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Shards of Unity",
+     "effect": "(30% to 45%) Increased Two-Handed Mace Drop Rate",
+     "grand": "(50% to 90%) Increased Two-Handed Mace Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Remorse of Heorot",
+     "effect": "(30% to 45%) Increased Two-Handed Spear Drop Rate",
+     "grand": "(50% to 90%) Increased Two-Handed Spear Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Vigilance of the Damned",
+     "effect": "(30% to 45%) Increased Bow Drop Rate",
+     "grand": "(50% to 75%) Increased Bow Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Subtlety of Slaughter",
+     "effect": "(30% to 45%) Increased Dagger Drop Rate",
+     "grand": "(50% to 75%) Increased Dagger Drop Rate",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Ending the Storm",
+   "level": 78,
+   "boss": "Lagon, God of Storms",
+   "knowledge": 1,
+   "echoes": "Drowned Thetima 50/150; Island Battlefield 180/500; Eye of the Storm 320/850",
+   "harbinger": "Harbinger of Chaos",
+   "rewards": "Gloves",
+   "blessings": [
+    {
+     "name": "Bastion of Divinity",
+     "effect": "+(25% to 40%) Lightning Resistance",
+     "grand": "+(55% to 75%) Lightning Resistance",
+     "recommended": false
+    },
+    {
+     "name": "Light of the Moon",
+     "effect": "+(30 to 50) Mana",
+     "grand": "+(60 to 90) Mana",
+     "recommended": false
+    },
+    {
+     "name": "Rhythm of the Tide",
+     "effect": "+(60% to 100%) increased Health Regen; +(6 to 10) Health Regen",
+     "grand": "+(120% to 200%) increased Health Regen; +(12 to 20) Health Regen",
+     "recommended": false
+    },
+    {
+     "name": "Chaos of Lagon",
+     "effect": "+(40% to 60%) increased Lightning Damage",
+     "grand": "+(65% to 100%) increased Lightning Damage",
+     "recommended": false
+    },
+    {
+     "name": "Might of the Sea Titan",
+     "effect": "+(40% to 60%) increased Cold Damage",
+     "grand": "+(65% to 100%) increased Cold Damage",
+     "recommended": false
+    },
+    {
+     "name": "Resonance of the Sea",
+     "effect": "+(17 to 25) Ward per Second",
+     "grand": "+(30 to 42) Ward per Second",
+     "recommended": false
+    },
+    {
+     "name": "Mysteries of the Deep",
+     "effect": "+(10% to 20%) Chance to Shred Lightning Resistance on Hit",
+     "grand": "+(25% to 50%) Chance to Shred Lightning Resistance on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Cruelty of the Meruna",
+     "effect": "+(40% to 60%) Chance to Shock on Hit",
+     "grand": "+(65% to 100%) Chance to Shock on Hit",
+     "recommended": false
+    },
+    {
+     "name": "Weight of the Abyss",
+     "effect": "+(100% to 180%) Freeze Rate Multiplier",
+     "grand": "+(200% to 300%) Freeze Rate Multiplier",
+     "recommended": false
+    },
+    {
+     "name": "Crash of the Waves",
+     "effect": "(50% to 90%) Increased Stun Chance",
+     "grand": "(100% to 160%) Increased Stun Chance",
+     "recommended": false
+    },
+    {
+     "name": "Trance of the Sirens",
+     "effect": "(10% to 14%) Increased Shock Duration",
+     "grand": "(15% to 22%) Increased Shock Duration",
+     "recommended": false
+    },
+    {
+     "name": "Intellect of Liath",
+     "effect": "(15% to 25%) Chance to Gain 30 Ward when Hit",
+     "grand": "(30% to 50%) Chance to Gain 30 Ward when Hit",
+     "recommended": false
+    },
+    {
+     "name": "Grace of Water",
+     "effect": "(40 to 70) Ward Gained on Potion Use; +(80 to 140) Ward Decay Threshold",
+     "grand": "(80 to 130) Ward Gained on Potion Use; +(160 to 260) Ward Decay Threshold",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Fall of the Empire",
+   "level": 82,
+   "boss": "Harton's Husk",
+   "knowledge": 2,
+   "echoes": "Voidscarred Necropolis 50/150; Path of Despair 160/500; Dreadnought's Wreckage 320/850",
+   "harbinger": "Harbinger of Treason",
+   "rewards": "Belt",
+   "blessings": [
+    {
+     "name": "Hope of the Beginning",
+     "effect": "(7% to 14%) Increased Prefix Shard Drop Rate",
+     "grand": "(15% to 25%) Increased Prefix Shard Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Safety of the Labyrinth",
+     "effect": "(10% to 20%) Increased Amulet Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Amulet Shard Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Remnants of the Living",
+     "effect": "(20% to 30%) Increased Ring Shard Drop Rate",
+     "grand": "(33% to 50%) Increased Ring Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Visions of Death",
+     "effect": "(25% to 35%) Increased Two-Handed Spear Shard Drop Rate",
+     "grand": "(40% to 60%) Increased Two-Handed Spear Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Inevitability of the Void",
+     "effect": "(16% to 26%) Increased Two-Handed Staff Shard Drop Rate",
+     "grand": "(30% to 45%) Increased Two-Handed Staff Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Rot of the World",
+     "effect": "(25% to 35%) Increased Wand Shard Drop Rate",
+     "grand": "(40% to 60%) Increased Wand Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Boon of the Scarab",
+     "effect": "(25% to 35%) Increased Bow Shard Drop Rate",
+     "grand": "(40% to 60%) Increased Bow Shard Drop Rate",
+     "recommended": false
+    },
+    {
+     "name": "Shadows of Infinity",
+     "effect": "(10% to 20%) Increased Relic Shard Drop Rate",
+     "grand": "(22% to 35%) Increased Relic Shard Drop Rate",
+     "recommended": true
+    },
+    {
+     "name": "Despair of the Empire",
+     "effect": "(25% to 40%) Increased Ailment Shard Drop Rate",
+     "grand": "(45% to 70%) Increased Ailment Shard Drop Rate",
+     "recommended": false
+    }
+   ]
+  }
+ ],
+ "dungeons": [
+  {
+   "name": "Lightless Arbor",
+   "entrance": "The Shrouded Ridge (north of The Surface, Chapter 3)",
+   "level": 22,
+   "boss": "The Mountain Beneath",
+   "mechanic": "Carry light: stay near fire or the darkness kills you",
+   "reward": "Vaults of Uncertain Fate - spend gold for chests with chosen modifiers",
+   "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+   "skip": "Alternate exit behind the boss leads to The End of Time (datamine; older guides say The Risen Lake)",
+   "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5); Monolith timeline bosses"
+  },
+  {
+   "name": "Soulfire Bastion",
+   "entrance": "The Felled Wood (off The Risen Lake, Chapter 4)",
+   "level": 37,
+   "boss": "Fire Lich Cremorus",
+   "mechanic": "Swap your shield between fire and necrotic to match incoming damage",
+   "reward": "Soul Gambler - spend Soul Embers from kills on items",
+   "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+   "skip": "Alternate exit leads to Kolheim Pass (Chapter 7)",
+   "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5); Monolith timeline bosses"
+  },
+  {
+   "name": "Temporal Sanctum",
+   "entrance": "The Ruined Coast (Time Rift in The Shining Cove, Chapter 5)",
+   "level": 55,
+   "boss": "Chronomancer Julra",
+   "mechanic": "Shift between the two eras to get past obstacles and dodge her big attacks",
+   "reward": "Eternity Cache - seal a unique with Legendary Potential and an exalted item into a Legendary",
+   "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+   "skip": "Alternate exit leads to The Radiant Dunes (Chapter 9)",
+   "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"
+  }
+ ]
+}

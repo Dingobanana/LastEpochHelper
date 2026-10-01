@@ -280,14 +280,16 @@ public static partial class MaxrollImporter
                 }
             }
 
-            build.Stages.Add(new TreeStage
+            var stage = new TreeStage
             {
                 Name = profile["name"]?.GetValue<string>() ?? $"Level {level}",
                 Level = level,
                 Passives = history,
                 Skills = skillHistory.Where(kv => skillTrees.ContainsKey(SkillName(kv.Key)))
                     .ToDictionary(kv => SkillName(kv.Key), kv => kv.Value),
-            });
+            };
+            MaxrollGear.Fill(stage, profile, data, game);
+            build.Stages.Add(stage);
 
             prevLevel = level;
             prevPassives = history;

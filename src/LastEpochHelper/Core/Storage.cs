@@ -17,6 +17,12 @@ public sealed class Settings
     public string LastRunVersion { get; set; } = "";
     /// <summary>Only the zone title and counters; for boss fights and small screens.</summary>
     public bool Compact { get; set; }
+    /// <summary>One line across the screen instead of the box.</summary>
+    public bool BarLayout { get; set; }
+    public double BarWidth { get; set; } = 1100;
+    public double? PlannerLeft { get; set; }
+    public double? PlannerTop { get; set; }
+    public string HotkeyPlanner { get; set; } = "Ctrl+Shift+G";
     /// <summary>Hide while another application has focus.</summary>
     public bool AutoHide { get; set; } = true;
     public bool ShowTimer { get; set; } = true;
@@ -46,8 +52,10 @@ public sealed class Settings
     public bool ShowOrderSkills { get; set; } = true;
     public string GameKeyPassives { get; set; } = "P";
     public string GameKeySkills { get; set; } = "S";
-    public double TreeLeft { get; set; } = double.NaN;
-    public double TreeTop { get; set; } = double.NaN;
+    // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings
+    // file that fails to save loses everything else in it too.)
+    public double? TreeLeft { get; set; }
+    public double? TreeTop { get; set; }
 }
 
 /// <summary>Pre-profile progress file (v0.1); only read to migrate it into the first profile.</summary>
@@ -84,6 +92,13 @@ public sealed class Profile
     /// <summary>Points spent per skill, counted by hand in the tree view (the log does not report them).</summary>
     public Dictionary<string, int> SkillPoints { get; set; } = new();
     public string TreeTab { get; set; } = "";
+    public string PlannerTab { get; set; } = "";
+    /// <summary>Gear slots ticked in the planner, as "stage|slot".</summary>
+    public HashSet<string> GearDone { get; set; } = new();
+    /// <summary>Loot filter file name -> level to start using it at (0 = unused).</summary>
+    public Dictionary<string, int> FilterStages { get; set; } = new();
+    public Dictionary<string, TimelineProgress> Timelines { get; set; } = new();
+    public Dictionary<string, DungeonProgress> Dungeons { get; set; } = new();
     public string LastSkillTab { get; set; } = "";
     public DateTime LastPlayed { get; set; }
 
@@ -126,6 +141,8 @@ public sealed class Storage
     private static readonly JsonSerializerOptions Options = new(Guide.JsonOptions)
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
+        // Older settings files may hold "NaN"; read it rather than throwing the whole file away.
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
 
     public string Dir { get; }
@@ -172,6 +189,8 @@ public sealed class Storage
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
+        catch (ArgumentException) { } // a value JSON cannot express; never worth crashing the caller for
+        catch (NotSupportedException) { }
     }
 
     public void AppendLine(string name, string line)

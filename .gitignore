@@ -490,3 +490,7 @@ release/
 
 # working notes with local paths and third-party page dumps
 research/
+
+# deep-research working files
+research_notes/
+reports/

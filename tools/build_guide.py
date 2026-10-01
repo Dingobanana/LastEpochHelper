@@ -249,6 +249,43 @@ TIPS = {
 }
 
 
+# Which damage to expect, by era/chapter: (chapter, zone, visit) -> text. Shown as a shield line.
+# Broad strokes from the enemy types of each era, not per-monster data.
+RESIST = {
+    (2, "The Crumbling Ruins", 1): "Ruined Era: almost everything deals void damage - void resistance is the one to pick up",
+    (3, "The Sanctum Bastille", 1): "Emperor's Remains next: void damage",
+    (4, "The Outcast Camp", 1): "Imperial Era: undead deal necrotic and poison damage",
+    (6, "Yulia's Haven", 1): "Citadel bosses: necrotic, lightning and poison - bring some of each",
+    (7, "The Gates of Solarum", 1): "Rahyeh's forces: fire and lightning damage",
+    (7, "Heoborea", 1): "The north: cold and physical damage",
+    (8, "Lagon's Isle", 1): "Lagon and his temple: lightning and cold damage",
+    (9, "Soreth'ka", 1): "Desert and Nagasa: poison and lightning damage",
+    (7, "Heoborea", 3): "Before the Monolith: aim for 75% in every resistance and 100% critical strike avoidance",
+}
+
+# The three dungeons: static facts for the planner window. Levels and exits are from the 1.5
+# datamine; the key caches are inferred from it (the patch notes do not name the zones).
+DUNGEONS = [
+    {"name": "Lightless Arbor", "entrance": "The Shrouded Ridge (north of The Surface, Chapter 3)", "level": 22,
+     "boss": "The Mountain Beneath", "mechanic": "Carry light: stay near fire or the darkness kills you",
+     "reward": "Vaults of Uncertain Fate - spend gold for chests with chosen modifiers",
+     "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+     "skip": "Alternate exit behind the boss leads to The End of Time (datamine; older guides say The Risen Lake)",
+     "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5); Monolith timeline bosses"},
+    {"name": "Soulfire Bastion", "entrance": "The Felled Wood (off The Risen Lake, Chapter 4)", "level": 37,
+     "boss": "Fire Lich Cremorus", "mechanic": "Swap your shield between fire and necrotic to match incoming damage",
+     "reward": "Soul Gambler - spend Soul Embers from kills on items",
+     "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+     "skip": "Alternate exit leads to Kolheim Pass (Chapter 7)",
+     "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5); Monolith timeline bosses"},
+    {"name": "Temporal Sanctum", "entrance": "The Ruined Coast (Time Rift in The Shining Cove, Chapter 5)", "level": 55,
+     "boss": "Chronomancer Julra", "mechanic": "Shift between the two eras to get past obstacles and dodge her big attacks",
+     "reward": "Eternity Cache - seal a unique with Legendary Potential and an exalted item into a Legendary",
+     "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
+     "skip": "Alternate exit leads to The Radiant Dunes (Chapter 9)",
+     "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"},
+]
+
 # Where to go / what the trick is, in a few words: (chapter, zone, visit) -> text.
 # From Maxroll's campaign walkthrough (written for Season 2); zone layouts have not changed since.
 GO = {
@@ -591,6 +628,9 @@ def build_route(route, strict, zones, quests, warnings):
             if go:
                 tasks.append({"type": "go", "text": go})
             tips = TIPS.get((chapter_number, step["zone"], step["visit"]), [])
+            resist = RESIST.get((chapter_number, step["zone"], step["visit"]))
+            if resist:
+                tasks.append({"type": "res", "text": resist})
             for kind, text in tips:
                 tasks.append({"type": kind, "text": text})
             named_cache = any("Cache" in text for _, text in tips)
@@ -688,6 +728,36 @@ def load_endgame():
     return [{"id": 11, "title": "Monolith of Fate", "era": "Endgame", "steps": steps}], scenes
 
 
+def build_endgame_data():
+    """Data/endgame.json: timelines with their blessings, and the dungeons, for the planner window."""
+    path = Path(__file__).resolve().parent / "monolith.json"
+    timelines = []
+    if path.exists():
+        source = {t["name"]: t for t in json.loads(path.read_text(encoding="utf-8"))["timelines"]}
+        for name in MONOLITH_ORDER:
+            t = source.get(name)
+            if t is None:
+                continue
+
+            def note(prefix):
+                return next((n[len(prefix):].strip().rstrip(".") for n in t["notes"] if n.startswith(prefix)), "")
+
+            knowledge = note("Knowledge of Orobyss for first completion:")
+            blessings = []
+            for b in t["blessings"]:
+                normal, _, grand = b["effect"].partition(" | Grand (empowered): ")
+                blessings.append({"name": b["name"], "effect": normal, "grand": grand, "recommended": bool(b.get("recommended"))})
+            timelines.append({
+                "name": name, "level": t["level"], "boss": t["boss"],
+                "knowledge": int(knowledge[0]) if knowledge[:1].isdigit() else 0,
+                "echoes": note("Quest echoes (stability needed, normal/empowered):").split(". ")[0],
+                "harbinger": note("Harbinger:"),
+                "rewards": note("Exclusive echo rewards (unique/set):"),
+                "blessings": blessings,
+            })
+    return {"knowledgeNeeded": 5, "timelines": timelines, "dungeons": DUNGEONS}
+
+
 def main():
     refresh = "--refresh" in sys.argv
     zones = load_zones(refresh)
@@ -710,7 +780,7 @@ def main():
         count = sum(len(c["steps"]) for c in chapters)
         print(f"{definition['id']:9} {count:3} steps; grants {totals[0]} passives, {totals[1]} idol slots")
 
-    for key in list(TIPS) + list(GO):
+    for key in list(TIPS) + list(GO) + list(RESIST):
         if not any(s["chapter"] == key[0] and s["zone"] == key[1] and s["visit"] == key[2] for s in all_steps):
             warnings.append(f"tip for unknown visit: {key}")
 
@@ -721,6 +791,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "guide.json").write_text(json.dumps(guide, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     (OUT / "scenes.json").write_text(json.dumps(scenes, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (OUT / "endgame.json").write_text(json.dumps(build_endgame_data(), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
     print(f"{len(zones)} zones, {len(quests)} quests")
     for warning in dict.fromkeys(warnings):

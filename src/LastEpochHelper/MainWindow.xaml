@@ -11,7 +11,7 @@
             <Setter Property="Foreground" Value="#B9B29C"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="5,1"/>
+            <Setter Property="Padding" Value="4,1"/>
             <Setter Property="Margin" Value="1,0,0,0"/>
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -46,62 +46,85 @@
         </Style>
     </Window.Resources>
 
-    <Border x:Name="Panel" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="6" Padding="10,6,10,8">
-        <StackPanel>
-            <!-- Header: drag handle + controls (controls hide while locked) -->
-            <DockPanel x:Name="Header" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown" Cursor="SizeAll">
-                <StackPanel x:Name="Buttons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource HeaderButton}" Content="◀" ToolTip="Previous step" Click="Prev_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="▶" ToolTip="Next step" Click="Next_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="☰" ToolTip="Chapters, profiles and more" Click="Menu_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="⚙" ToolTip="Settings" Click="Settings_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="🔒" ToolTip="Lock (click-through)" Click="Lock_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="✕" ToolTip="Hide (tray icon or hotkey brings it back)" Click="Hide_Click"/>
+    <Grid>
+        <!-- Normal layout: a box with the step list -->
+        <Border x:Name="Panel" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="6" Padding="10,6,10,8">
+            <StackPanel>
+                <!-- Header: drag handle + controls (controls hide while locked) -->
+                <DockPanel x:Name="Header" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown" Cursor="SizeAll">
+                    <StackPanel x:Name="Buttons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource HeaderButton}" Content="◀" ToolTip="Previous step" Click="Prev_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="▶" ToolTip="Next step" Click="Next_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="☰" ToolTip="Chapters, routes, characters" Click="Menu_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="▤" ToolTip="Planner: gear, idols, loot filter, Monolith, dungeons" Click="Planner_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="⚙" ToolTip="Settings" Click="Settings_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="🔒" ToolTip="Lock (click-through)" Click="Lock_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="✕" ToolTip="Hide (tray icon or hotkey brings it back)" Click="Hide_Click"/>
+                    </StackPanel>
+                    <TextBlock x:Name="ChapterText" Foreground="#C9A85C" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+
+                <TextBlock x:Name="UpdateText" Visibility="Collapsed" Foreground="#7BE06A" FontWeight="SemiBold" Cursor="Hand"
+                           TextWrapping="Wrap" Margin="0,2,0,0" MouseLeftButtonUp="UpdateText_Click"/>
+
+                <DockPanel Margin="0,2,0,4">
+                    <TextBlock x:Name="WaypointText" DockPanel.Dock="Right" Foreground="#5FC9B8" VerticalAlignment="Bottom" Margin="8,0,0,3" Text="⚑ Waypoint"/>
+                    <TextBlock x:Name="ZoneText" FontSize="19" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+                </DockPanel>
+
+                <!-- Boss card: stays visible in compact mode -->
+                <Border x:Name="BossSection" Background="#26FF7A6B" BorderBrush="#FF7A6B" BorderThickness="1" CornerRadius="4" Padding="7,4,7,5" Margin="0,0,0,4">
+                    <StackPanel x:Name="BossList"/>
+                </Border>
+
+                <StackPanel x:Name="Details">
+                    <StackPanel x:Name="TaskList"/>
+
+                    <Border x:Name="PendingSection" Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="UNCLAIMED REWARDS  ·  click = done, right-click = skipped"/>
+                            <StackPanel x:Name="PendingList"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="BuildSection" Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock x:Name="BuildTitle" Style="{StaticResource SectionTitle}" Text="BUILD"/>
+                            <StackPanel x:Name="BuildList"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="MapSection" Style="{StaticResource Section}">
+                        <Image x:Name="MapImage" Stretch="Uniform" MaxHeight="260"/>
+                    </Border>
                 </StackPanel>
-                <TextBlock x:Name="ChapterText" Foreground="#C9A85C" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-            </DockPanel>
 
-            <TextBlock x:Name="UpdateText" Visibility="Collapsed" Foreground="#7BE06A" FontWeight="SemiBold" Cursor="Hand"
-                       TextWrapping="Wrap" Margin="0,2,0,0" MouseLeftButtonUp="UpdateText_Click"/>
-
-            <DockPanel Margin="0,2,0,4">
-                <TextBlock x:Name="WaypointText" DockPanel.Dock="Right" Foreground="#5FC9B8" VerticalAlignment="Bottom" Margin="8,0,0,3" Text="⚑ Waypoint"/>
-                <TextBlock x:Name="ZoneText" FontSize="19" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
-            </DockPanel>
-
-            <StackPanel x:Name="Details">
-                <StackPanel x:Name="TaskList"/>
-
-                <Border x:Name="PendingSection" Style="{StaticResource Section}">
+                <Border Style="{StaticResource Section}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitle}" Text="UNCLAIMED REWARDS  ·  click = done, right-click = skipped"/>
-                        <StackPanel x:Name="PendingList"/>
+                        <TextBlock x:Name="NextText" Foreground="#A9A493" TextTrimming="CharacterEllipsis"/>
+                        <DockPanel Margin="0,2,0,0">
+                            <TextBlock x:Name="LevelText" DockPanel.Dock="Right" Foreground="#A9A493"/>
+                            <TextBlock x:Name="RewardText" Foreground="#A9A493"/>
+                        </DockPanel>
+                        <TextBlock x:Name="TimerText" Foreground="#A9A493" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="StatusText" Foreground="#77736A" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
-                </Border>
-
-                <Border x:Name="BuildSection" Style="{StaticResource Section}">
-                    <StackPanel>
-                        <TextBlock x:Name="BuildTitle" Style="{StaticResource SectionTitle}" Text="BUILD"/>
-                        <StackPanel x:Name="BuildList"/>
-                    </StackPanel>
-                </Border>
-
-                <Border x:Name="MapSection" Style="{StaticResource Section}">
-                    <Image x:Name="MapImage" Stretch="Uniform" MaxHeight="260"/>
                 </Border>
             </StackPanel>
+        </Border>
 
-            <Border Style="{StaticResource Section}">
-                <StackPanel>
-                    <TextBlock x:Name="NextText" Foreground="#A9A493" TextTrimming="CharacterEllipsis"/>
-                    <DockPanel Margin="0,2,0,0">
-                        <TextBlock x:Name="LevelText" DockPanel.Dock="Right" Foreground="#A9A493"/>
-                        <TextBlock x:Name="RewardText" Foreground="#A9A493"/>
-                    </DockPanel>
-                    <TextBlock x:Name="TimerText" Foreground="#A9A493" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="StatusText" Foreground="#77736A" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+        <!-- Bar layout: one line across the top of the screen, for streaming or small screens -->
+        <Border x:Name="Bar" Visibility="Collapsed" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="5" Padding="10,4,8,5"
+                MouseLeftButtonDown="Header_MouseLeftButtonDown">
+            <DockPanel LastChildFill="True">
+                <StackPanel x:Name="BarButtons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource HeaderButton}" Content="☰" ToolTip="Chapters, routes, characters" Click="Menu_Click"/>
+                    <Button Style="{StaticResource HeaderButton}" Content="▣" ToolTip="Back to the box layout" Click="Layout_Click"/>
                 </StackPanel>
-            </Border>
-        </StackPanel>
-    </Border>
+                <TextBlock x:Name="BarRight" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="#A9A493" Margin="14,0,6,0"/>
+                <TextBlock x:Name="BarZone" DockPanel.Dock="Left" VerticalAlignment="Center" FontWeight="Bold" Foreground="White" Margin="0,0,12,0"/>
+                <TextBlock x:Name="BarText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Border>
+    </Grid>
 </Window>

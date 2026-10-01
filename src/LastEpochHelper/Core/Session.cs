@@ -40,11 +40,17 @@ public sealed class Session
 
     public event Action? Changed;
 
-    public Session(Storage storage, Guide guide, SceneMap scenes)
+    public EndgameData Endgame { get; }
+    /// <summary>The game's loot filter folder.</summary>
+    public string FiltersDir { get; }
+
+    public Session(Storage storage, Guide guide, SceneMap scenes, EndgameData? endgame = null, string? filtersDir = null)
     {
         _storage = storage;
         _scenes = scenes;
         Guide = guide;
+        Endgame = endgame ?? new EndgameData();
+        FiltersDir = filtersDir ?? Path.Combine(Path.GetDirectoryName(LogWatcher.DefaultPath)!, "Filters");
         Settings = storage.Load<Settings>(SettingsFile);
         Store = storage.Load<ProfileStore>(ProfilesFile);
 
@@ -294,6 +300,73 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    // ------------------------------------------------------------------ planner: gear, filters, endgame
+
+    public void ToggleGearDone(string key)
+    {
+        if (!Profile.GearDone.Remove(key)) Profile.GearDone.Add(key);
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Names of the loot filters in the game's folder.</summary>
+    public List<string> InstalledFilters()
+    {
+        try
+        {
+            return Directory.Exists(FiltersDir)
+                ? Directory.GetFiles(FiltersDir, "*.xml").Select(f => Path.GetFileNameWithoutExtension(f)!).OrderBy(n => n).ToList()
+                : new List<string>();
+        }
+        catch (IOException) { return new List<string>(); }
+        catch (UnauthorizedAccessException) { return new List<string>(); }
+    }
+
+    public void SetFilterLevel(string filter, int level)
+    {
+        if (level <= 0) Profile.FilterStages.Remove(filter);
+        else Profile.FilterStages[filter] = level;
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>"Switch loot filter" reminders for this character, as build lines.</summary>
+    public IEnumerable<PlanEntry> FilterEntries() =>
+        Profile.FilterStages.Where(kv => kv.Value > 0)
+            .Select(kv => new PlanEntry(kv.Value, $"Loot filter: switch to \"{kv.Key}\" (Shift+F in game)", $"filter:{kv.Key}:{kv.Value}"));
+
+    public TimelineProgress TimelineProgress(string timeline) => Profile.Timelines.GetValueOrDefault(timeline) ?? new TimelineProgress();
+
+    public void UpdateTimeline(string timeline, Action<TimelineProgress> change)
+    {
+        if (!Profile.Timelines.TryGetValue(timeline, out var progress)) Profile.Timelines[timeline] = progress = new TimelineProgress();
+        change(progress);
+        Save();
+        Changed?.Invoke();
+    }
+
+    public DungeonProgress DungeonProgress(string dungeon) => Profile.Dungeons.GetValueOrDefault(dungeon) ?? new DungeonProgress();
+
+    public void UpdateDungeon(string dungeon, Action<DungeonProgress> change)
+    {
+        if (!Profile.Dungeons.TryGetValue(dungeon, out var progress)) Profile.Dungeons[dungeon] = progress = new DungeonProgress();
+        change(progress);
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Knowledge of Orobyss: from timelines ticked as completed, plus one each for finishing
+    /// Chapter 9 and Chapter 10 when the route has taken the character past them.
+    /// </summary>
+    public int Knowledge()
+    {
+        int knowledge = Endgame.Timelines.Where(t => TimelineProgress(t.Name).Normal).Sum(t => t.Knowledge);
+        int position = Route.Chapters.IndexOf(Tracker.Chapter);
+        knowledge += Route.Chapters.Take(position).Count(c => c.Id is 9 or 10);
+        return knowledge;
+    }
+
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
@@ -319,7 +392,7 @@ public sealed class Session
     /// <summary>Ticks every plan entry up to and including the given level - for clearing a backlog in one go.</summary>
     public void TickPlanThrough(int level)
     {
-        foreach (var entry in (Plan?.Entries ?? Enumerable.Empty<PlanEntry>()).Concat(BuildPlan.Milestones))
+        foreach (var entry in (Plan?.Entries ?? Enumerable.Empty<PlanEntry>()).Concat(BuildPlan.Milestones).Concat(FilterEntries()))
             if (entry.Level <= level) Profile.PlanDone.Add(entry.Key);
         Save();
         Changed?.Invoke();

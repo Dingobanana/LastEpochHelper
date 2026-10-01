@@ -258,6 +258,10 @@
          "type": "main",
          "quest": "The Last Refuge",
          "text": "Talk: Elder Burron"
+        },
+        {
+         "type": "res",
+         "text": "Ruined Era: almost everything deals void damage - void resistance is the one to pick up"
         }
        ]
       },
@@ -796,6 +800,10 @@
         {
          "type": "go",
          "text": "North, then east to the Time Rift"
+        },
+        {
+         "type": "res",
+         "text": "Emperor's Remains next: void damage"
         }
        ]
       },
@@ -868,6 +876,10 @@
         {
          "type": "go",
          "text": "West to Welryn Outskirts"
+        },
+        {
+         "type": "res",
+         "text": "Imperial Era: undead deal necrotic and poison damage"
         },
         {
          "type": "tip",
@@ -1355,6 +1367,10 @@
         {
          "type": "go",
          "text": "East to The Upper Necropolis"
+        },
+        {
+         "type": "res",
+         "text": "Citadel bosses: necrotic, lightning and poison - bring some of each"
         }
        ]
       },
@@ -1442,6 +1458,10 @@
          "type": "main",
          "quest": "Rahyeh's Warpath",
          "text": "Leave the chamber and examine your surroundings"
+        },
+        {
+         "type": "res",
+         "text": "Rahyeh's forces: fire and lightning damage"
         }
        ]
       },
@@ -1490,6 +1510,10 @@
         {
          "type": "go",
          "text": "South-west to The Heoborean Forest"
+        },
+        {
+         "type": "res",
+         "text": "The north: cold and physical damage"
         }
        ]
       },
@@ -1699,6 +1723,10 @@
          "idol": 1
         },
         {
+         "type": "res",
+         "text": "Before the Monolith: aim for 75% in every resistance and 100% critical strike avoidance"
+        },
+        {
          "type": "tip",
          "text": "Quest caps reached (15 passives / 8 idol slots) if you did the marked side quests - you can leave for the Monolith via The End of Time now"
         }
@@ -1854,6 +1882,10 @@
          "text": "North-west to Moonlit Shrine"
         },
         {
+         "type": "res",
+         "text": "Lagon and his temple: lightning and cold damage"
+        },
+        {
          "type": "tip",
          "text": "A one-shot loot cache is hidden in this zone"
         }
@@ -1979,6 +2011,10 @@
         {
          "type": "go",
          "text": "North to The Crossroads"
+        },
+        {
+         "type": "res",
+         "text": "Desert and Nagasa: poison and lightning damage"
         }
        ]
       },
@@ -3080,6 +3116,10 @@
          "type": "main",
          "quest": "The Last Refuge",
          "text": "Talk: Elder Burron"
+        },
+        {
+         "type": "res",
+         "text": "Ruined Era: almost everything deals void damage - void resistance is the one to pick up"
         }
        ]
       },
@@ -3618,6 +3658,10 @@
         {
          "type": "go",
          "text": "North, then east to the Time Rift"
+        },
+        {
+         "type": "res",
+         "text": "Emperor's Remains next: void damage"
         }
        ]
       },
@@ -3690,6 +3734,10 @@
         {
          "type": "go",
          "text": "West to Welryn Outskirts"
+        },
+        {
+         "type": "res",
+         "text": "Imperial Era: undead deal necrotic and poison damage"
         },
         {
          "type": "tip",
@@ -4177,6 +4225,10 @@
         {
          "type": "go",
          "text": "East to The Upper Necropolis"
+        },
+        {
+         "type": "res",
+         "text": "Citadel bosses: necrotic, lightning and poison - bring some of each"
         }
        ]
       },
@@ -4264,6 +4316,10 @@
          "type": "main",
          "quest": "Rahyeh's Warpath",
          "text": "Leave the chamber and examine your surroundings"
+        },
+        {
+         "type": "res",
+         "text": "Rahyeh's forces: fire and lightning damage"
         }
        ]
       },
@@ -4312,6 +4368,10 @@
         {
          "type": "go",
          "text": "South-west to The Heoborean Forest"
+        },
+        {
+         "type": "res",
+         "text": "The north: cold and physical damage"
         }
        ]
       },
@@ -4519,6 +4579,10 @@
          "text": "Talk: Yulia (completes The Lance of Heorot)",
          "quest": "The Lance of Heorot",
          "idol": 1
+        },
+        {
+         "type": "res",
+         "text": "Before the Monolith: aim for 75% in every resistance and 100% critical strike avoidance"
         },
         {
          "type": "tip",
@@ -5132,6 +5196,10 @@
          "type": "main",
          "quest": "The Last Refuge",
          "text": "Talk: Elder Burron"
+        },
+        {
+         "type": "res",
+         "text": "Ruined Era: almost everything deals void damage - void resistance is the one to pick up"
         }
        ]
       },
@@ -5531,6 +5599,10 @@
          "text": "West to Welryn Outskirts"
         },
         {
+         "type": "res",
+         "text": "Imperial Era: undead deal necrotic and poison damage"
+        },
+        {
          "type": "tip",
          "text": "Crafting (the Forge) unlocks here"
         }
@@ -5798,6 +5870,10 @@
         {
          "type": "go",
          "text": "South-west to The Heoborean Forest"
+        },
+        {
+         "type": "res",
+         "text": "The north: cold and physical damage"
         }
        ]
       },
@@ -6044,6 +6120,10 @@
          "text": "North-west to Moonlit Shrine"
         },
         {
+         "type": "res",
+         "text": "Lagon and his temple: lightning and cold damage"
+        },
+        {
          "type": "tip",
          "text": "A one-shot loot cache is hidden in this zone"
         }
@@ -6176,6 +6256,10 @@
         {
          "type": "go",
          "text": "North to The Crossroads"
+        },
+        {
+         "type": "res",
+         "text": "Desert and Nagasa: poison and lightning damage"
         }
        ]
       },
@@ -7310,6 +7394,10 @@
          "type": "main",
          "quest": "The Last Refuge",
          "text": "Talk: Elder Burron"
+        },
+        {
+         "type": "res",
+         "text": "Ruined Era: almost everything deals void damage - void resistance is the one to pick up"
         }
        ]
       },
@@ -7707,6 +7795,10 @@
         {
          "type": "go",
          "text": "West to Welryn Outskirts"
+        },
+        {
+         "type": "res",
+         "text": "Imperial Era: undead deal necrotic and poison damage"
         },
         {
          "type": "tip",

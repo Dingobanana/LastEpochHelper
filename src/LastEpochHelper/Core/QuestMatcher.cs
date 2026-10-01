@@ -41,7 +41,7 @@ public static class QuestMatcher
         bool tie = false;
         foreach (var (key, task) in candidates)
         {
-            if (task.Type is "tip" or "boss" or "skip" or "go") continue;
+            if (task.Type is "tip" or "boss" or "skip" or "go" or "res") continue;
             // A merged line covers several objectives; one trigger must not tick them all.
             if (task.Text.Contains('\u2192')) continue;
             bool isAccept = task.Text.StartsWith("Accept:", StringComparison.Ordinal);

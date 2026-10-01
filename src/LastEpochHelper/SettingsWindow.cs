@@ -88,9 +88,10 @@ internal sealed class SettingsWindow : Window
                  {
                      ("Next step", nameof(Settings.HotkeyNext)), ("Previous step", nameof(Settings.HotkeyPrev)),
                      ("Show / hide", nameof(Settings.HotkeyToggle)), ("Lock / unlock", nameof(Settings.HotkeyLock)),
-                     ("Compact mode", nameof(Settings.HotkeyCompact)), ("Zone map mode", nameof(Settings.HotkeyMap)),
+                     ("Box / compact / bar", nameof(Settings.HotkeyCompact)), ("Zone map mode", nameof(Settings.HotkeyMap)),
                      ("Capture zone map", nameof(Settings.HotkeyCapture)),
                      ("Build tree", nameof(Settings.HotkeyTree)),
+                     ("Planner", nameof(Settings.HotkeyPlanner)),
                  })
         {
             var box = new TextBox();

@@ -28,6 +28,9 @@ public sealed partial class BuildPlan
     public static readonly PlanEntry[] Milestones =
     {
         new(4, "1st skill specialization slot unlocked - specialize your main skill", "milestone:4"),
+        new(10, "Loot filter: load one now (Shift+F in game) - see the planner's Loot filter page", "milestone:filter"),
+        new(25, "Resistances: keep a resistance affix on each armour piece from here on", "milestone:res25"),
+        new(55, "Before the Monolith: 75% in every resistance and 100% critical strike avoidance", "milestone:res55"),
         new(8, "2nd skill specialization slot unlocked", "milestone:8"),
         new(20, "3rd skill specialization slot unlocked", "milestone:20"),
         new(35, "4th skill specialization slot unlocked", "milestone:35"),
@@ -72,9 +75,12 @@ public sealed partial class BuildPlan
         "10-14: Passives: ...\n";
 
     /// <summary>Entries that are due at <paramref name="level"/> and not ticked, plus the next one coming up.</summary>
-    public static (List<PlanEntry> Due, PlanEntry? Next) View(BuildPlan? plan, int level, ISet<string> done, int maxDue = 4)
+    /// <param name="extra">Further entries for this character, e.g. its loot filter switches.</param>
+    public static (List<PlanEntry> Due, PlanEntry? Next) View(BuildPlan? plan, int level, ISet<string> done, int maxDue = 4,
+        IEnumerable<PlanEntry>? extra = null)
     {
-        var all = (plan?.Entries ?? Enumerable.Empty<PlanEntry>()).Concat(Milestones).OrderBy(e => e.Level).ToList();
+        var all = (plan?.Entries ?? Enumerable.Empty<PlanEntry>()).Concat(Milestones).Concat(extra ?? Enumerable.Empty<PlanEntry>())
+            .OrderBy(e => e.Level).ToList();
         var due = all.Where(e => e.Level <= level && !done.Contains(e.Key)).ToList();
         // The newest entries are the relevant ones if a backlog built up.
         if (due.Count > maxDue) due = due.GetRange(due.Count - maxDue, maxDue);

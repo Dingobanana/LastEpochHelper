@@ -36,7 +36,12 @@ public sealed class TreeRenderTests : IDisposable
                 if (Environment.GetEnvironmentVariable("LEH_ATLAS") is { } atlas)
                     File.Copy(atlas, storage.PathOf(BuildTree.AtlasFile));
                 var route = TrackerTests.MakeRoute("A", "B");
-                var session = new Session(storage, new Guide { PassiveCap = 15, IdolCap = 8, Routes = { route } }, new SceneMap());
+                string filters = Path.Combine(_dir, "Filters");
+                Directory.CreateDirectory(filters);
+                File.WriteAllText(Path.Combine(filters, "Leveling.xml"), "");
+                File.WriteAllText(Path.Combine(filters, "Strict endgame.xml"), "");
+                var endgame = EndgameData.Load(Path.Combine(AppContext.BaseDirectory, "Data", "endgame.json"));
+                var session = new Session(storage, new Guide { PassiveCap = 15, IdolCap = 8, Routes = { route } }, new SceneMap(), endgame, filters);
 
                 var build = sample is not null ? BuildTree.Load(sample)! : new BuildTree
                 {
@@ -72,6 +77,29 @@ public sealed class TreeRenderTests : IDisposable
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
                     using var file = File.Create(Path.Combine(output, $"tree-{rendered:00}-{tree.Name.Replace(' ', '_')}.png"));
+                    encoder.Save(file);
+                }
+
+                // The planner pages, with some state so every kind of row is drawn.
+                session.SetFilterLevel("Strict endgame", 60);
+                session.UpdateTimeline("Fall of the Outcasts", p => { p.Normal = true; p.Blessing = "Winds of Fortune"; p.Corruption = 30; });
+                session.UpdateDungeon("Temporal Sanctum", p => p.Keys = 2);
+                var planner = new PlannerWindow(session);
+                foreach (string tab in new[] { "Gear", "Idols", "Loot filter", "Monolith", "Dungeons" })
+                {
+                    session.Profile.PlannerTab = tab;
+                    planner.Render();
+                    var root = (FrameworkElement)planner.Content;
+                    root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    root.Arrange(new Rect(root.DesiredSize));
+                    root.UpdateLayout();
+                    var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth), (int)Math.Ceiling(root.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(root);
+                    rendered++;
+                    if (output is null) continue;
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                    using var file = File.Create(Path.Combine(output, $"planner-{tab.Replace(' ', '_')}.png"));
                     encoder.Save(file);
                 }
             }

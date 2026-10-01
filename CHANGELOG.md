@@ -2,6 +2,19 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.6.0 - Planner, boss cards, bar layout
+
+- New planner window (the ▤ button or Ctrl+Shift+G) with five pages:
+  - Gear: what the imported build wears at your stage, which affixes to look for, and a tick per slot.
+  - Idols: the build's idols and blessings, with the timeline each blessing comes from.
+  - Loot filter: give each installed filter a level; the overlay tells you when to switch.
+  - Monolith: per timeline tick normal/empowered, pick the blessing you took, keep corruption; Knowledge of Orobyss is counted for you.
+  - Dungeons: entrance, boss mechanic, reward, skip exit, key sources, your key count and first clear.
+- Re-import your Maxroll build once to get the gear and idol pages.
+- Boss card: bosses in a zone are shown in a red box that stays visible in compact mode.
+- Shield lines: which damage types to expect in each era, and resistance reminders at level 25 and 55.
+- Bar layout: one line across the screen. Ctrl+Shift+C now cycles box, compact, bar.
+
 ## 0.5.0 - Updates from GitHub
 
 - The app checks GitHub for a new version at start and every six hours; a green line in the overlay tells you when there is one. Click it (or use "Look for update" in settings) to download and install - the overlay restarts itself.

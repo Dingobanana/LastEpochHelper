@@ -26,7 +26,12 @@ internal sealed class ChangelogWindow : Window
             string title = entry.Title.Length > 0 ? $"  -  {entry.Title}" : "";
             text.Inlines.Add(new Run($"\n{Updater.Display(entry.Version)}{title}\n") { FontWeight = FontWeights.SemiBold, FontSize = 14 });
             foreach (string line in entry.Body.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                text.Inlines.Add(new Run((line.StartsWith("- ") ? "  •  " + line[2..] : line) + "\n"));
+            {
+                // "- item" and nested "  - item" both become bullets, the nested ones indented.
+                string trimmed = line.TrimStart();
+                string indent = new(' ', 2 + (line.Length - trimmed.Length) * 2);
+                text.Inlines.Add(new Run((trimmed.StartsWith("- ") ? indent + "•  " + trimmed[2..] : line) + "\n"));
+            }
         }
         if (entries.Count == 0) text.Inlines.Add(new Run("\nNo notes for this version."));
 

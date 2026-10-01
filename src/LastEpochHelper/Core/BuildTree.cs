@@ -29,6 +29,18 @@ public sealed class TreeDef
     public List<TreeNode> Nodes { get; set; } = new();
 }
 
+/// <summary>One piece of equipment (or idol) the build wears at a stage.</summary>
+public sealed class GearItem
+{
+    public string Slot { get; set; } = "";
+    public string Name { get; set; } = "";
+    /// <summary>"" for a normal base, "unique" or "set".</summary>
+    public string Rarity { get; set; } = "";
+    /// <summary>Affix names with tier, e.g. "Health T5".</summary>
+    public List<string> Affixes { get; set; } = new();
+    public int Count { get; set; } = 1;
+}
+
 /// <summary>A planner profile ("lvl 5 - 26"): the click order of every tree up to that level.</summary>
 public sealed class TreeStage
 {
@@ -38,6 +50,17 @@ public sealed class TreeStage
     public List<int> Passives { get; set; } = new();
     /// <summary>Skill name -> one entry per skill point, in order.</summary>
     public Dictionary<string, List<int>> Skills { get; set; } = new();
+    public List<GearItem> Gear { get; set; } = new();
+    public List<GearItem> Idols { get; set; } = new();
+    public List<string> Blessings { get; set; } = new();
+
+    /// <summary>Affixes the stage's gear repeats most: what to look for on drops and at the forge.</summary>
+    public List<(string Affix, int Count)> WantedAffixes(int max = 8) =>
+        Gear.SelectMany(g => g.Affixes)
+            .Select(a => a[..Math.Max(0, a.LastIndexOf(" T", StringComparison.Ordinal))])
+            .Where(a => a.Length > 0)
+            .GroupBy(a => a).OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Take(max).Select(g => (g.Key, g.Count())).ToList();
 }
 
 /// <summary>The next thing to do in a tree: put <see cref="Count"/> points in a row into one node.</summary>
@@ -63,6 +86,9 @@ public sealed class BuildTree
     public int AtlasCells { get; set; }
     public List<TreeDef> Trees { get; set; } = new();
     public List<TreeStage> Stages { get; set; } = new();
+
+    /// <summary>The stage a character of this level is working towards: the first one not yet outgrown.</summary>
+    public TreeStage? StageFor(int level) => Stages.FirstOrDefault(s => s.Level >= level) ?? Stages.LastOrDefault();
 
     public static string PathFor(string planPath) => Path.ChangeExtension(planPath, ".tree.json");
 

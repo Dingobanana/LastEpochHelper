@@ -20,7 +20,9 @@ logfil (`Player.log`) og rører hverken spillets hukommelse eller filer.
 | `Ctrl+Shift+Right` / `Ctrl+Shift+Left` | Næste / forrige step |
 | `Ctrl+Shift+H` | Skjul / vis |
 | `Ctrl+Shift+L` | Lås (klik går igennem til spillet) / lås op |
-| `Ctrl+Shift+C` | Kompakt visning (kun zone og tællere) |
+| `Ctrl+Shift+C` | Skifter mellem boks, kompakt boks og vandret bjælke |
+| `Ctrl+Shift+G` | Planlægger: gear, idols, loot filter, Monolith, dungeons |
+| `Ctrl+Shift+T` | Build-træ |
 | `Ctrl+Shift+M` | Zonekort: fra / i overlayet / stort midt på skærmen |
 | `Ctrl+Shift+S` | Gem et skærmbillede af spillet som kort for den zone du står i |
 
@@ -71,6 +73,17 @@ beder om det, og der hentes kun zip-filer fra dette repos egne releases. Dit fre
   Ikonerne hentes fra Maxroll ved import og kræver Windows' WebP-codec; uden den tegnes noderne uden billeder.
 - **Grønne linjer i overlayet** er build-/level-ting (ikke quests): hvad buildet skal have på dit level, og
   hvornår nye skill-slots åbner. Klik = gjort; højreklik = gjort inkl. alle tidligere linjer.
+- **Planlægger (`▤`).** Fem sider, der ikke hører til en bestemt zone:
+  *Gear* (hvad buildet har på i dit stadie, hvilke affixes du skal kigge efter, kryds pr. slot),
+  *Idols* (buildets idols og blessings, med hvilken timeline hver blessing kommer fra),
+  *Loot filter* (giv hvert installeret filter et level, så siger overlayet til, når du skal skifte),
+  *Monolith* (kryds normal/empowered af pr. timeline, vælg din blessing, hold styr på corruption; Knowledge of
+  Orobyss tælles sammen) og *Dungeons* (indgang, boss-mekanik, belønning, skip-udgang, nøglekilder, dine nøgler).
+  Monolith- og dungeon-siderne føres i hånden; spillets egen Nexus-oversigt i 1.5 viser en del af det samme.
+- **Boss-kort.** Bosser i zonen står i en rød boks, som også vises i kompakt visning.
+- **Skjold-linjer (`🛡`).** Hvilke skadetyper du møder i hver æra, og påmindelser om resistances ved level 25 og 55.
+  Det er grove træk ud fra fjendetyperne, ikke data pr. monster.
+- **Bjælke-layout.** Hele steppet på én linje hen over skærmen, til streaming eller små skærme.
 - **Milestones.** Uden plan vises stadig, hvornår nye skill specialization slots låses op.
 - **Tid.** Spilletid pr. karakter (kun mens du er inde i verdenen), tid i nuværende kapitel, bedste tid
   for kapitlet blandt dine andre karakterer på samme rute, og antal dødsfald.

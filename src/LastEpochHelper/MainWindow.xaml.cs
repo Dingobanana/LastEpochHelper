@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         ["side"] = ("◆", Frozen("#7FB2FF")),
         ["boss"] = ("☠", Frozen("#FF7A6B")),
         ["go"] = ("➜", Frozen("#5FC9B8")),
+        ["res"] = ("🛡", Frozen("#B9A2FF")),
         ["waypoint"] = ("⚑", Frozen("#5FC9B8")),
         ["tip"] = ("•", Frozen("#A9A493")),
         ["skip"] = ("✕", Frozen("#77736A")),
@@ -45,6 +46,8 @@ public partial class MainWindow : Window
     private MapWindow? _mapWindow;
     private SettingsWindow? _settingsWindow;
     private TreeWindow? _treeWindow;
+    private PlannerWindow? _plannerWindow;
+    private bool _plannerWanted;
     private KeyboardWatcher? _keyboard;
     private bool _treeWanted;
     private ScreenReader? _screenReader;
@@ -75,7 +78,7 @@ public partial class MainWindow : Window
         var scenes = new SceneMap(
             ReadSceneFile(Path.Combine(dataDir, "scenes.json")),
             ReadSceneFile(storage.PathOf(Session.LearnedScenesFile)));
-        _session = new Session(storage, guide, scenes);
+        _session = new Session(storage, guide, scenes, EndgameData.Load(Path.Combine(dataDir, "endgame.json")));
         _session.Changed += Render;
 
         Left = Settings.Left;
@@ -222,6 +225,7 @@ public partial class MainWindow : Window
         Register(Settings.HotkeyMap, CycleMapMode);
         Register(Settings.HotkeyCapture, CaptureMap);
         Register(Settings.HotkeyTree, () => ShowTree(!_treeWanted));
+        Register(Settings.HotkeyPlanner, () => ShowPlanner(!_plannerWanted));
 
         _keyboard?.Dispose();
         _keyboard = null;
@@ -252,12 +256,55 @@ public partial class MainWindow : Window
         Render();
     }
 
+    /// <summary>Cycles box -> compact box -> bar across the screen -> box.</summary>
     private void ToggleCompact()
     {
-        Settings.Compact = !Settings.Compact;
+        if (Settings.BarLayout) { Settings.BarLayout = false; Settings.Compact = false; }
+        else if (Settings.Compact) { Settings.Compact = false; Settings.BarLayout = true; }
+        else Settings.Compact = true;
+        ApplyAppearance();
         SaveSettings();
         Render();
     }
+
+    private void Layout_Click(object sender, RoutedEventArgs e)
+    {
+        Settings.BarLayout = false;
+        ApplyAppearance();
+        SaveSettings();
+        Render();
+    }
+
+    // ------------------------------------------------------------------ planner
+
+    private void ShowPlanner(bool show)
+    {
+        _plannerWanted = show;
+        if (show)
+        {
+            if (_plannerWindow is null)
+            {
+                _plannerWindow = new PlannerWindow(_session);
+                _plannerWindow.Moved += () =>
+                {
+                    Settings.PlannerLeft = _plannerWindow.Left;
+                    Settings.PlannerTop = _plannerWindow.Top;
+                    SaveSettings();
+                };
+                _plannerWindow.CloseRequested += () => ShowPlanner(false);
+                _plannerWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                _plannerWindow.Left = Usable(Settings.PlannerLeft) ?? Math.Max(0, (SystemParameters.PrimaryScreenWidth - 600) / 2);
+                _plannerWindow.Top = Usable(Settings.PlannerTop) ?? 80;
+            }
+            _plannerWindow.Render();
+        }
+        UpdateVisibility();
+    }
+
+    private void Planner_Click(object sender, RoutedEventArgs e) => ShowPlanner(!_plannerWanted);
+
+    /// <summary>A saved window coordinate, unless it was never set (or is a NaN left by an older version).</summary>
+    private static double? Usable(double? value) => value is { } v && double.IsFinite(v) ? v : null;
 
     private void CycleMapMode()
     {
@@ -284,17 +331,9 @@ public partial class MainWindow : Window
                     SaveSettings();
                 };
                 _treeWindow.CloseRequested += () => ShowTree(false);
-                if (double.IsNaN(Settings.TreeLeft))
-                {
-                    _treeWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                    _treeWindow.Left = Math.Max(0, (SystemParameters.PrimaryScreenWidth - 900) / 2);
-                    _treeWindow.Top = 40;
-                }
-                else
-                {
-                    _treeWindow.Left = Settings.TreeLeft;
-                    _treeWindow.Top = Settings.TreeTop;
-                }
+                _treeWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                _treeWindow.Left = Usable(Settings.TreeLeft) ?? Math.Max(0, (SystemParameters.PrimaryScreenWidth - 900) / 2);
+                _treeWindow.Top = Usable(Settings.TreeTop) ?? 40;
             }
             if (kind is not null) _treeWindow.SelectKind(kind);
             _treeWindow.Render();
@@ -416,6 +455,13 @@ public partial class MainWindow : Window
         else if (!show && IsVisible) Hide();
         UpdateMapWindow();
 
+        if (_plannerWindow is not null)
+        {
+            bool showPlanner = _plannerWanted && focusOk;
+            if (showPlanner && !_plannerWindow.IsVisible) _plannerWindow.Show();
+            else if (!showPlanner && _plannerWindow.IsVisible) _plannerWindow.Hide();
+        }
+
         if (_treeWindow is not null)
         {
             bool showTree = _treeWanted && focusOk;
@@ -428,7 +474,10 @@ public partial class MainWindow : Window
 
     private void ApplyAppearance()
     {
-        Width = Math.Clamp(Settings.Width, 260, 900);
+        Width = Settings.BarLayout ? Math.Clamp(Settings.BarWidth, 500, 3000) : Math.Clamp(Settings.Width, 260, 900);
+        Panel.Visibility = Settings.BarLayout ? Visibility.Collapsed : Visibility.Visible;
+        Bar.Visibility = Settings.BarLayout ? Visibility.Visible : Visibility.Collapsed;
+        Bar.Background = new SolidColorBrush(Color.FromArgb((byte)Math.Clamp(Settings.Opacity * 255, 40, 255), 0x0E, 0x0F, 0x14));
         FontSize = Math.Clamp(Settings.FontSize, 9, 28);
         ZoneText.FontSize = FontSize + 5;
         byte alpha = (byte)Math.Clamp(Settings.Opacity * 255, 40, 255);
@@ -454,11 +503,19 @@ public partial class MainWindow : Window
         StatusText.Visibility = Settings.Compact ? Visibility.Collapsed : Visibility.Visible;
 
         TaskList.Children.Clear();
+        BossList.Children.Clear();
         for (int i = 0; i < step.Tasks.Count; i++)
         {
+            var task = step.Tasks[i];
+            if (task.Type.Equals("boss", StringComparison.OrdinalIgnoreCase))
+            {
+                BossList.Children.Add(BuildBossLine(task.Text));
+                continue;
+            }
             string key = Session.Key(tracker.Index, i);
-            TaskList.Children.Add(BuildTaskRow(step.Tasks[i], _session.IsDone(key), () => _session.ToggleDone(key)));
+            TaskList.Children.Add(BuildTaskRow(task, _session.IsDone(key), () => _session.ToggleDone(key)));
         }
+        BossSection.Visibility = BossList.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var (passive, idol, pending) = _session.Rewards();
         PendingList.Children.Clear();
@@ -495,7 +552,52 @@ public partial class MainWindow : Window
         Header.Cursor = Settings.Locked ? Cursors.Arrow : Cursors.SizeAll;
         RenderTimer();
         StatusText.Text = BuildStatus();
+        if (Settings.BarLayout) RenderBar(step, passive, idol, level);
         if (_treeWanted) _treeWindow?.Render();
+        if (_plannerWanted) _plannerWindow?.Render();
+    }
+
+    /// <summary>The whole step on one line: zone, what to do, where to go, boss, counters.</summary>
+    private void RenderBar(GuideStep step, int passive, int idol, int? level)
+    {
+        var tracker = _session.Tracker;
+        BarZone.Text = $"{tracker.Chapter.Id}.{tracker.IndexInChapter + 1}  {step.Zone}";
+        BarText.Inlines.Clear();
+        bool first = true;
+        for (int i = 0; i < step.Tasks.Count; i++)
+        {
+            var task = step.Tasks[i];
+            if (task.Type is "tip" or "skip" or "res") continue; // details stay in the box layout
+            if (_session.IsDone(Session.Key(tracker.Index, i))) continue;
+            var (glyph, brush) = TaskStyles.TryGetValue(task.Type, out var style) ? style : TaskStyles["main"];
+            if (!first) BarText.Inlines.Add(new Run("    "));
+            first = false;
+            BarText.Inlines.Add(new Run($"{glyph} {task.Text}") { Foreground = brush });
+            if (task.Passive > 0) BarText.Inlines.Add(new Run($" +{task.Passive}P") { Foreground = PassiveBrush, FontWeight = FontWeights.Bold });
+            if (task.Idol > 0) BarText.Inlines.Add(new Run(" +Idol") { Foreground = IdolBrush, FontWeight = FontWeights.Bold });
+        }
+        if (tracker.NextStep is { } next)
+            BarText.Inlines.Add(new Run($"{(first ? "" : "    ")}▸ next: {next.Zone}") { Foreground = DimBrush });
+
+        BarRight.Inlines.Clear();
+        BarRight.Inlines.Add(new Run($"{passive}/{_session.Guide.PassiveCap}") { Foreground = PassiveBrush });
+        BarRight.Inlines.Add(new Run("  "));
+        BarRight.Inlines.Add(new Run($"{idol}/{_session.Guide.IdolCap}") { Foreground = IdolBrush });
+        if (level is { } lvl)
+            BarRight.Inlines.Add(new Run($"   lvl {lvl}{(step.Level > 0 ? $" / zone {step.Level}" : "")}")
+                { Foreground = step.Level > 0 && lvl < step.Level - 2 ? UnderLevelBrush : BarRight.Foreground });
+        if (Settings.ShowTimer) BarRight.Inlines.Add(new Run($"   ⏱ {Clock(_session.Profile.PlaySeconds)}"));
+        BarButtons.Visibility = Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>"Name - what to watch for" with the name standing out.</summary>
+    private static TextBlock BuildBossLine(string text)
+    {
+        var line = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        int split = text.IndexOf(" - ", StringComparison.Ordinal);
+        line.Inlines.Add(new Run("☠ " + (split < 0 ? text : text[..split])) { Foreground = Frozen("#FF9C8F"), FontWeight = FontWeights.SemiBold });
+        if (split >= 0) line.Inlines.Add(new Run("  " + text[(split + 3)..]) { Foreground = Frozen("#E8E4D8") });
+        return line;
     }
 
     private void RenderBuild(int? level)
@@ -504,7 +606,7 @@ public partial class MainWindow : Window
         BuildSection.Visibility = Visibility.Collapsed;
         if (!Settings.ShowBuild || level is not { } lvl) return;
 
-        var (due, next) = BuildPlan.View(_session.Plan, lvl, _session.Profile.PlanDone);
+        var (due, next) = BuildPlan.View(_session.Plan, lvl, _session.Profile.PlanDone, extra: _session.FilterEntries());
         if (due.Count == 0 && next is null) return;
 
         BuildTitle.Text = (_session.Plan is { } plan ? $"BUILD  ·  {plan.Name}" : "LEVEL MILESTONES") + "  ·  click = done, right-click = done incl. earlier";
@@ -748,6 +850,18 @@ public partial class MainWindow : Window
         menu.Items.Add(reset);
 
         menu.Items.Add(new Separator());
+        var planner = new MenuItem { Header = "Planner: gear, idols, loot filter, Monolith, dungeons" };
+        planner.Click += (_, _) => ShowPlanner(true);
+        menu.Items.Add(planner);
+        var layout = new MenuItem { Header = "Bar layout (one line across the screen)", IsChecked = Settings.BarLayout };
+        layout.Click += (_, _) =>
+        {
+            Settings.BarLayout = !Settings.BarLayout;
+            ApplyAppearance();
+            SaveSettings();
+            Render();
+        };
+        menu.Items.Add(layout);
         var settings = new MenuItem { Header = "Settings..." };
         settings.Click += (_, _) => OpenSettings();
         menu.Items.Add(settings);
@@ -771,6 +885,7 @@ public partial class MainWindow : Window
         _tray?.Dispose();
         _mapWindow?.Close();
         _treeWindow?.Close();
+        _plannerWindow?.Close();
         _keyboard?.Dispose();
         _settingsWindow?.Close();
         SaveSettings();

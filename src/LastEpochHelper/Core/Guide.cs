@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace LastEpochHelper.Core;
 
-/// <summary>One line in a step. <see cref="Type"/> is one of: main, side, go, boss, tip, skip.</summary>
+/// <summary>One line in a step. <see cref="Type"/> is one of: main, side, go, boss, res, tip, skip.</summary>
 public sealed class GuideTask
 {
     public string Type { get; set; } = "main";

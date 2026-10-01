@@ -225,8 +225,101 @@ public sealed class SessionTests : IDisposable
 
         var (due, next) = BuildPlan.View(null, level: 25, session.Profile.PlanDone);
 
-        Assert.Equal(20, Assert.Single(due).Level);
+        Assert.Equal(new[] { 10, 20, 25 }, due.Select(e => e.Level)); // the loot filter, skill slot and resistance reminders
         Assert.Equal(35, next!.Level);
+    }
+
+    private static EndgameData MakeEndgame() => new()
+    {
+        Timelines =
+        {
+            new Timeline { Name = "Outcasts", Knowledge = 1, Blessings = { new Blessing { Name = "Winds of Fortune" } } },
+            new Timeline { Name = "Dragons", Knowledge = 2 },
+            new Timeline { Name = "Winter", Knowledge = 0 },
+        },
+    };
+
+    [Fact]
+    public void Knowledge_CountsTickedTimelines_AndIsKeptPerCharacter()
+    {
+        var session = new Session(new Storage(_dir), MakeGuide(), new SceneMap(), MakeEndgame(), Path.Combine(_dir, "Filters"));
+        Assert.Equal(0, session.Knowledge());
+
+        session.UpdateTimeline("Outcasts", p => p.Normal = true);
+        session.UpdateTimeline("Dragons", p => { p.Normal = true; p.Blessing = "X"; p.Corruption = 40; });
+        session.UpdateTimeline("Winter", p => p.Empowered = true);
+
+        Assert.Equal(3, session.Knowledge());
+        Assert.Equal(40, session.TimelineProgress("Dragons").Corruption);
+        Assert.Equal("Outcasts", session.Endgame.TimelineOf("Grand Winds of Fortune")!.Name);
+
+        var restarted = new Session(new Storage(_dir), MakeGuide(), new SceneMap(), MakeEndgame(), Path.Combine(_dir, "Filters"));
+        Assert.Equal(3, restarted.Knowledge());
+        restarted.Activate(restarted.CreateProfile("Alt"));
+        Assert.Equal(0, restarted.Knowledge());
+    }
+
+    [Fact]
+    public void LootFilters_AreListedFromTheGameFolder_AndBecomeBuildLinesAtTheirLevel()
+    {
+        string filters = Path.Combine(_dir, "Filters");
+        Directory.CreateDirectory(filters);
+        File.WriteAllText(Path.Combine(filters, "Leveling.xml"), "<ItemFilter/>");
+        File.WriteAllText(Path.Combine(filters, "Strict.xml"), "<ItemFilter/>");
+        File.WriteAllText(Path.Combine(filters, "notes.txt"), "");
+        var session = new Session(new Storage(_dir), MakeGuide(), new SceneMap(), MakeEndgame(), filters);
+
+        Assert.Equal(new[] { "Leveling", "Strict" }, session.InstalledFilters());
+
+        session.SetFilterLevel("Strict", 50);
+        session.SetFilterLevel("Leveling", 5);
+        session.SetFilterLevel("Leveling", 0); // 0 = not used
+
+        var (due, _) = BuildPlan.View(null, level: 50, new HashSet<string>(), maxDue: 10, extra: session.FilterEntries());
+        Assert.Contains(due, e => e.Level == 50 && e.Text.Contains("\"Strict\""));
+        Assert.DoesNotContain(due, e => e.Text.Contains("\"Leveling\""));
+    }
+
+    [Fact]
+    public void DungeonKeysAndGearTicks_AreRemembered()
+    {
+        var session = MakeSession();
+        session.UpdateDungeon("Temporal Sanctum", p => { p.Keys = 2; p.FirstClear = true; });
+        session.ToggleGearDone("Early|Helmet");
+
+        var restarted = MakeSession();
+
+        Assert.Equal(2, restarted.DungeonProgress("Temporal Sanctum").Keys);
+        Assert.True(restarted.DungeonProgress("Temporal Sanctum").FirstClear);
+        Assert.Contains("Early|Helmet", restarted.Profile.GearDone);
+        Assert.Equal(0, restarted.DungeonProgress("Lightless Arbor").Keys);
+    }
+
+    [Fact]
+    public void FreshSettings_SurviveASaveAndLoad()
+    {
+        // Regression: a default that JSON cannot store (NaN) once made every settings save fail silently.
+        var storage = new Storage(_dir);
+        var settings = new Settings { LastRunVersion = "9.9.9", Left = 123 };
+
+        storage.Save(Session.SettingsFile, settings);
+        var loaded = storage.Load<Settings>(Session.SettingsFile);
+
+        Assert.Equal("9.9.9", loaded.LastRunVersion);
+        Assert.Equal(123, loaded.Left);
+        Assert.Null(loaded.TreeLeft);
+        Assert.Null(loaded.PlannerLeft);
+    }
+
+    [Fact]
+    public void SettingsFileWithNaN_FromAnOlderVersion_StillLoads()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(Path.Combine(_dir, Session.SettingsFile), "{ \"left\": 77, \"treeLeft\": \"NaN\", \"treeTop\": \"NaN\" }");
+
+        var loaded = new Storage(_dir).Load<Settings>(Session.SettingsFile);
+
+        Assert.Equal(77, loaded.Left);
     }
 
     [Fact]
@@ -293,6 +386,12 @@ public class MaxrollImporterTests
           { "name": "Paladin", "abilities": [], "masteryAbility": "a_hands" }
         ]
       } ],
+      "itemTypes": [
+        { "baseTypeID": 0, "displayName": "Helmet", "subItems": [ { "subTypeID": 3, "name": "Iron Casque", "displayName": "" } ] },
+        { "baseTypeID": 34, "displayName": "Blessing", "subItems": [ { "subTypeID": 37, "name": "Grand Hunger of the Void", "displayName": "" } ] }
+      ],
+      "affixes": [ { "affixId": 25, "affixName": "Added Health", "affixDisplayName": "Health" }, { "affixId": 7, "affixName": "Void Resistance", "affixDisplayName": "" } ],
+      "uniques": [ { "uniqueID": 9, "name": "Calamity", "displayName": "", "isSetItem": false } ],
       "abilities": {
         "a_lunge": { "abilityName": "Lunge", "playerAbilityID": "lu" },
         "a_rive": { "abilityName": "Rive", "playerAbilityID": "rv" },
@@ -311,12 +410,17 @@ public class MaxrollImporterTests
 
     private const string Planner = """
     {
+      "items": {
+        "11": { "itemType": 0, "subType": 3, "affixes": [ { "id": 25, "tier": 3, "roll": 1 }, { "id": 7, "tier": 2, "roll": 1 } ] },
+        "12": { "itemType": 0, "subType": 3, "uniqueID": 9, "affixes": [ { "id": 25, "tier": 5, "roll": 1 } ] }
+      },
       "profiles": [
-        { "name": "Early", "level": 10, "class": 0, "mastery": 0,
+        { "name": "Early", "level": 10, "class": 0, "mastery": 0, "items": { "head": 11 },
           "passives": { "history": [1, 1, {"2": 2}, 1], "position": 3 },
           "specializedSkills": ["a_rive"], "activeSkills": ["a_rive", "a_multi"],
           "skillTrees": { "rv": { "history": [4, 4], "position": 2 } } },
         { "name": "Mid", "level": 20, "class": 0, "mastery": 3,
+          "items": { "head": 12 }, "idols": [null, 11, 11], "blessings": [null, { "itemType": 34, "subType": 37 }],
           "passives": { "history": [1, 1, {"2": 2}, 9, 9], "position": 5 },
           "specializedSkills": ["a_rive"], "activeSkills": ["a_rive"],
           "skillTrees": { "rv": { "history": [4, 4, 5], "position": 3 } } }
@@ -351,6 +455,16 @@ public class MaxrollImporterTests
         Assert.Equal(new[] { 4, 6 }, tree.Stages.Select(s => s.Passives.Count)); // a {node: 2} batch is two points
         var juggernautNode = tree.Trees[0].Nodes.Single(n => n.Name == "Juggernaut");
         Assert.Equal(8, juggernautNode.Max);
+
+        // Gear, idols and blessings come out with readable names.
+        var helmet = Assert.Single(tree.Stages[0].Gear);
+        Assert.Equal(("Helmet", "Iron Casque", ""), (helmet.Slot, helmet.Name, helmet.Rarity));
+        Assert.Equal(new[] { "Health T3", "Void Resistance T2" }, helmet.Affixes);
+        Assert.Equal(("Calamity", "unique"), (tree.Stages[1].Gear[0].Name, tree.Stages[1].Gear[0].Rarity));
+        Assert.Equal(2, Assert.Single(tree.Stages[1].Idols).Count);
+        Assert.Equal(new[] { "Grand Hunger of the Void" }, tree.Stages[1].Blessings);
+        Assert.Equal(("Health", 1), tree.Stages[0].WantedAffixes()[0]);
+        Assert.Same(tree.Stages[1], tree.StageFor(15));
 
         var plan = BuildPlan.Parse(result.Text);
         Assert.Equal("Test build", plan.Name);
