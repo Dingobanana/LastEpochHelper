@@ -23,6 +23,7 @@ logfil (`Player.log`) og rører hverken spillets hukommelse eller filer.
 | `Ctrl+Shift+C` | Skifter mellem boks, kompakt boks og vandret bjælke |
 | `Ctrl+Shift+G` | Planlægger: gear, idols, loot filter, Monolith, dungeons |
 | `Ctrl+Shift+T` | Build-træ |
+| `Ctrl+Shift+E` | Tjek det item, musen peger på, mod buildets affixes |
 | `Ctrl+Shift+M` | Zonekort: fra / i overlayet / stort midt på skærmen |
 | `Ctrl+Shift+S` | Gem et skærmbillede af spillet som kort for den zone du står i |
 
@@ -80,6 +81,19 @@ beder om det, og der hentes kun zip-filer fra dette repos egne releases. Dit fre
   *Monolith* (kryds normal/empowered af pr. timeline, vælg din blessing, hold styr på corruption; Knowledge of
   Orobyss tælles sammen) og *Dungeons* (indgang, boss-mekanik, belønning, skip-udgang, nøglekilder, dine nøgler).
   Monolith- og dungeon-siderne føres i hånden; spillets egen Nexus-oversigt i 1.5 viser en del af det samme.
+- **Loot filter fra buildet.** Planlæggerens Loot filter-side skriver et leveling-filter ud fra det importerede
+  build direkte i spillets mappe (vælg det i spillet med Shift+F). Det viser alt til level 9, rares til level 29
+  og derefter kun items med buildets affixes; uniques, sets og exalted skjules aldrig. `check` ud for et filter
+  viser uniques og affixes, der er nyere end noget filteret kender.
+- **Synk med din rigtige karakter.** `⟳ sync` i build-træet henter dine passive- og skill-points fra din
+  offentlige profil på Last Epoch Tools (kræver at profilen er slået op dér én gang; data kan være et par timer
+  gamle). Så vises det, du faktisk har; "next" springer det over, du allerede har taget, og points uden for
+  planen får rød ring. Endpointet er udokumenteret og kaldes kun, når du trykker.
+- **Targets.** Hvilken timeline der giver hver blessing og unique, buildet vil have, med roll-intervaller.
+- **Item-tjek.** Hold musen over et item og tryk `Ctrl+Shift+E`: overlayet læser tooltippet fra skærmen og
+  siger, hvilke af buildets affixes der er på.
+- **Dødsjournal.** Hvert dødsfald logges med zone og level; klik for at notere årsagen.
+- **Morditas og Prophecies.** Opslagssider for de nye 1.5-systemer (fra Maxrolls gengivelse af patch notes).
 - **Boss-kort.** Bosser i zonen står i en rød boks, som også vises i kompakt visning.
 - **Skjold-linjer (`🛡`).** Hvilke skadetyper du møder i hver æra, og påmindelser om resistances ved level 25 og 55.
   Det er grove træk ud fra fjendetyperne, ikke data pr. monster.

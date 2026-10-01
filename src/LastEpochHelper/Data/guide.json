@@ -2544,6 +2544,14 @@
         {
          "type": "tip",
          "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"
+        },
+        {
+         "type": "tip",
+         "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"
+        },
+        {
+         "type": "tip",
+         "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"
         }
        ]
       },
@@ -2828,6 +2836,31 @@
         {
          "type": "tip",
          "text": "Echo reward exclusive to this timeline: unique/set Belt"
+        }
+       ]
+      },
+      {
+       "zone": "Before Empowered",
+       "tasks": [
+        {
+         "type": "main",
+         "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"
+        },
+        {
+         "type": "res",
+         "text": "75% in every resistance and 100% critical strike avoidance before you step in"
+        },
+        {
+         "type": "main",
+         "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"
+        },
+        {
+         "type": "tip",
+         "text": "Item faction joined and ranked up; Woven joined"
+        },
+        {
+         "type": "tip",
+         "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"
         }
        ]
       },
@@ -4624,6 +4657,14 @@
         {
          "type": "tip",
          "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"
+        },
+        {
+         "type": "tip",
+         "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"
+        },
+        {
+         "type": "tip",
+         "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"
         }
        ]
       },
@@ -4908,6 +4949,31 @@
         {
          "type": "tip",
          "text": "Echo reward exclusive to this timeline: unique/set Belt"
+        }
+       ]
+      },
+      {
+       "zone": "Before Empowered",
+       "tasks": [
+        {
+         "type": "main",
+         "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"
+        },
+        {
+         "type": "res",
+         "text": "75% in every resistance and 100% critical strike avoidance before you step in"
+        },
+        {
+         "type": "main",
+         "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"
+        },
+        {
+         "type": "tip",
+         "text": "Item faction joined and ranked up; Woven joined"
+        },
+        {
+         "type": "tip",
+         "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"
         }
        ]
       },
@@ -6822,6 +6888,14 @@
         {
          "type": "tip",
          "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"
+        },
+        {
+         "type": "tip",
+         "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"
+        },
+        {
+         "type": "tip",
+         "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"
         }
        ]
       },
@@ -7106,6 +7180,31 @@
         {
          "type": "tip",
          "text": "Echo reward exclusive to this timeline: unique/set Belt"
+        }
+       ]
+      },
+      {
+       "zone": "Before Empowered",
+       "tasks": [
+        {
+         "type": "main",
+         "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"
+        },
+        {
+         "type": "res",
+         "text": "75% in every resistance and 100% critical strike avoidance before you step in"
+        },
+        {
+         "type": "main",
+         "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"
+        },
+        {
+         "type": "tip",
+         "text": "Item faction joined and ranked up; Woven joined"
+        },
+        {
+         "type": "tip",
+         "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"
         }
        ]
       },
@@ -8741,6 +8840,14 @@
         {
          "type": "tip",
          "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"
+        },
+        {
+         "type": "tip",
+         "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"
+        },
+        {
+         "type": "tip",
+         "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"
         }
        ]
       },
@@ -9025,6 +9132,31 @@
         {
          "type": "tip",
          "text": "Echo reward exclusive to this timeline: unique/set Belt"
+        }
+       ]
+      },
+      {
+       "zone": "Before Empowered",
+       "tasks": [
+        {
+         "type": "main",
+         "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"
+        },
+        {
+         "type": "res",
+         "text": "75% in every resistance and 100% critical strike avoidance before you step in"
+        },
+        {
+         "type": "main",
+         "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"
+        },
+        {
+         "type": "tip",
+         "text": "Item faction joined and ranked up; Woven joined"
+        },
+        {
+         "type": "tip",
+         "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"
         }
        ]
       },

@@ -85,7 +85,11 @@ public sealed class TreeRenderTests : IDisposable
                 session.UpdateTimeline("Fall of the Outcasts", p => { p.Normal = true; p.Blessing = "Winds of Fortune"; p.Corruption = 30; });
                 session.UpdateDungeon("Temporal Sanctum", p => p.Keys = 2);
                 var planner = new PlannerWindow(session);
-                foreach (string tab in new[] { "Gear", "Idols", "Loot filter", "Monolith", "Dungeons" })
+                session.Handle(new SceneLoadEvent("ZA"), live: true);
+                session.Handle(new PlayerDiedEvent(), live: true);
+                session.SetDeathCause(session.Profile.DeathLog[0], "Boss mechanic");
+                session.Handle(new PlayerDiedEvent(), live: true);
+                foreach (string tab in new[] { "Gear", "Idols", "Targets", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" })
                 {
                     session.Profile.PlannerTab = tab;
                     planner.Render();

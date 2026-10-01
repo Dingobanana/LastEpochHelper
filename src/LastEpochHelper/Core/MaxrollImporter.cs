@@ -87,6 +87,20 @@ public static partial class MaxrollImporter
         throw new InvalidDataException("That does not look like a Maxroll Last Epoch planner or build guide link.");
     }
 
+    /// <summary>Maxroll's game database, if an earlier import left a copy; never downloads.</summary>
+    public static JsonNode? CachedGameData(string cacheDir)
+    {
+        try
+        {
+            string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
+            if (!File.Exists(cache)) return null;
+            using var stream = File.OpenRead(cache);
+            return JsonNode.Parse(stream);
+        }
+        catch (IOException) { return null; }
+        catch (System.Text.Json.JsonException) { return null; }
+    }
+
     private static async Task<JsonNode> LoadGameDataAsync(string cacheDir, HttpClient http)
     {
         string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
@@ -156,6 +170,7 @@ public static partial class MaxrollImporter
                 if (cells[i]?.GetValue<string>() is { } cell) atlas[cell] = i;
         var build = new BuildTree { Name = name, AtlasCells = atlas.Count };
         var skillTrees = new Dictionary<string, JsonNode>();
+        var skillTreeIds = new Dictionary<string, string>();
 
         int prevLevel = 1, prevMastery = 0;
         var prevPassives = new List<int>();
@@ -254,6 +269,7 @@ public static partial class MaxrollImporter
                 }
                 if (tree is null) continue;
                 skillTrees[skill] = tree;
+                skillTreeIds[skill] = treeId!;
 
                 var old = prevSkillHistory.GetValueOrDefault(ability) ?? new List<int>();
                 List<int> fresh;
@@ -324,6 +340,7 @@ public static partial class MaxrollImporter
             {
                 Name = skill,
                 Kind = TreeDef.SkillKind,
+                TreeId = skillTreeIds.GetValueOrDefault(skill, ""),
                 Nodes = tree["nodes"]!.AsObject().Select(kv => ToNode(kv.Key, kv.Value!, atlas, kv.Key == "0" ? skillIcon : null)).ToList(),
             });
         }

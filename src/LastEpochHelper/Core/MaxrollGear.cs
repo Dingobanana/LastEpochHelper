@@ -60,10 +60,12 @@ internal static class MaxrollGear
 
     private static GearItem Describe(string slot, JsonNode item, JsonNode game)
     {
-        var gear = new GearItem { Slot = slot, Name = BaseName(item, game) };
+        var type = Find(game["itemTypes"], "baseTypeID", item["itemType"]?.GetValue<int>() ?? -1);
+        var gear = new GearItem { Slot = slot, Name = BaseName(item, game), Type = Text(type, "displayName", "BaseTypeName") };
         if (item["uniqueID"] is { } uniqueId && Find(game["uniques"], "uniqueID", uniqueId.GetValue<int>()) is { } unique)
         {
             gear.Name = Text(unique, "displayName", "name");
+            gear.UniqueId = uniqueId.GetValue<int>();
             gear.Rarity = unique["isSetItem"]?.GetValue<bool>() == true ? "set" : "unique";
         }
 
@@ -74,6 +76,7 @@ internal static class MaxrollGear
             string name = Text(definition, "affixDisplayName", "affixName");
             if (name.Length == 0) return;
             gear.Affixes.Add($"{name} T{affix["tier"]?.GetValue<int>() ?? 1}{suffix}");
+            gear.AffixIds.Add(id.GetValue<int>());
         }
         foreach (var affix in item["affixes"] as JsonArray ?? new JsonArray()) AddAffix(affix);
         AddAffix(item["sealedAffix"], " (sealed)");

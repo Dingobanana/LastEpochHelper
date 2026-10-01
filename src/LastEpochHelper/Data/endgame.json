@@ -818,5 +818,37 @@
    "skip": "Alternate exit leads to The Radiant Dunes (Chapter 9)",
    "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"
   }
+ ],
+ "reference": [
+  {
+   "title": "Morditas",
+   "lines": [
+    "!Rage of Morditas: touch a Blood Crystal (campaign from Chapter 2, and echoes) to start a timed kill phase.",
+    "Kills extend the timer - rarer enemies extend it more.",
+    "!Bloodrage charges at 20 / 50 / 90 / 140 / 200 kills. Past 200 the timer drains fast: finish there.",
+    "Each charge gives a random Bloodrage buff for the encounter.",
+    "Phase two: when the timer ends, everything you killed revives inside an arena of blood ice. Leaving it for 4 seconds ends the encounter.",
+    "!Rewards: five slots (four equipment, one other). Each charge claims one item or performs a ritual.",
+    "Frozen Ritual: sacrifice a slot, the rest reroll as that same item type.",
+    "Bloody Ritual: banish a slot, the rest reroll and that item type cannot appear.",
+    "Charges do not carry over to the next encounter.",
+    "!Boss chain: Rage of Morditas encounters in the Monolith fill the Rage meter (campaign ones do not count).",
+    "Full meter: a Morditas echo chain ending in the Circle of Frozen Blood (standard Morditas).",
+    "Killing him gives Demigod's Ascendance - Pinnacle Morditas - which needs 400 corruption."
+   ]
+  },
+  {
+   "title": "Prophecies",
+   "lines": [
+    "!Circle of Fortune in 1.5: no more rerolling. You pick a reward category per slot; slots gain charges (up to 99) as you earn Favor.",
+    "!Mesembria - rank 1 - triggers on: defeat a Rift Beast or activate a Shrine.",
+    "!Dysis - rank 3 - triggers on: defeat a Nemesis or open a Lost Cache.",
+    "!Eos - rank 6 - triggers on: defeat an Exiled Mage or a Timeline Boss.",
+    "!Arctis - rank 9 - triggers on: defeat a Fateweaver or an Omen.",
+    "Lenses can be bought from rank 3. Lens of Tyranny doubles the charge rate.",
+    "Before 1.5, Weaver idol prophecies needed rank 9-10 and the game did not say so; whether that still holds after the rework is unconfirmed.",
+    "Guides written before 1.5 describe the old reroll system and no longer apply."
+   ]
+  }
  ]
 }

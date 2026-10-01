@@ -48,6 +48,7 @@ public partial class MainWindow : Window
     private TreeWindow? _treeWindow;
     private PlannerWindow? _plannerWindow;
     private bool _plannerWanted;
+    private bool _alertShown;
     private KeyboardWatcher? _keyboard;
     private bool _treeWanted;
     private ScreenReader? _screenReader;
@@ -226,6 +227,7 @@ public partial class MainWindow : Window
         Register(Settings.HotkeyCapture, CaptureMap);
         Register(Settings.HotkeyTree, () => ShowTree(!_treeWanted));
         Register(Settings.HotkeyPlanner, () => ShowPlanner(!_plannerWanted));
+        Register(Settings.HotkeyLookup, LookUpItem);
 
         _keyboard?.Dispose();
         _keyboard = null;
@@ -273,6 +275,45 @@ public partial class MainWindow : Window
         ApplyAppearance();
         SaveSettings();
         Render();
+    }
+
+    // ------------------------------------------------------------------ item check
+
+    /// <summary>
+    /// Reads the tooltip under the mouse and says which of the build's affixes are on the item.
+    /// The game shows the tooltip; this only reads the picture of it.
+    /// </summary>
+    private async void LookUpItem()
+    {
+        if (_reading) return;
+        _game.Refresh();
+        if (!_game.GameFocused) { _session.ShowAlert("Item check: hover an item in Last Epoch first."); return; }
+        if (_session.Tree?.StageFor(_session.Profile.Level) is not { } stage)
+        {
+            _session.ShowAlert("Item check needs an imported build (settings: Import from Maxroll).");
+            return;
+        }
+        _screenReader ??= new ScreenReader();
+        if (!_screenReader.Available) { _session.ShowAlert("Item check: Windows text recognition is not available."); return; }
+
+        _reading = true;
+        try
+        {
+            // Tooltips open beside the cursor; a generous box around it catches them on either side.
+            var cursor = System.Windows.Forms.Cursor.Position;
+            var game = _game.GameBounds;
+            var box = new Native.RECT
+            {
+                Left = Math.Max(game.Left, cursor.X - 750), Right = Math.Min(game.Right, cursor.X + 750),
+                Top = Math.Max(game.Top, cursor.Y - 800), Bottom = Math.Min(game.Bottom, cursor.Y + 800),
+            };
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+            var lines = await _screenReader.ReadAsync(box, masks);
+            _session.ShowAlert(ItemCheck.Describe(lines, stage), 20);
+        }
+        finally { _reading = false; }
     }
 
     // ------------------------------------------------------------------ planner
@@ -440,6 +481,7 @@ public partial class MainWindow : Window
         // Checked even while hidden, so the notice is waiting when the game gets focus again.
         CheckForUpdateInBackground();
         if (!IsVisible) return;
+        if (_alertShown && _session.Alert is null) Render(); // the alert ran out
         RenderTimer();
         // Borderless games occasionally jump above topmost windows; re-assert without taking focus.
         if (++_ticks % 4 == 0) Native.BringToTop(_hwnd);
@@ -492,6 +534,10 @@ public partial class MainWindow : Window
         int? level = _session.Profile.Level > 0 ? _session.Profile.Level : null;
 
         ChapterText.Text = $"{chapter.Title} · {chapter.Era}  ({tracker.IndexInChapter + 1}/{chapter.Steps.Count})";
+        string? alert = _session.Alert;
+        AlertSection.Visibility = alert is null ? Visibility.Collapsed : Visibility.Visible;
+        AlertText.Text = alert ?? "";
+        _alertShown = alert is not null;
         UpdateText.Visibility = AvailableUpdate is null || Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
         if (AvailableUpdate is { } update)
             UpdateText.Text = _updating ? $"Downloading version {Updater.Display(update.Version)}..."
@@ -567,7 +613,7 @@ public partial class MainWindow : Window
         for (int i = 0; i < step.Tasks.Count; i++)
         {
             var task = step.Tasks[i];
-            if (task.Type is "tip" or "skip" or "res") continue; // details stay in the box layout
+            if (task.Type is "tip" or "skip" or "res" or "boss") continue; // bosses get their own row below; details stay in the box layout
             if (_session.IsDone(Session.Key(tracker.Index, i))) continue;
             var (glyph, brush) = TaskStyles.TryGetValue(task.Type, out var style) ? style : TaskStyles["main"];
             if (!first) BarText.Inlines.Add(new Run("    "));
@@ -588,6 +634,13 @@ public partial class MainWindow : Window
                 { Foreground = step.Level > 0 && lvl < step.Level - 2 ? UnderLevelBrush : BarRight.Foreground });
         if (Settings.ShowTimer) BarRight.Inlines.Add(new Run($"   ⏱ {Clock(_session.Profile.PlaySeconds)}"));
         BarButtons.Visibility = Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
+
+        BarBoss.Children.Clear();
+        foreach (var boss in step.Tasks.Where(t => t.Type == "boss"))
+            BarBoss.Children.Add(BuildBossLine(boss.Text));
+        BarBoss.Visibility = BarBoss.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BarAlert.Text = _session.Alert ?? "";
+        BarAlert.Visibility = _session.Alert is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>"Name - what to watch for" with the name standing out.</summary>

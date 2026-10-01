@@ -11,7 +11,7 @@
     <!-- Only for the tray icon and screen capture; see the Using Remove items below. -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.6.0</Version>
+    <Version>0.7.0</Version>
     <!-- The manifest is how a WPF app declares DPI awareness; the WinForms analyzer does not apply. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>

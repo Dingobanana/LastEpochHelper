@@ -14,6 +14,8 @@ public sealed record CharacterCreatedEvent(string Name, int ClassId) : LogEvent;
 /// </summary>
 public sealed record QuestTriggerEvent(string Name) : LogEvent;
 public sealed record PlayerDiedEvent : LogEvent;
+/// <summary>The account name, as the chat service reports it on login.</summary>
+public sealed record AccountEvent(string Name) : LogEvent;
 
 /// <summary>Turns Player.log lines into events. Lines look like "&lt;timestamp&gt;\tLog\t&lt;message&gt;".</summary>
 public static partial class LogParser
@@ -30,6 +32,9 @@ public static partial class LogParser
 
     [GeneratedRegex(@"update the condition handler in (.+?)\s*$")]
     private static partial Regex QuestTrigger();
+
+    [GeneratedRegex(@"\tConnected to chat as '([^']+)'")]
+    private static partial Regex ChatAccount();
 
     public static LogEvent? Parse(string line)
     {
@@ -61,6 +66,12 @@ public static partial class LogParser
 
         if (line.Contains("Player died: -IsLocalPlayer: True", StringComparison.Ordinal))
             return new PlayerDiedEvent();
+
+        if (line.Contains("Connected to chat as ", StringComparison.Ordinal))
+        {
+            m = ChatAccount().Match(line);
+            if (m.Success) return new AccountEvent(m.Groups[1].Value);
+        }
 
         return null;
     }

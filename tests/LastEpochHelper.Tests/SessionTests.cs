@@ -184,6 +184,33 @@ public sealed class SessionTests : IDisposable
     }
 
     [Fact]
+    public void Death_GoesInTheJournal_WithZoneAndLevel_AndRaisesAnAlert()
+    {
+        var session = MakeSession();
+        EnterWorld(session, "ZA", 12, 0, created: "Hero");
+        session.Handle(new SceneLoadEvent("ZB"), true);
+
+        session.Handle(new PlayerDiedEvent(), true);
+
+        var death = Assert.Single(session.Profile.DeathLog);
+        Assert.Equal(("B", 12), (death.Zone, death.Level));
+        Assert.Contains("Died in B", session.Alert);
+
+        session.SetDeathCause(death, "One-shot");
+        Assert.Equal("One-shot", MakeSession().Profile.DeathLog[0].Cause);
+    }
+
+    [Fact]
+    public void AccountName_IsPickedUpFromTheLog()
+    {
+        var session = MakeSession();
+
+        session.Handle(new AccountEvent("SomeAccount"), live: false);
+
+        Assert.Equal("SomeAccount", MakeSession().Settings.AccountName);
+    }
+
+    [Fact]
     public void Death_IsCounted_AndStateSurvivesARestart()
     {
         var session = MakeSession();

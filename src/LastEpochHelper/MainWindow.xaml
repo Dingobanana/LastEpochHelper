@@ -67,6 +67,11 @@
                 <TextBlock x:Name="UpdateText" Visibility="Collapsed" Foreground="#7BE06A" FontWeight="SemiBold" Cursor="Hand"
                            TextWrapping="Wrap" Margin="0,2,0,0" MouseLeftButtonUp="UpdateText_Click"/>
 
+                <!-- Short-lived messages: a death, the result of an item check -->
+                <Border x:Name="AlertSection" Visibility="Collapsed" Background="#2A7BE06A" BorderBrush="#7BE06A" BorderThickness="1" CornerRadius="4" Padding="7,3,7,4" Margin="0,3,0,0">
+                    <TextBlock x:Name="AlertText" TextWrapping="Wrap" Foreground="#E8E4D8"/>
+                </Border>
+
                 <DockPanel Margin="0,2,0,4">
                     <TextBlock x:Name="WaypointText" DockPanel.Dock="Right" Foreground="#5FC9B8" VerticalAlignment="Bottom" Margin="8,0,0,3" Text="⚑ Waypoint"/>
                     <TextBlock x:Name="ZoneText" FontSize="19" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
@@ -116,15 +121,21 @@
         <!-- Bar layout: one line across the top of the screen, for streaming or small screens -->
         <Border x:Name="Bar" Visibility="Collapsed" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="5" Padding="10,4,8,5"
                 MouseLeftButtonDown="Header_MouseLeftButtonDown">
-            <DockPanel LastChildFill="True">
-                <StackPanel x:Name="BarButtons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource HeaderButton}" Content="☰" ToolTip="Chapters, routes, characters" Click="Menu_Click"/>
-                    <Button Style="{StaticResource HeaderButton}" Content="▣" ToolTip="Back to the box layout" Click="Layout_Click"/>
-                </StackPanel>
-                <TextBlock x:Name="BarRight" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="#A9A493" Margin="14,0,6,0"/>
-                <TextBlock x:Name="BarZone" DockPanel.Dock="Left" VerticalAlignment="Center" FontWeight="Bold" Foreground="White" Margin="0,0,12,0"/>
-                <TextBlock x:Name="BarText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-            </DockPanel>
+            <StackPanel>
+                <DockPanel LastChildFill="True">
+                    <StackPanel x:Name="BarButtons" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource HeaderButton}" Content="☰" ToolTip="Chapters, routes, characters" Click="Menu_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="▤" ToolTip="Planner" Click="Planner_Click"/>
+                        <Button Style="{StaticResource HeaderButton}" Content="▣" ToolTip="Back to the box layout" Click="Layout_Click"/>
+                    </StackPanel>
+                    <TextBlock x:Name="BarRight" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="#A9A493" Margin="14,0,6,0"/>
+                    <TextBlock x:Name="BarZone" DockPanel.Dock="Left" VerticalAlignment="Center" FontWeight="Bold" Foreground="White" Margin="0,0,12,0"/>
+                    <TextBlock x:Name="BarText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+                <!-- Boss tactics and alerts get their own full-width rows so they are never cut off -->
+                <StackPanel x:Name="BarBoss" Margin="0,3,0,0"/>
+                <TextBlock x:Name="BarAlert" Visibility="Collapsed" TextWrapping="Wrap" Foreground="#7BE06A" Margin="0,3,0,0"/>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

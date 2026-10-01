@@ -26,6 +26,8 @@ public sealed class TreeDef
 
     public string Name { get; set; } = "";
     public string Kind { get; set; } = PassiveKind;
+    /// <summary>The game's id of a skill tree ("" for passive tabs); matches profiles read from the game.</summary>
+    public string TreeId { get; set; } = "";
     public List<TreeNode> Nodes { get; set; } = new();
 }
 
@@ -39,6 +41,11 @@ public sealed class GearItem
     /// <summary>Affix names with tier, e.g. "Health T5".</summary>
     public List<string> Affixes { get; set; } = new();
     public int Count { get; set; } = 1;
+    /// <summary>The game's ids for the affixes and the unique, as loot filters use them.</summary>
+    public List<int> AffixIds { get; set; } = new();
+    public int? UniqueId { get; set; }
+    /// <summary>Kind of item, e.g. "Helmet" - decides which timeline drops it as an echo reward.</summary>
+    public string Type { get; set; } = "";
 }
 
 /// <summary>A planner profile ("lvl 5 - 26"): the click order of every tree up to that level.</summary>
@@ -73,7 +80,13 @@ public sealed record TreeState(
     IReadOnlyList<NextRun> Next,
     int Points,
     int StagePoints,
-    string Stage);
+    string Stage)
+{
+    /// <summary>True when <see cref="Allocated"/> is what the character really has, not what the plan assumes.</summary>
+    public bool FromGame { get; init; }
+    /// <summary>Nodes with more points than the build gives them at this stage.</summary>
+    public IReadOnlySet<int> OffPlan { get; init; } = new HashSet<int>();
+}
 
 /// <summary>The structured half of an imported build: tree layouts plus point order, for the tree view.</summary>
 public sealed class BuildTree
@@ -144,6 +157,42 @@ public sealed class BuildTree
             else next.Add(new NextRun(node, 1));
         }
         return new TreeState(allocated, target, next, taken, history.Count, stage.Name);
+    }
+
+    /// <summary>
+    /// The same view built from the points the character really has: what is taken is the truth, and
+    /// "next" is the first planned points not yet covered - so points taken out of order are fine.
+    /// Returns null when the profile has nothing for this tree.
+    /// </summary>
+    public TreeState? State(TreeDef tree, ActualTrees actual, int level, int nextCount = 3)
+    {
+        if (Stages.Count == 0) return null;
+        bool passive = tree.Kind == TreeDef.PassiveKind;
+        Dictionary<int, int>? have = passive ? actual.Passives : actual.Skills.GetValueOrDefault(tree.TreeId);
+        if (have is null || (!passive && tree.TreeId.Length == 0)) return null;
+        int total = have.Values.Sum();
+        List<int> History(TreeStage s) => passive ? s.Passives : s.Skills.GetValueOrDefault(tree.Name) ?? new List<int>();
+
+        TreeStage stage = Stages.FirstOrDefault(s => (passive || s.Level >= level) && History(s).Count > total)
+                          ?? Stages.FirstOrDefault(s => History(s).Count > total)
+                          ?? Stages.LastOrDefault(s => History(s).Count > 0) ?? Stages[^1];
+        var history = History(stage);
+        var mine = tree.Nodes.Select(n => n.Id).ToHashSet();
+        var allocated = have.Where(kv => kv.Value > 0 && mine.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+        var target = Count(history.Where(mine.Contains));
+        var wholeTarget = Count(history);
+
+        var remaining = new Dictionary<int, int>(have);
+        var next = new List<NextRun>();
+        foreach (int node in history)
+        {
+            if (remaining.GetValueOrDefault(node) > 0) { remaining[node]--; continue; }
+            if (next.Count > 0 && next[^1].Node == node) next[^1] = next[^1] with { Count = next[^1].Count + 1 };
+            else if (next.Count == nextCount) break;
+            else next.Add(new NextRun(node, 1));
+        }
+        var offPlan = allocated.Where(kv => kv.Value > wholeTarget.GetValueOrDefault(kv.Key)).Select(kv => kv.Key).ToHashSet();
+        return new TreeState(allocated, target, next, total, history.Count, stage.Name) { FromGame = true, OffPlan = offPlan };
     }
 
     public string NodeName(int id, bool passive, string? skill = null)

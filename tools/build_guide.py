@@ -286,6 +286,35 @@ DUNGEONS = [
      "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"},
 ]
 
+# Reference pages for the planner window. Lines starting with "!" are highlighted.
+# Sources: Maxroll's copy of the 1.5 patch notes and its Rage of Morditas page.
+REFERENCE = [
+    {"title": "Morditas", "lines": [
+        "!Rage of Morditas: touch a Blood Crystal (campaign from Chapter 2, and echoes) to start a timed kill phase.",
+        "Kills extend the timer - rarer enemies extend it more.",
+        "!Bloodrage charges at 20 / 50 / 90 / 140 / 200 kills. Past 200 the timer drains fast: finish there.",
+        "Each charge gives a random Bloodrage buff for the encounter.",
+        "Phase two: when the timer ends, everything you killed revives inside an arena of blood ice. Leaving it for 4 seconds ends the encounter.",
+        "!Rewards: five slots (four equipment, one other). Each charge claims one item or performs a ritual.",
+        "Frozen Ritual: sacrifice a slot, the rest reroll as that same item type.",
+        "Bloody Ritual: banish a slot, the rest reroll and that item type cannot appear.",
+        "Charges do not carry over to the next encounter.",
+        "!Boss chain: Rage of Morditas encounters in the Monolith fill the Rage meter (campaign ones do not count).",
+        "Full meter: a Morditas echo chain ending in the Circle of Frozen Blood (standard Morditas).",
+        "Killing him gives Demigod's Ascendance - Pinnacle Morditas - which needs 400 corruption.",
+    ]},
+    {"title": "Prophecies", "lines": [
+        "!Circle of Fortune in 1.5: no more rerolling. You pick a reward category per slot; slots gain charges (up to 99) as you earn Favor.",
+        "!Mesembria - rank 1 - triggers on: defeat a Rift Beast or activate a Shrine.",
+        "!Dysis - rank 3 - triggers on: defeat a Nemesis or open a Lost Cache.",
+        "!Eos - rank 6 - triggers on: defeat an Exiled Mage or a Timeline Boss.",
+        "!Arctis - rank 9 - triggers on: defeat a Fateweaver or an Omen.",
+        "Lenses can be bought from rank 3. Lens of Tyranny doubles the charge rate.",
+        "Before 1.5, Weaver idol prophecies needed rank 9-10 and the game did not say so; whether that still holds after the rework is unconfirmed.",
+        "Guides written before 1.5 describe the old reroll system and no longer apply.",
+    ]},
+]
+
 # Where to go / what the trick is, in a few words: (chapter, zone, visit) -> text.
 # From Maxroll's campaign walkthrough (written for Season 2); zone layouts have not changed since.
 GO = {
@@ -685,6 +714,8 @@ def load_endgame():
             {"type": "tip", "text": "Each timeline: run echoes for stability, do the 3 quest echoes in order - the third is the boss"},
             {"type": "tip", "text": "A boss kill offers blessings; one slot per timeline. Re-pick discovered blessings at Chronomancer Nyx"},
             {"type": "tip", "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"},
+            {"type": "tip", "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"},
+            {"type": "tip", "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"},
         ],
     }]
     scenes = {}
@@ -714,6 +745,16 @@ def load_endgame():
         if ids:
             scenes.update({scene: name for scene in ids.groups()})
 
+    steps.append({
+        "zone": "Before Empowered",
+        "tasks": [
+            {"type": "main", "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"},
+            {"type": "res", "text": "75% in every resistance and 100% critical strike avoidance before you step in"},
+            {"type": "main", "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"},
+            {"type": "tip", "text": "Item faction joined and ranked up; Woven joined"},
+            {"type": "tip", "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"},
+        ],
+    })
     steps.append({
         "zone": "Empowered Monolith",
         "level": 100,
@@ -755,7 +796,7 @@ def build_endgame_data():
                 "rewards": note("Exclusive echo rewards (unique/set):"),
                 "blessings": blessings,
             })
-    return {"knowledgeNeeded": 5, "timelines": timelines, "dungeons": DUNGEONS}
+    return {"knowledgeNeeded": 5, "timelines": timelines, "dungeons": DUNGEONS, "reference": REFERENCE}
 
 
 def main():

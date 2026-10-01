@@ -17,7 +17,7 @@ namespace LastEpochHelper;
 /// </summary>
 internal sealed class PlannerWindow : Window
 {
-    private static readonly string[] Tabs = { "Gear", "Idols", "Loot filter", "Monolith", "Dungeons" };
+    private static readonly string[] Tabs = { "Gear", "Idols", "Targets", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" };
 
     private static readonly Brush Gold = Frozen("#C9A85C");
     private static readonly Brush Green = Frozen("#7BE06A");
@@ -30,8 +30,10 @@ internal sealed class PlannerWindow : Window
     private static readonly Brush Idol = Frozen("#C79BFF");
 
     private readonly Session _session;
-    private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal };
+    private readonly WrapPanel _tabs = new() { MaxWidth = 530 };
     private readonly StackPanel _body = new() { Width = 560 };
+    private readonly Dictionary<string, FilterReport?> _reports = new();
+    private string _filterMessage = "";
 
     public event Action? Moved;
     public event Action? CloseRequested;
@@ -141,9 +143,12 @@ internal sealed class PlannerWindow : Window
         {
             case "Gear": RenderGear(); break;
             case "Idols": RenderIdols(); break;
+            case "Targets": RenderTargets(); break;
             case "Loot filter": RenderFilters(); break;
             case "Monolith": RenderMonolith(); break;
+            case "Morditas" or "Prophecies": RenderReference(current); break;
             case "Dungeons": RenderDungeons(); break;
+            case "Deaths": RenderDeaths(); break;
         }
     }
 
@@ -160,15 +165,27 @@ internal sealed class PlannerWindow : Window
         Heading($"{stage.Name}  ·  gear the build wears by level {stage.Level}");
         if (stage.Gear.Count == 0) { Note("This stage of the build lists no gear."); return; }
 
-        var wanted = stage.WantedAffixes();
+        var wanted = stage.WantedAffixes(10);
         if (wanted.Count > 0)
         {
-            var look = Line("", top: 4);
-            look.Inlines.Add(new Run("Look for:  ") { Foreground = Muted });
-            look.Inlines.Add(new Run(string.Join(",  ", wanted.Select(w => w.Count > 1 ? $"{w.Affix} ×{w.Count}" : w.Affix))) { Foreground = Green });
+            // Each affix is a button that puts its name on the clipboard, ready for the stash search box.
+            var look = new WrapPanel { Margin = new Thickness(0, 5, 0, 0) };
+            look.Children.Add(new TextBlock { Text = "Look for:", Foreground = Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 3) });
+            foreach (var (affix, count) in wanted)
+            {
+                string search = affix.StartsWith("Added ", StringComparison.OrdinalIgnoreCase) ? affix[6..] : affix;
+                var chip = Button(count > 1 ? $"{affix} ×{count}" : affix, () =>
+                {
+                    try { Clipboard.SetText(search); _session.ShowAlert($"Copied \"{search}\" - paste it into the stash search (Ctrl+V).", 8); }
+                    catch (System.Runtime.InteropServices.ExternalException) { }
+                }, color: Green);
+                chip.Margin = new Thickness(0, 0, 4, 3);
+                chip.ToolTip = "Click to copy for the stash search box";
+                look.Children.Add(chip);
+            }
             _body.Children.Add(look);
         }
-        Note("Tiers are what the build ends the stage with - any tier of the right affix is an upgrade on the way. Click a slot when you have it covered.");
+        Note("Click an affix to copy it for the stash search. Tiers are what the build ends the stage with - any tier of the right affix is an upgrade on the way. Click a slot when you have it covered.");
 
         foreach (var item in stage.Gear)
         {
@@ -213,8 +230,106 @@ internal sealed class PlannerWindow : Window
         }
     }
 
+    private void RenderTargets()
+    {
+        if (Stage() is not { } stage) return;
+        Heading($"{stage.Name}  ·  where to get what the build wants");
+
+        var uniques = stage.Gear.Concat(stage.Idols).Where(g => g.Rarity.Length > 0).DistinctBy(g => g.Name).ToList();
+        if (uniques.Count == 0) Note("This stage of the build uses no unique or set items.");
+        foreach (var item in uniques)
+        {
+            var timeline = _session.Endgame.TimelineForItemType(item.Type);
+            var row = Line("", top: 5);
+            row.Inlines.Add(new Run(item.Name) { Foreground = item.Rarity == "set" ? Set : Unique, FontWeight = FontWeights.SemiBold });
+            row.Inlines.Add(new Run($"  ({item.Type})") { Foreground = Dim });
+            row.Inlines.Add(new Run(timeline is null
+                ? "\n      no timeline gives this item type as an echo reward - check its drop source"
+                : $"\n      echo rewards for this item type: {timeline.Name} (level {timeline.Level})") { Foreground = Muted, FontSize = 12 });
+            _body.Children.Add(row);
+        }
+        if (uniques.Count > 0) Note("Echo rewards narrow the item type, not the exact unique; boss-only uniques drop from their boss instead.");
+
+        Heading("Blessings");
+        if (stage.Blessings.Count == 0) Note("This stage of the build lists no blessings.");
+        foreach (string blessing in stage.Blessings)
+        {
+            string plain = blessing.StartsWith("Grand ", StringComparison.OrdinalIgnoreCase) ? blessing[6..] : blessing;
+            var timeline = _session.Endgame.TimelineOf(blessing);
+            var data = timeline?.Blessings.FirstOrDefault(b => b.Name.Equals(plain, StringComparison.OrdinalIgnoreCase));
+            bool taken = timeline is not null && _session.TimelineProgress(timeline.Name).Blessing.Equals(plain, StringComparison.OrdinalIgnoreCase);
+            var row = Line("", top: 5);
+            row.Inlines.Add(new Run(taken ? "✔ " : "☐ ") { Foreground = taken ? Green : Muted });
+            row.Inlines.Add(new Run(blessing) { Foreground = taken ? Dim : Idol, FontWeight = FontWeights.SemiBold });
+            if (timeline is not null)
+                row.Inlines.Add(new Run($"   {timeline.Name} - kill {timeline.Boss}") { Foreground = Muted });
+            if (data is not null)
+                row.Inlines.Add(new Run($"\n      normal {data.Effect}" + (data.Grand.Length > 0 ? $"   ·   grand {data.Grand}" : "")) { Foreground = Muted, FontSize = 12 });
+            _body.Children.Add(row);
+        }
+        if (stage.Blessings.Count > 0) Note("Ticked when the same blessing is chosen on the Monolith page. The top of each range is a good roll; re-kill the boss for a new offer.");
+    }
+
+    private void RenderReference(string title)
+    {
+        var page = _session.Endgame.Reference.FirstOrDefault(p => p.Title == title);
+        Heading(title);
+        if (page is null) { Note("No reference text in this version."); return; }
+        foreach (string line in page.Lines)
+        {
+            bool key = line.StartsWith('!');
+            _body.Children.Add(Line(key ? line[1..] : line, key ? Text : Muted, top: key ? 7 : 2, weight: key ? FontWeights.SemiBold : FontWeights.Normal));
+        }
+        Note("From Maxroll's copy of the 1.5 patch notes; not checked in game.");
+    }
+
+    private void RenderDeaths()
+    {
+        var deaths = _session.Profile.DeathLog;
+        Heading($"Deaths  ·  {deaths.Count}");
+        if (deaths.Count == 0) { Note("None recorded for this character since the journal was added."); return; }
+        Note("Click a death to note why. Patterns show quickly: the same cause three times is the thing to fix.");
+
+        foreach (var group in deaths.Where(d => d.Cause.Length > 0).GroupBy(d => d.Cause).OrderByDescending(g => g.Count()))
+            _body.Children.Add(Line($"{group.Count()}×  {group.Key}", Passive, top: 3));
+
+        foreach (var death in deaths.AsEnumerable().Reverse().Take(40))
+        {
+            var entry = death;
+            var row = Line("", top: 6);
+            row.Cursor = Cursors.Hand;
+            row.Inlines.Add(new Run($"{entry.When:dd MMM HH:mm}  ") { Foreground = Dim });
+            row.Inlines.Add(new Run(entry.Zone) { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold });
+            bool under = entry.ZoneLevel > 0 && entry.Level < entry.ZoneLevel - 2;
+            row.Inlines.Add(new Run($"   level {entry.Level}" + (entry.ZoneLevel > 0 ? $" in a level {entry.ZoneLevel} zone" : "")) { Foreground = under ? Frozen("#FF7A6B") : Muted });
+            row.Inlines.Add(new Run("\n      " + (entry.Cause.Length > 0 ? entry.Cause : "cause: click to set")) { Foreground = entry.Cause.Length > 0 ? Passive : Dim, FontSize = 12 });
+            row.MouseLeftButtonDown += (_, e) =>
+            {
+                int next = (Array.IndexOf(DeathEntry.Causes, entry.Cause) + 1) % DeathEntry.Causes.Length;
+                _session.SetDeathCause(entry, DeathEntry.Causes[next]);
+                e.Handled = true;
+            };
+            _body.Children.Add(row);
+        }
+    }
+
     private void RenderFilters()
     {
+        Heading("Loot filter from your build");
+        Note("Writes a filter into the game's folder that shows everything at first, then only rares, then only items with the affixes your imported build uses. Uniques, sets and exalted items always show. Select it in game with Shift+F.");
+        var generate = Button("Generate filter from build", () =>
+        {
+            string? name = _session.GenerateFilter();
+            _filterMessage = name is null
+                ? "No build with gear to generate from - import a Maxroll build first (and re-import builds imported before 0.7)."
+                : $"Wrote \"{name}\". In game: Shift+F, then pick it from the list.";
+            Render();
+        }, color: Green);
+        generate.HorizontalAlignment = HorizontalAlignment.Left;
+        generate.Margin = new Thickness(0, 5, 0, 0);
+        _body.Children.Add(generate);
+        if (_filterMessage.Length > 0) _body.Children.Add(Line(_filterMessage, Passive, 12, top: 3));
+
         Heading("Loot filter by level");
         Note("Give each filter the level you want to start using it at. When you reach that level the overlay tells you to switch (in game: Shift+F opens the filter list). 0 = not used.");
         var files = _session.InstalledFilters();
@@ -226,13 +341,34 @@ internal sealed class PlannerWindow : Window
             var stepper = Stepper("from level", level, delta => _session.SetFilterLevel(name, Math.Clamp(level + delta, 0, 100)), step: 5);
             DockPanel.SetDock(stepper, Dock.Right);
             row.Children.Add(stepper);
+            var check = Button("check", () => { _reports[name] = _session.InspectFilter(name); Render(); });
+            check.ToolTip = "Look for signs that this filter is older than the game";
+            check.Margin = new Thickness(0, 0, 8, 0);
+            DockPanel.SetDock(check, Dock.Right);
+            row.Children.Add(check);
             row.Children.Add(new TextBlock { Text = name, Foreground = level > 0 ? Brushes.White : Muted, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
             _body.Children.Add(row);
+            if (_reports.TryGetValue(name, out var report)) RenderReport(report);
         }
         var open = Button("Open Filters folder", () => Process.Start(new ProcessStartInfo(_session.FiltersDir) { UseShellExecute = true }));
         open.HorizontalAlignment = HorizontalAlignment.Left;
         open.Margin = new Thickness(0, 10, 0, 0);
         _body.Children.Add(open);
+    }
+
+    private void RenderReport(FilterReport? report)
+    {
+        if (report is null) { Note("      Could not read this file as a loot filter."); return; }
+        var lines = new List<string> { $"format {report.Version}, {report.Rules} rules" };
+        lines.AddRange(report.Notes);
+        if (report.NewerUniqueCount > 0)
+            lines.Add($"{report.NewerUniqueCount} uniques are newer than anything this filter lists: {string.Join(", ", report.NewerUniques)}{(report.NewerUniqueCount > report.NewerUniques.Count ? ", ..." : "")}");
+        if (report.NewerAffixCount > 0)
+            lines.Add($"{report.NewerAffixCount} affixes are newer than anything this filter lists: {string.Join(", ", report.NewerAffixes)}{(report.NewerAffixCount > report.NewerAffixes.Count ? ", ..." : "")}");
+        if (report.NewerUniqueCount == 0 && report.NewerAffixCount == 0 && report.Notes.Count == 0)
+            lines.Add("nothing newer than this filter was found");
+        foreach (string line in lines)
+            _body.Children.Add(Line("      " + line, report.NewerUniqueCount + report.NewerAffixCount > 0 ? Passive : Muted, 12, top: 1));
     }
 
     private void RenderMonolith()

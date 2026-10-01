@@ -38,12 +38,38 @@ public sealed class Dungeon
     public string Keys { get; set; } = "";
 }
 
+/// <summary>A page of reference text: lines starting with "!" are the ones to notice.</summary>
+public sealed class ReferencePage
+{
+    public string Title { get; set; } = "";
+    public List<string> Lines { get; set; } = new();
+}
+
 /// <summary>Static facts about the Monolith timelines and the dungeons (Data/endgame.json).</summary>
 public sealed class EndgameData
 {
     public int KnowledgeNeeded { get; set; } = 5;
     public List<Timeline> Timelines { get; set; } = new();
     public List<Dungeon> Dungeons { get; set; } = new();
+    public List<ReferencePage> Reference { get; set; } = new();
+
+    private static readonly (string InType, string InRewards)[] RewardWords =
+    {
+        ("helm", "Helmet"), ("body", "Body Armour"), ("belt", "Belt"), ("boot", "Boots"), ("glove", "Gloves"),
+        ("ring", "Ring"), ("amulet", "Amulet"), ("relic", "Relic"), ("shield", "Shield"), ("quiver", "Quiver"),
+        ("bow", "Bows"), ("wand", "Wand"), ("catalyst", "Catalyst"), ("staff", "Staff"), ("scept", "Sceptre"),
+        ("sword", "Sword"), ("dagger", "Dagger"), ("axe", "Axe"), ("mace", "Mace"), ("polearm", "Polearm"), ("spear", "Polearm"),
+    };
+
+    /// <summary>The timeline whose echoes can reward unique/set items of this kind ("Helmet", "2H Axes", ...).</summary>
+    public Timeline? TimelineForItemType(string itemType)
+    {
+        string type = itemType.ToLowerInvariant();
+        foreach (var (inType, inRewards) in RewardWords)
+            if (type.Contains(inType))
+                return Timelines.FirstOrDefault(t => t.Rewards.Contains(inRewards, StringComparison.OrdinalIgnoreCase));
+        return null;
+    }
 
     public static EndgameData Load(string path)
     {

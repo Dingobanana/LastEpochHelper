@@ -23,6 +23,7 @@ internal sealed class SettingsWindow : Window
     private readonly TextBlock _routeInfo = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.7, Margin = new Thickness(0, 2, 0, 0) };
     private readonly ComboBox _plan = new();
     private readonly TextBox _importLink = new();
+    private readonly TextBox _account = new();
     private readonly Slider _opacity = new() { Minimum = 0.3, Maximum = 1, TickFrequency = 0.05, IsSnapToTickEnabled = true };
     private readonly Slider _fontSize = new() { Minimum = 10, Maximum = 22, TickFrequency = 1, IsSnapToTickEnabled = true };
     private readonly Slider _width = new() { Minimum = 280, Maximum = 700, TickFrequency = 10, IsSnapToTickEnabled = true };
@@ -64,6 +65,8 @@ internal sealed class SettingsWindow : Window
         root.Children.Add(Row("Route", _route));
         root.Children.Add(Indented(_routeInfo));
         root.Children.Add(Row("Build plan", _plan));
+        root.Children.Add(Row("Account name", _account));
+        _account.ToolTip = "Your Last Epoch account name, used by 'sync' in the build tree to read your character from Last Epoch Tools. Filled in from the game log.";
         root.Children.Add(Row("Maxroll link", _importLink));
         _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
         root.Children.Add(Indented(Buttons(
@@ -92,6 +95,7 @@ internal sealed class SettingsWindow : Window
                      ("Capture zone map", nameof(Settings.HotkeyCapture)),
                      ("Build tree", nameof(Settings.HotkeyTree)),
                      ("Planner", nameof(Settings.HotkeyPlanner)),
+                     ("Check hovered item", nameof(Settings.HotkeyLookup)),
                  })
         {
             var box = new TextBox();
@@ -225,6 +229,7 @@ internal sealed class SettingsWindow : Window
         _profile.ItemsSource = _session.Store.Profiles.Select(p => new ProfileItem(p)).ToList();
         _profile.SelectedIndex = _session.Store.Profiles.IndexOf(profile);
         _name.Text = profile.Name;
+        _account.Text = settings.AccountName;
         _route.ItemsSource = _session.Guide.Routes;
         _route.SelectedItem = _session.Route;
 
@@ -269,6 +274,7 @@ internal sealed class SettingsWindow : Window
 
         string name = _name.Text.Trim();
         if (name.Length > 0) profile.Name = name;
+        settings.AccountName = _account.Text.Trim();
         string plan = _plan.SelectedItem as string ?? NoPlan;
         profile.BuildPlan = plan == NoPlan ? "" : plan;
         _session.ReloadPlan();

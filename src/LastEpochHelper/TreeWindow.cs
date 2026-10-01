@@ -26,6 +26,7 @@ internal sealed class TreeWindow : Window
     private static readonly Brush PlannedFill = Frozen("#1B1A16");
     private static readonly Brush Dim = Frozen("#33FFFFFF");
     private static readonly Brush Line = Frozen("#3AFFFFFF");
+    private static readonly Brush Red = Frozen("#FF6B5C");
     private static readonly Brush Text = Frozen("#E8E4D8");
     private static readonly Brush Muted = Frozen("#A9A493");
 
@@ -35,6 +36,9 @@ internal sealed class TreeWindow : Window
     private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(0, 4, 0, 0) };
     private readonly TextBlock _points = new() { Foreground = Muted, VerticalAlignment = VerticalAlignment.Center };
     private Border _markers = null!;
+    private Border _sync = null!;
+    private string _syncMessage = "";
+    private bool _syncing;
     private readonly TextBlock _empty = new()
     {
         Foreground = Muted, TextWrapping = TextWrapping.Wrap, Width = 420, TextAlignment = TextAlignment.Center,
@@ -83,7 +87,10 @@ internal sealed class TreeWindow : Window
         var footer = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
         _markers = HeaderButton("① order", ToggleMarkers);
         _markers.ToolTip = "Show or hide the green rings that mark the next points (remembered separately for passives and skills)";
+        _sync = HeaderButton("⟳ sync", Sync);
+        _sync.ToolTip = "Read this character's real passive and skill points from its public Last Epoch Tools profile.\nClick again while synced to go back to following the plan.";
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
+        adjust.Children.Add(_sync);
         adjust.Children.Add(_markers);
         adjust.Children.Add(minus);
         adjust.Children.Add(plus);
@@ -212,6 +219,49 @@ internal sealed class TreeWindow : Window
         if (tree is not null && tree != Current()) Select(tree);
     }
 
+    /// <summary>
+    /// Fetches the character's trees from Last Epoch Tools, or - when already synced - drops them and
+    /// returns to the plan-based view.
+    /// </summary>
+    private async void Sync()
+    {
+        if (_syncing) return;
+        if (_session.Profile.Actual is not null)
+        {
+            _syncMessage = "";
+            _session.SetActual(null);
+            return;
+        }
+        string account = _session.Settings.AccountName;
+        if (account.Length == 0)
+        {
+            _syncMessage = "Sync needs your account name: enter it in settings.";
+            Render();
+            return;
+        }
+        _syncing = true;
+        _syncMessage = "Reading your character from Last Epoch Tools...";
+        Render();
+        try
+        {
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var actual = await LetProfile.FetchAsync(account, _session.Profile.Name, http);
+            _syncMessage = actual is null
+                ? $"Last Epoch Tools has no data for {account} / {_session.Profile.Name} yet. Open {LetProfile.ProfilePage(account)} once so it fetches your characters, then sync again."
+                : "";
+            if (actual is not null) _session.SetActual(actual);
+        }
+        catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
+        {
+            _syncMessage = "Could not reach Last Epoch Tools: " + e.Message;
+        }
+        finally
+        {
+            _syncing = false;
+            Render();
+        }
+    }
+
     private bool MarkersOn(TreeDef tree) =>
         tree.Kind == TreeDef.PassiveKind ? _session.Settings.ShowOrderPassives : _session.Settings.ShowOrderSkills;
 
@@ -284,10 +334,23 @@ internal sealed class TreeWindow : Window
         _next.Text = parts.Count > 0 ? "Next:  " + string.Join("     ", parts)
             : state.StagePoints == 0 ? "This build puts no points here yet." : "Everything in this tree is taken - nothing more planned.";
 
-        string source = passive
-            ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
-            : $"{state.Points} of {state.StagePoints} points in {tree.Name}  -  use + each time you spend a skill point";
-        _points.Text = $"{state.Stage}  ·  {source}";
+        string source = state.FromGame
+            ? $"{state.Points} of {state.StagePoints} points, read from your profile {Age(_session.Profile.Actual!.Fetched)}"
+              + (state.OffPlan.Count > 0 ? $"  ·  {state.OffPlan.Count} node(s) beyond the plan (red)" : "")
+            : passive
+                ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
+                : $"{state.Points} of {state.StagePoints} points in {tree.Name}  -  use + each time you spend a skill point";
+        _points.Text = _syncMessage.Length > 0 ? _syncMessage : $"{state.Stage}  ·  {source}";
+        _points.TextWrapping = TextWrapping.Wrap;
+        _points.MaxWidth = 600;
+        ((TextBlock)_sync.Child).Text = _session.Profile.Actual is null ? "⟳ sync" : "⟳ synced";
+        ((TextBlock)_sync.Child).Foreground = _session.Profile.Actual is null ? Muted : Green;
+    }
+
+    private static string Age(DateTime when)
+    {
+        var age = DateTime.Now - when;
+        return age.TotalMinutes < 2 ? "just now" : age.TotalHours < 1 ? $"{(int)age.TotalMinutes} min ago" : age.TotalDays < 1 ? $"{(int)age.TotalHours} h ago" : $"{(int)age.TotalDays} d ago";
     }
 
     private void DrawTree(BuildTree build, TreeDef tree, TreeState state)
@@ -320,7 +383,9 @@ internal sealed class TreeWindow : Window
             int target = state.Target.GetValueOrDefault(node.Id);
             int run = state.Next.ToList().FindIndex(r => r.Node == node.Id);
             int order = MarkersOn(tree) ? run : -1;
-            bool planned = target > 0;
+            bool offPlan = state.OffPlan.Contains(node.Id);
+            // A node the character has points in is drawn full size even if the build never takes it.
+            bool planned = target > 0 || have > 0;
             double size = planned ? NodeSize : SmallNodeSize;
 
             var icon = IconBrush(node, build);
@@ -329,7 +394,7 @@ internal sealed class TreeWindow : Window
             {
                 Width = size, Height = size,
                 Fill = icon ?? (order >= 0 ? GreenFill : have > 0 ? GoldFill : planned ? PlannedFill : Dim),
-                Stroke = order >= 0 ? Green : have > 0 ? Gold : planned ? Planned : icon is null ? null : Dim,
+                Stroke = offPlan ? Red : order >= 0 ? Green : have > 0 ? Gold : planned ? Planned : icon is null ? null : Dim,
                 StrokeThickness = order >= 0 ? 3 : planned ? 2 : 1,
                 // Nodes the build never takes stay in the picture for orientation, but faded.
                 Opacity = lit ? 1 : planned ? 0.75 : 0.3,

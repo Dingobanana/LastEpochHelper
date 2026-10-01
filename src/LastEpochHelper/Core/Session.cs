@@ -40,6 +40,18 @@ public sealed class Session
 
     public event Action? Changed;
 
+    /// <summary>A message worth interrupting for (a death, an item check), shown for a short while.</summary>
+    public string? Alert => _alertUntil > DateTime.UtcNow ? _alert : null;
+    private string? _alert;
+    private DateTime _alertUntil;
+
+    public void ShowAlert(string text, int seconds = 15)
+    {
+        _alert = text;
+        _alertUntil = DateTime.UtcNow.AddSeconds(seconds);
+        Changed?.Invoke();
+    }
+
     public EndgameData Endgame { get; }
     /// <summary>The game's loot filter folder.</summary>
     public string FiltersDir { get; }
@@ -239,7 +251,22 @@ public sealed class Session
 
             case PlayerDiedEvent when live:
                 Profile.Deaths++;
+                Profile.DeathLog.Add(new DeathEntry
+                {
+                    When = DateTime.Now, Zone = Tracker.Step.Zone, Level = Profile.Level,
+                    ZoneLevel = Tracker.Step.Level, PlaySeconds = Profile.PlaySeconds,
+                });
                 Save();
+                ShowAlert($"Died in {Tracker.Step.Zone} (level {Profile.Level}, zone {Tracker.Step.Level})."
+                          + (DamageAdvice() is { } advice ? $"  {advice}." : "") + "  Note the cause in the planner: Deaths.", 25);
+                break;
+
+            case AccountEvent account:
+                if (Settings.AccountName != account.Name)
+                {
+                    Settings.AccountName = account.Name;
+                    SaveSettings();
+                }
                 break;
         }
         Changed?.Invoke();
@@ -330,6 +357,35 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Writes a loot filter for the imported build into the game's folder. Returns the filter's name,
+    /// or null when there is no build (or it lists no gear) to derive one from.
+    /// </summary>
+    public string? GenerateFilter()
+    {
+        if (Tree is null) return null;
+        string name = LootFilters.FileNameFor(Tree.Name);
+        if (LootFilters.Generate(Tree, name) is not { } xml) return null;
+        Directory.CreateDirectory(FiltersDir);
+        // The game writes its filters as UTF-8 with a byte order mark.
+        File.WriteAllText(Path.Combine(FiltersDir, name + ".xml"), xml, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+        Changed?.Invoke();
+        return name;
+    }
+
+    /// <summary>Checks an installed filter for signs of age. Null if the file cannot be read as a filter.</summary>
+    public FilterReport? InspectFilter(string name)
+    {
+        try
+        {
+            string xml = File.ReadAllText(Path.Combine(FiltersDir, name + ".xml"));
+            return LootFilters.Inspect(xml, MaxrollImporter.CachedGameData(DataDir));
+        }
+        catch (IOException) { return null; }
+        catch (System.Xml.XmlException) { return null; }
+        catch (FormatException) { return null; }
+    }
+
     /// <summary>"Switch loot filter" reminders for this character, as build lines.</summary>
     public IEnumerable<PlanEntry> FilterEntries() =>
         Profile.FilterStages.Where(kv => kv.Value > 0)
@@ -367,9 +423,34 @@ public sealed class Session
         return knowledge;
     }
 
+    /// <summary>The most recent "damage to expect" line at or before the current step.</summary>
+    public string? DamageAdvice()
+    {
+        for (int i = Tracker.Index; i >= 0; i--)
+            if (Route.Flat[i].Step.Tasks.LastOrDefault(t => t.Type == "res") is { } task) return task.Text;
+        return null;
+    }
+
+    public void SetDeathCause(DeathEntry entry, string cause)
+    {
+        entry.Cause = cause;
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Stores (or with null, forgets) the tree points read from the character's public profile.</summary>
+    public void SetActual(ActualTrees? actual)
+    {
+        Profile.Actual = actual;
+        Save();
+        Changed?.Invoke();
+    }
+
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
+        if (Profile.Actual is { } actual && Tree!.State(tree, actual, Profile.Level) is { } real) return real;
+
         int points = tree.Kind == TreeDef.PassiveKind
             ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset
             : Profile.SkillPoints.GetValueOrDefault(tree.Name);

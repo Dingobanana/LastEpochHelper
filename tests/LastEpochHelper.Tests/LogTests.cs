@@ -40,6 +40,10 @@ public class LogTests
         Assert.Equal(new QuestTriggerEvent("Storerooms Sidequest Turn In Speak with Heoborean Soldier"), LogParser.Parse(Trigger));
 
     [Fact]
+    public void Parses_AccountName() => Assert.Equal(new AccountEvent("SomeAccount"),
+        LogParser.Parse("2026-10-01T17:00:01.0000000+00:00\tLog\tConnected to chat as 'SomeAccount' (ID: '0123456789ABCDEF')"));
+
+    [Fact]
     public void Parses_PlayerDeath() => Assert.IsType<PlayerDiedEvent>(LogParser.Parse(Died));
 
     [Fact]

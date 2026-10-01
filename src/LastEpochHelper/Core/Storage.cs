@@ -23,6 +23,9 @@ public sealed class Settings
     public double? PlannerLeft { get; set; }
     public double? PlannerTop { get; set; }
     public string HotkeyPlanner { get; set; } = "Ctrl+Shift+G";
+    public string HotkeyLookup { get; set; } = "Ctrl+Shift+E";
+    /// <summary>Last Epoch account name, for reading the character's public profile. Filled in from the game log.</summary>
+    public string AccountName { get; set; } = "";
     /// <summary>Hide while another application has focus.</summary>
     public bool AutoHide { get; set; } = true;
     public bool ShowTimer { get; set; } = true;
@@ -99,6 +102,9 @@ public sealed class Profile
     public Dictionary<string, int> FilterStages { get; set; } = new();
     public Dictionary<string, TimelineProgress> Timelines { get; set; } = new();
     public Dictionary<string, DungeonProgress> Dungeons { get; set; } = new();
+    /// <summary>Tree points as last read from the character's public profile; null = follow the plan instead.</summary>
+    public ActualTrees? Actual { get; set; }
+    public List<DeathEntry> DeathLog { get; set; } = new();
     public string LastSkillTab { get; set; } = "";
     public DateTime LastPlayed { get; set; }
 
@@ -127,6 +133,19 @@ public sealed class Profile
         PlaySeconds = 0;
         Deaths = 0;
     }
+}
+
+/// <summary>One death, for the journal.</summary>
+public sealed class DeathEntry
+{
+    public DateTime When { get; set; }
+    public string Zone { get; set; } = "";
+    public int Level { get; set; }
+    public int ZoneLevel { get; set; }
+    public double PlaySeconds { get; set; }
+    public string Cause { get; set; } = "";
+
+    public static readonly string[] Causes = { "", "Boss mechanic", "One-shot", "Damage over time", "Swarmed", "Under-levelled", "Lag / disconnect" };
 }
 
 public sealed class ProfileStore
