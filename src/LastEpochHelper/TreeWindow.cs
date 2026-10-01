@@ -41,7 +41,7 @@ internal sealed class TreeWindow : Window
     private Border _minus = null!, _plus = null!;
     private readonly Slider _slider = new() { Minimum = 0, Maximum = 20, Width = 260, IsSnapToTickEnabled = true, TickFrequency = 1, Focusable = false, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _sliderLabel = new() { Foreground = Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
-    private readonly TextBlock _sliderValue = new() { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Width = 150, Margin = new Thickness(8, 0, 0, 0) };
+    private readonly TextBlock _sliderValue = new() { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
     private DockPanel _sliderRow = null!;
     private bool _settingSlider;
     private readonly TextBlock _empty = new()
@@ -88,30 +88,29 @@ internal sealed class TreeWindow : Window
 
         var minus = _minus = HeaderButton("−", () => Adjust(-1));
         var plus = _plus = HeaderButton("+", () => Adjust(+1));
-        minus.ToolTip = "I have one point fewer than shown";
-        plus.ToolTip = "I have one point more than shown";
-        var footer = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
+        minus.ToolTip = "One point fewer";
+        plus.ToolTip = "One point more";
         _markers = HeaderButton("① order", ToggleMarkers);
         _markers.ToolTip = "Show or hide the numbers that mark the order of the next points (remembered separately for passives and skills)";
-        _amounts = HeaderButton("+N points", ToggleAmounts);
+        _amounts = HeaderButton("+N", ToggleAmounts);
         _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
-        _reset = HeaderButton("↺ plan", () => { if (Current() is { } tree) _session.ResetActual(tree); });
-        _reset.ToolTip = "Forget the points set by hand in this tree and follow the build's plan again";
+        // Only there when the game's own points are known for this tree: switches between them and the plan.
+        _reset = HeaderButton("game", () => { if (Current() is { } tree) _session.SetPlanView(tree, _session.ShowsActual(tree)); });
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
         adjust.Children.Add(_reset);
         adjust.Children.Add(_markers);
         adjust.Children.Add(_amounts);
-        DockPanel.SetDock(adjust, Dock.Right);
-        footer.Children.Add(adjust);
-        footer.Children.Add(_points);
 
-        // How many points the plan should place: by default what the level gives, adjustable here.
+        // The slider is always there. It shows how many points the tree is drawn with; moving it asks
+        // for the plan at that many points (hover any control for an explanation).
         _sliderRow = new DockPanel { Margin = new Thickness(0, 5, 0, 0), LastChildFill = false };
         _slider.ValueChanged += (_, _) =>
         {
             if (_settingSlider || Current() is not { } tree) return;
             _session.SetTreePoints(tree, (int)_slider.Value);
         };
+        DockPanel.SetDock(adjust, Dock.Right);
+        _sliderRow.Children.Add(adjust);
         foreach (var element in new UIElement[] { _sliderLabel, minus, _slider, plus, _sliderValue })
         {
             DockPanel.SetDock(element, Dock.Left);
@@ -123,7 +122,6 @@ internal sealed class TreeWindow : Window
         body.Children.Add(new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) });
         body.Children.Add(_next);
         body.Children.Add(_sliderRow);
-        body.Children.Add(footer);
 
         Content = new Border
         {
@@ -291,7 +289,7 @@ internal sealed class TreeWindow : Window
 
     private void Adjust(int delta)
     {
-        if (Current() is { } tree) _session.AdjustTreePoints(tree, delta);
+        if (Current() is { } tree) _session.SetTreePoints(tree, (int)_slider.Value + delta);
     }
 
     public void Render()
@@ -307,7 +305,7 @@ internal sealed class TreeWindow : Window
             Canvas.SetTop(_empty, CanvasHeight / 2 - 40);
             _canvas.Children.Add(_empty);
             _next.Text = "";
-            _points.Text = "";
+            _sliderRow.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -322,54 +320,45 @@ internal sealed class TreeWindow : Window
             _tabs.Children.Add(HeaderButton(tab.Name, () => Select(captured), tab == tree));
         }
 
+        _sliderRow.Visibility = Visibility.Visible;
         var state = _session.TreeState(tree);
         DrawTree(build, tree, state);
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
         ((TextBlock)_markers.Child).Foreground = MarkersOn(tree) ? Green : Muted;
         ((TextBlock)_amounts.Child).Foreground = AmountsOn(tree) ? Green : Muted;
-        var running = new Dictionary<int, int>(state.Allocated);
         var parts = new List<string>();
         for (int i = 0; i < state.Next.Count; i++)
         {
             var (id, count) = state.Next[i];
-            running[id] = running.GetValueOrDefault(id) + count;
-            // What to click and how many times; the bracket is where the node stands afterwards.
-            bool here = tree.Nodes.Any(n => n.Id == id);
-            string after = here ? $" (→ {running[id]}/{tree.Nodes.First(n => n.Id == id).Max})" : "";
-            parts.Add($"{i + 1}. {build.NodeName(id, passive, tree.Name)} +{count}{after}");
+            parts.Add($"{i + 1}. {build.NodeName(id, passive, tree.Name)} +{count}");
         }
         _next.Text = parts.Count > 0 ? "Next:  " + string.Join("     ", parts)
-            : state.StagePoints == 0 ? "This build puts no points here yet." : "Everything in this tree is taken - nothing more planned.";
+            : state.StagePoints == 0 ? "No points planned here yet." : "Nothing more planned in this tree.";
 
-        string source = state.FromGame
-            ? $"{state.Points} of {state.StagePoints} points, set by you"
-              + (state.OffPlan.Count > 0 ? $"  ·  {state.OffPlan.Count} node(s) beyond the plan (red)" : "")
-            : passive
-                ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
-                : $"{state.Points} of {state.StagePoints} points in {tree.Name}";
-        source = source.Replace(", set by you", ", as in the game (read from its panel or set by clicking)");
-        source += "  ·  click a node +1, right-click −1";
-        // Once the tree holds real points there is nothing for the slider to place.
-        _reset.Visibility = state.FromGame ? Visibility.Visible : Visibility.Collapsed;
-        _sliderRow.Visibility = state.FromGame ? Visibility.Collapsed : Visibility.Visible;
-        if (!state.FromGame)
-        {
-            int byLevel = _session.PassivePointsByLevel();
-            _settingSlider = true;
-            _slider.Maximum = Math.Max(Math.Max(state.StagePoints, state.Points), passive ? build.Stages.Max(s => s.Passives.Count) : 20);
-            _slider.Value = state.Points;
-            _settingSlider = false;
-            _sliderLabel.Text = passive ? "Passive points" : "Skill level";
-            _sliderValue.Text = passive
-                ? state.Points == byLevel ? $"{state.Points}  (your level {_session.Profile.Level})" : $"{state.Points}  (level {_session.Profile.Level} gives {byLevel})"
-                : $"{state.Points}";
-            _slider.ToolTip = passive
-                ? "How many passive points to place. Follows your level and quest rewards unless you move it."
-                : "This skill's level = the points it has to spend. Move it as the skill levels up.";
-        }
-        _points.Text = $"{state.Stage}  ·  {source}";
-        _points.TextTrimming = TextTrimming.CharacterEllipsis;
+        // The slider always shows the number of points the tree is drawn with.
+        int byLevel = _session.PassivePointsByLevel();
+        _settingSlider = true;
+        _slider.Maximum = Math.Max(Math.Max(state.StagePoints, state.Points), passive ? build.Stages.Max(s => s.Passives.Count) : 20);
+        _slider.Value = Math.Min(state.Points, _slider.Maximum);
+        _settingSlider = false;
+        _sliderLabel.Text = passive ? "Passive points" : "Skill level";
+        _sliderValue.Text = state.Points.ToString();
+        _sliderRow.ToolTip = null;
+        _slider.ToolTip = (passive
+            ? $"How many passive points the tree is drawn with. Level {_session.Profile.Level} with your quest rewards gives {byLevel}."
+            : "This skill's level = the points it has to spend.")
+            + "\nMove it to see the build's plan at that many points.\nClick a node to add a point, right-click to remove one."
+            + $"\nBuild stage: {state.Stage} ({state.StagePoints} points)";
+
+        // "game" = drawn from the points read off the game's panel; click to flip to the plan view and back.
+        bool known = _session.HasActual(tree);
+        _reset.Visibility = known ? Visibility.Visible : Visibility.Collapsed;
+        ((TextBlock)_reset.Child).Text = state.FromGame ? "● game" : "○ plan";
+        ((TextBlock)_reset.Child).Foreground = state.FromGame ? Green : Muted;
+        _reset.ToolTip = state.FromGame
+            ? "Showing the points your character has in the game" + (state.OffPlan.Count > 0 ? $" ({state.OffPlan.Count} node(s) outside the build, ringed red)" : "") + ".\nClick to see the build's plan instead."
+            : $"Showing the build's plan at {state.Points} points. Click to go back to the points read from the game ({_session.ActualPoints(tree)}).";
     }
 
     private static string Age(DateTime when)

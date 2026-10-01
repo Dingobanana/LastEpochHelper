@@ -147,6 +147,35 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void MovingTheSlider_ShowsThePlan_EvenWhenTheGamesPointsAreKnown_AndTheSwitchGoesBack()
+    {
+        var session = Make();
+        var passives = session.Tree!.Trees[0];
+        session.SetReadPoints(passives, new Dictionary<int, int> { [1] = 1, [7] = 2 });
+        Assert.True(session.TreeState(passives).FromGame);
+        Assert.Equal(3, session.ActualPoints(passives));
+
+        session.SetTreePoints(passives, 5); // "show me the build at 5 points"
+        var plan = session.TreeState(passives);
+        Assert.False(plan.FromGame);
+        Assert.Equal(5, plan.Points);
+
+        // New readings keep arriving while the game's panel is open; the chosen view stays put.
+        session.SetReadPoints(passives, new Dictionary<int, int> { [1] = 2 });
+        Assert.False(session.TreeState(passives).FromGame);
+
+        session.SetPlanView(passives, false);
+        var game = session.TreeState(passives);
+        Assert.True(game.FromGame);
+        Assert.Equal(2, game.Allocated[1]);
+
+        // Correcting a node by hand is about the real points, so it leaves the plan view too.
+        session.SetTreePoints(passives, 4);
+        session.AdjustNode(passives, passives.Nodes[0], +1);
+        Assert.True(session.TreeState(passives).FromGame);
+    }
+
+    [Fact]
     public void SkillTrees_AreSetIndependently_AndCanGoBackToThePlan()
     {
         var session = Make();

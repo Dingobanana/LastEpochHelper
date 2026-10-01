@@ -468,6 +468,7 @@ public sealed class Session
                     Tree.State(tree, Profile.SkillPoints.GetValueOrDefault(tree.Name), Profile.Level).Allocated);
         }
 
+        Profile.PlanViewTrees.Remove(ViewKey(tree)); // correcting a node means looking at the real points
         int next = Math.Clamp(points.GetValueOrDefault(node.Id) + delta, 0, Math.Max(node.Max, 1));
         if (next == 0) points.Remove(node.Id); else points[node.Id] = next;
         actual.Fetched = DateTime.Now;
@@ -508,6 +509,8 @@ public sealed class Session
     public void SetTreePoints(TreeDef tree, int points)
     {
         points = Math.Max(0, points);
+        // Choosing a number is asking for the plan at that many points, whatever the game shows.
+        Profile.PlanViewTrees.Add(ViewKey(tree));
         if (tree.Kind == TreeDef.PassiveKind)
             Profile.PassiveOffset = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
         else Profile.SkillPoints[tree.Name] = points;
@@ -522,12 +525,35 @@ public sealed class Session
     public bool HasActual(TreeDef tree) => Profile.Actual is { } actual &&
         (tree.Kind == TreeDef.PassiveKind ? actual.Passives.Count > 0 || _passivesTaken : actual.Skills.ContainsKey(BuildTree.SkillKey(tree)));
 
+    private static string ViewKey(TreeDef tree) => tree.Kind == TreeDef.PassiveKind ? "passives" : BuildTree.SkillKey(tree);
+
+    /// <summary>
+    /// True when the tree is drawn from the character's real points. Real points may be known and
+    /// still not shown: moving the slider switches that tree to the plan view until told otherwise.
+    /// </summary>
+    public bool ShowsActual(TreeDef tree) => HasActual(tree) && !Profile.PlanViewTrees.Contains(ViewKey(tree));
+
+    /// <summary>Chooses between the game's points and the plan view for one tree.</summary>
+    public void SetPlanView(TreeDef tree, bool planView)
+    {
+        bool changed = planView ? Profile.PlanViewTrees.Add(ViewKey(tree)) : Profile.PlanViewTrees.Remove(ViewKey(tree));
+        if (!changed) return;
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Total points the game was last seen to have in this kind of tree.</summary>
+    public int ActualPoints(TreeDef tree) => Profile.Actual is not { } actual ? 0
+        : tree.Kind == TreeDef.PassiveKind ? actual.Passives.Values.Sum()
+        : actual.Skills.GetValueOrDefault(BuildTree.SkillKey(tree))?.Values.Sum() ?? 0;
+
     /// <summary>Goes back to following the plan for one tree.</summary>
     public void ResetActual(TreeDef tree)
     {
         if (Profile.Actual is not { } actual) return;
         if (tree.Kind == TreeDef.PassiveKind) { actual.Passives.Clear(); _passivesTaken = false; }
         else actual.Skills.Remove(BuildTree.SkillKey(tree));
+        Profile.PlanViewTrees.Remove(ViewKey(tree));
         if (actual.Passives.Count == 0 && actual.Skills.Count == 0) Profile.Actual = null;
         Save();
         Changed?.Invoke();
@@ -544,7 +570,7 @@ public sealed class Session
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
-        if (HasActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level) is { } real) return real;
+        if (ShowsActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level) is { } real) return real;
 
         int points = tree.Kind == TreeDef.PassiveKind
             ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset

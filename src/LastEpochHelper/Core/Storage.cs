@@ -119,6 +119,8 @@ public sealed class Profile
     /// <summary>Tree points as last read from the character's public profile; null = follow the plan instead.</summary>
     public ActualTrees? Actual { get; set; }
     public List<DeathEntry> DeathLog { get; set; } = new();
+    /// <summary>Trees where the slider's plan view was chosen over the points read from the game.</summary>
+    public HashSet<string> PlanViewTrees { get; set; } = new();
     public string LastSkillTab { get; set; } = "";
     public DateTime LastPlayed { get; set; }
 
