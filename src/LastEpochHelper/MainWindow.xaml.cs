@@ -52,6 +52,12 @@ public partial class MainWindow : Window
     private KeyboardWatcher? _keyboard;
     private bool _treeWanted;
     private ScreenReader? _screenReader;
+    // Following the open skill tree: a quick look at where the heading was last seen, several times a
+    // second, and a full read of the game window only when that spot stops showing a skill name.
+    private readonly DispatcherTimer _followTimer = new() { Interval = TimeSpan.FromMilliseconds(200) };
+    private Native.RECT? _titleRegion;
+    private int _titleMisses;
+    private DateTime _lastFullRead = DateTime.MinValue;
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(6);
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private bool _updating;
@@ -123,6 +129,8 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
+        _followTimer.Tick += (_, _) => FollowSkillOnScreen();
+        _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
         _watcher = new LogWatcher(logPath);
@@ -234,7 +242,9 @@ public partial class MainWindow : Window
         if (Settings.FollowGameKeys)
         {
             _keyboard = new KeyboardWatcher();
-            _keyboard.KeyDown += OnGameKey;
+            // Never do the work inside the hook callback: Windows forbids outgoing COM calls there (which
+            // broke loading the icon sheet) and drops hooks that take too long.
+            _keyboard.KeyDown += key => Dispatcher.BeginInvoke(() => OnGameKey(key));
         }
 
         void Register(string combo, Action action)
@@ -393,12 +403,48 @@ public partial class MainWindow : Window
         _screenReader ??= new ScreenReader();
         if (!_screenReader.Available) return;
 
+        bool quick = _titleRegion is not null;
+        // A full read of an ultrawide takes a few hundred milliseconds; do not chain them back to back.
+        if (!quick && DateTime.UtcNow - _lastFullRead < TimeSpan.FromMilliseconds(600)) return;
+
         _reading = true;
         try
         {
             var masks = new List<Native.RECT> { ScreenRect(this), ScreenRect(tree) };
-            var lines = await _screenReader.ReadAsync(_game.GameBounds, masks);
-            if (SkillTitleMatcher.Pick(lines, tree.SkillNames) is { } skill && _treeWanted) tree.SelectSkill(skill);
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+            if (!quick) _lastFullRead = DateTime.UtcNow;
+            var lines = await _screenReader.ReadAsync(_titleRegion ?? _game.GameBounds, masks);
+            var names = tree.SkillNames.ToList();
+            if (SkillTitleMatcher.PickLine(lines, names) is { } found)
+            {
+                _titleMisses = 0;
+                if (!quick)
+                {
+                    // Remember a band around the heading; other skills' names are of similar length.
+                    var game = _game.GameBounds;
+                    _titleRegion = new Native.RECT
+                    {
+                        Left = Math.Max(game.Left, (int)(found.Line.X - 350)),
+                        Right = Math.Min(game.Right, (int)(found.Line.X + found.Line.Width + 350)),
+                        Top = Math.Max(game.Top, (int)(found.Line.Y - found.Line.Height * 1.5)),
+                        Bottom = Math.Min(game.Bottom, (int)(found.Line.Y + found.Line.Height * 3)),
+                    };
+                    if (_titleRegion.Value.Right - _titleRegion.Value.Left < 200 || _titleRegion.Value.Bottom - _titleRegion.Value.Top < 200)
+                    {
+                        // The reader needs a minimum size; pad the band downwards.
+                        var r = _titleRegion.Value;
+                        r.Bottom = Math.Min(game.Bottom, r.Top + 220);
+                        _titleRegion = r;
+                    }
+                }
+                if (_treeWanted) tree.SelectSkill(found.Skill);
+            }
+            else if (quick && ++_titleMisses >= 2)
+            {
+                // The heading moved or the panel closed: look everywhere again.
+                _titleRegion = null;
+                _titleMisses = 0;
+            }
         }
         finally { _reading = false; }
     }
@@ -485,7 +531,6 @@ public partial class MainWindow : Window
         RenderTimer();
         // Borderless games occasionally jump above topmost windows; re-assert without taking focus.
         if (++_ticks % 4 == 0) Native.BringToTop(_hwnd);
-        if (_ticks % 2 == 0) FollowSkillOnScreen();
     }
 
     private void UpdateVisibility()
@@ -659,10 +704,13 @@ public partial class MainWindow : Window
         BuildSection.Visibility = Visibility.Collapsed;
         if (!Settings.ShowBuild || level is not { } lvl) return;
 
-        var (due, next) = BuildPlan.View(_session.Plan, lvl, _session.Profile.PlanDone, extra: _session.FilterEntries());
+        // The build's own per-level lines are optional (the tree view shows them as a picture);
+        // the reminders - skill slots, resistances, loot filter switches - always belong here.
+        var shownPlan = Settings.ShowBuildLines ? _session.Plan : null;
+        var (due, next) = BuildPlan.View(shownPlan, lvl, _session.Profile.PlanDone, extra: _session.FilterEntries());
         if (due.Count == 0 && next is null) return;
 
-        BuildTitle.Text = (_session.Plan is { } plan ? $"BUILD  ·  {plan.Name}" : "LEVEL MILESTONES") + "  ·  click = done, right-click = done incl. earlier";
+        BuildTitle.Text = (shownPlan is { } plan ? $"BUILD  ·  {plan.Name}" : "REMINDERS FOR YOUR LEVEL") + "  ·  click = done, right-click = done incl. earlier";
         foreach (var entry in due)
         {
             var row = BuildTaskRow(new GuideTask { Type = "main", Text = entry.Text }, done: false, () => _session.TogglePlanDone(entry.Key));
@@ -936,6 +984,7 @@ public partial class MainWindow : Window
         _watcher?.Dispose();
         _hotkeys?.Dispose();
         _tray?.Dispose();
+        _followTimer.Stop();
         _mapWindow?.Close();
         _treeWindow?.Close();
         _plannerWindow?.Close();

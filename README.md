@@ -69,11 +69,12 @@ beder om det, og der hentes kun zip-filer fra dette repos egne releases. Dit fre
   se, så brug `+`/`−` i vinduet, når du bruger et skill point (eller hvis passive-tallet er skævt).
   Når du åbner et skill-træ i spillet, skifter vinduet selv til den skill: programmet læser spillets vindue
   med Windows' indbyggede tekstgenkendelse og finder skill-navnet i overskriften (kan slås fra under `⚙`).
-  `① order` nederst slår de grønne ringe til/fra (huskes hver for sig for passives og skills). "Next"-linjen
-  og det grønne `+N` ved noden viser, hvor mange points der skal i noden i dette skridt.
+  Nederst er der to kontakter, som huskes hver for sig for passives og skills: `① order` (tallene, der viser
+  rækkefølgen) og `+N points` (hvor mange points der skal i noden i dette skridt). "Next"-linjen viser altid begge dele.
   Ikonerne hentes fra Maxroll ved import og kræver Windows' WebP-codec; uden den tegnes noderne uden billeder.
-- **Grønne linjer i overlayet** er build-/level-ting (ikke quests): hvad buildet skal have på dit level, og
-  hvornår nye skill-slots åbner. Klik = gjort; højreklik = gjort inkl. alle tidligere linjer.
+- **Grønne linjer i overlayet** er påmindelser for dit level (ikke quests): nye skill-slots, resistances og
+  skift af loot filter. Klik = gjort; højreklik = gjort inkl. alle tidligere linjer. Buildets egne trin pr. level
+  kan også vises som tekst her (slået fra som standard; build-træet viser det samme som billede).
 - **Planlægger (`▤`).** Fem sider, der ikke hører til en bestemt zone:
   *Gear* (hvad buildet har på i dit stadie, hvilke affixes du skal kigge efter, kryds pr. slot),
   *Idols* (buildets idols og blessings, med hvilken timeline hver blessing kommer fra),
@@ -85,10 +86,6 @@ beder om det, og der hentes kun zip-filer fra dette repos egne releases. Dit fre
   build direkte i spillets mappe (vælg det i spillet med Shift+F). Det viser alt til level 9, rares til level 29
   og derefter kun items med buildets affixes; uniques, sets og exalted skjules aldrig. `check` ud for et filter
   viser uniques og affixes, der er nyere end noget filteret kender.
-- **Synk med din rigtige karakter.** `⟳ sync` i build-træet henter dine passive- og skill-points fra din
-  offentlige profil på Last Epoch Tools (kræver at profilen er slået op dér én gang; data kan være et par timer
-  gamle). Så vises det, du faktisk har; "next" springer det over, du allerede har taget, og points uden for
-  planen får rød ring. Endpointet er udokumenteret og kaldes kun, når du trykker.
 - **Targets.** Hvilken timeline der giver hver blessing og unique, buildet vil have, med roll-intervaller.
 - **Item-tjek.** Hold musen over et item og tryk `Ctrl+Shift+E`: overlayet læser tooltippet fra skærmen og
   siger, hvilke af buildets affixes der er på.

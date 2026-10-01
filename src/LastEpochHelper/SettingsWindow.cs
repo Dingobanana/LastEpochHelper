@@ -23,19 +23,21 @@ internal sealed class SettingsWindow : Window
     private readonly TextBlock _routeInfo = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.7, Margin = new Thickness(0, 2, 0, 0) };
     private readonly ComboBox _plan = new();
     private readonly TextBox _importLink = new();
-    private readonly TextBox _account = new();
     private readonly Slider _opacity = new() { Minimum = 0.3, Maximum = 1, TickFrequency = 0.05, IsSnapToTickEnabled = true };
     private readonly Slider _fontSize = new() { Minimum = 10, Maximum = 22, TickFrequency = 1, IsSnapToTickEnabled = true };
     private readonly Slider _width = new() { Minimum = 280, Maximum = 700, TickFrequency = 10, IsSnapToTickEnabled = true };
     private readonly CheckBox _autoHide = new() { Content = "Hide the overlay while another program has focus" };
     private readonly CheckBox _showTimer = new() { Content = "Show play time and chapter splits" };
-    private readonly CheckBox _showBuild = new() { Content = "Show build plan / level milestones" };
+    private readonly CheckBox _showBuild = new() { Content = "Show reminders for your level (skill slots, resistances, loot filter)" };
     private readonly CheckBox _autoTick = new() { Content = "Tick quest steps automatically when the game log reports them" };
     private readonly CheckBox _autoLearn = new() { Content = "Learn unknown zones automatically (new zones after a patch)" };
     private readonly CheckBox _followKeys = new() { Content = "Open the build tree with the game's own passive / skill keys" };
     private readonly CheckBox _followSkill = new() { Content = "Switch skill tab to the skill tree open in the game (reads the screen)" };
-    private readonly CheckBox _orderPassives = new() { Content = "Passive tree: mark the next points with green rings" };
-    private readonly CheckBox _orderSkills = new() { Content = "Skill trees: mark the next points with green rings" };
+    private readonly CheckBox _orderPassives = new() { Content = "Passive tree: number the next points in order" };
+    private readonly CheckBox _orderSkills = new() { Content = "Skill trees: number the next points in order" };
+    private readonly CheckBox _amountPassives = new() { Content = "Passive tree: show how many points go into the node (+N)" };
+    private readonly CheckBox _amountSkills = new() { Content = "Skill trees: show how many points go into the node (+N)" };
+    private readonly CheckBox _buildLines = new() { Content = "List the build's per-level steps as text in the overlay box" };
     private readonly TextBox _keyPassives = new();
     private readonly TextBox _keySkills = new();
     private readonly ComboBox _mapMode = new() { ItemsSource = new[] { "Off", "Inside the overlay", "Large, centred on screen" } };
@@ -65,8 +67,6 @@ internal sealed class SettingsWindow : Window
         root.Children.Add(Row("Route", _route));
         root.Children.Add(Indented(_routeInfo));
         root.Children.Add(Row("Build plan", _plan));
-        root.Children.Add(Row("Account name", _account));
-        _account.ToolTip = "Your Last Epoch account name, used by 'sync' in the build tree to read your character from Last Epoch Tools. Filled in from the game log.";
         root.Children.Add(Row("Maxroll link", _importLink));
         _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
         root.Children.Add(Indented(Buttons(
@@ -78,7 +78,7 @@ internal sealed class SettingsWindow : Window
         root.Children.Add(Row("Text size", _fontSize));
         root.Children.Add(Row("Width", _width));
         root.Children.Add(Row("Zone map", _mapMode));
-        foreach (var box in new[] { _autoHide, _showTimer, _showBuild, _autoTick, _autoLearn, _followKeys, _followSkill, _orderPassives, _orderSkills })
+        foreach (var box in new[] { _autoHide, _showTimer, _showBuild, _autoTick, _autoLearn, _buildLines, _followKeys, _followSkill, _orderPassives, _amountPassives, _orderSkills, _amountSkills })
         {
             box.Margin = new Thickness(0, 4, 0, 0);
             root.Children.Add(box);
@@ -229,7 +229,6 @@ internal sealed class SettingsWindow : Window
         _profile.ItemsSource = _session.Store.Profiles.Select(p => new ProfileItem(p)).ToList();
         _profile.SelectedIndex = _session.Store.Profiles.IndexOf(profile);
         _name.Text = profile.Name;
-        _account.Text = settings.AccountName;
         _route.ItemsSource = _session.Guide.Routes;
         _route.SelectedItem = _session.Route;
 
@@ -252,6 +251,9 @@ internal sealed class SettingsWindow : Window
         _followSkill.IsChecked = settings.FollowSkillOnScreen;
         _orderPassives.IsChecked = settings.ShowOrderPassives;
         _orderSkills.IsChecked = settings.ShowOrderSkills;
+        _amountPassives.IsChecked = settings.ShowAmountPassives;
+        _amountSkills.IsChecked = settings.ShowAmountSkills;
+        _buildLines.IsChecked = settings.ShowBuildLines;
         _keyPassives.Text = settings.GameKeyPassives;
         _keySkills.Text = settings.GameKeySkills;
         foreach (var (key, box) in _hotkeys)
@@ -274,7 +276,7 @@ internal sealed class SettingsWindow : Window
 
         string name = _name.Text.Trim();
         if (name.Length > 0) profile.Name = name;
-        settings.AccountName = _account.Text.Trim();
+
         string plan = _plan.SelectedItem as string ?? NoPlan;
         profile.BuildPlan = plan == NoPlan ? "" : plan;
         _session.ReloadPlan();
@@ -293,6 +295,9 @@ internal sealed class SettingsWindow : Window
         settings.FollowSkillOnScreen = _followSkill.IsChecked == true;
         settings.ShowOrderPassives = _orderPassives.IsChecked == true;
         settings.ShowOrderSkills = _orderSkills.IsChecked == true;
+        settings.ShowAmountPassives = _amountPassives.IsChecked == true;
+        settings.ShowAmountSkills = _amountSkills.IsChecked == true;
+        settings.ShowBuildLines = _buildLines.IsChecked == true;
         if (KeyboardWatcher.VirtualKey(_keyPassives.Text) != 0) settings.GameKeyPassives = _keyPassives.Text.Trim();
         if (KeyboardWatcher.VirtualKey(_keySkills.Text) != 0) settings.GameKeySkills = _keySkills.Text.Trim();
         foreach (var (key, box) in _hotkeys)

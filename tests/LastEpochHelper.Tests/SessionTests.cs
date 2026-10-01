@@ -598,6 +598,18 @@ public class SkillTitleMatcherTests
     }
 
     [Fact]
+    public void PickLine_ReturnsWhereTheHeadingWas()
+    {
+        var lines = new[] { new ScreenLine("Warcry", 14, 100, 900, 60), new ScreenLine("GATHERING STORM", 34, 2200, 150, 400) };
+
+        var found = SkillTitleMatcher.PickLine(lines, Skills)!.Value;
+
+        Assert.Equal("Gathering Storm", found.Skill);
+        Assert.Equal((2200, 150), (found.Line.X, found.Line.Y));
+        Assert.Null(SkillTitleMatcher.PickLine(new[] { new ScreenLine("Inventory", 30) }, Skills));
+    }
+
+    [Fact]
     public void ToleratesOcrNoise_InSpacingCaseAndPunctuation()
     {
         Assert.Equal("Summon Spriggan", SkillTitleMatcher.Pick(new[] { new ScreenLine("summon-Spriggan: Lvl 3", 30) }, Skills));

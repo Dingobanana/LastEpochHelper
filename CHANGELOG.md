@@ -6,13 +6,16 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 - Loot filter from your build: the planner's Loot filter page writes a leveling filter for the imported build straight into the game's folder.
 - Filter check: "check" next to a filter lists uniques and affixes that are newer than anything the filter knows.
-- Sync with your real character: "sync" in the build tree reads your passive and skill points from your public Last Epoch Tools profile. Taken points are shown as they are, "next" skips what you already have, and points outside the plan are ringed red.
 - Targets page: which timeline gives each blessing and unique the build wants, with the roll ranges.
 - Item check (Ctrl+Shift+E): hover an item and the overlay says which of the build's affixes are on it.
 - Click an affix on the Gear page to copy it for the stash search.
 - Death journal: every death is logged with zone and level; note the cause with a click.
 - Morditas and Prophecies reference pages for the 1.5 systems, and a "Before Empowered" checklist step.
 - Bar layout: boss tactics and alerts now get their own full-width row instead of being cut off.
+- Build tree: icons now load when the tree is opened with the game's P/S keys (they only appeared when it was opened by hotkey).
+- Build tree: follows the skill you open several times a second instead of once a second.
+- Build tree: the order numbers and the "+N points" tags can be switched off separately.
+- The build's per-level text lines are now off by default (settings: "List the build's per-level steps"); the reminders for your level stay.
 - Fixed: on a fresh install, settings (such as the overlay's position) were not saved.
 - Re-import your Maxroll build once so the filter generator has the data it needs.
 

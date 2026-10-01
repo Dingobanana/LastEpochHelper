@@ -53,6 +53,11 @@ public sealed class Settings
     /// <summary>Green rings and numbers marking the next points, per kind of tree.</summary>
     public bool ShowOrderPassives { get; set; } = true;
     public bool ShowOrderSkills { get; set; } = true;
+    /// <summary>The "+N" tag: how many points the next step puts into a node, per kind of tree.</summary>
+    public bool ShowAmountPassives { get; set; } = true;
+    public bool ShowAmountSkills { get; set; } = true;
+    /// <summary>List the imported build's per-level lines in the overlay box. The tree view shows the same thing as a picture.</summary>
+    public bool ShowBuildLines { get; set; }
     public string GameKeyPassives { get; set; } = "P";
     public string GameKeySkills { get; set; } = "S";
     // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings

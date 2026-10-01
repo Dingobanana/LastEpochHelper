@@ -1,7 +1,7 @@
 namespace LastEpochHelper.Core;
 
-/// <summary>A line of text read off the screen, with the pixel height of its letters.</summary>
-public sealed record ScreenLine(string Text, double Height);
+/// <summary>A line of text read off the screen, with the pixel height of its letters and where it was (screen pixels).</summary>
+public sealed record ScreenLine(string Text, double Height, double X = 0, double Y = 0, double Width = 0);
 
 /// <summary>
 /// Decides which skill's tree the game is showing from the text on screen. The open tree prints
@@ -11,6 +11,15 @@ public sealed record ScreenLine(string Text, double Height);
 public static class SkillTitleMatcher
 {
     private const double ClearlyBigger = 1.2;
+
+    /// <summary>The line the picked skill name was read from, so the next look can go straight there.</summary>
+    public static (string Skill, ScreenLine Line)? PickLine(IReadOnlyList<ScreenLine> lines, IReadOnlyList<string> skillNames)
+    {
+        if (Pick(lines, skillNames) is not { } skill) return null;
+        string key = Letters(skill);
+        var line = lines.Where(l => Letters(l.Text).Contains(key, StringComparison.Ordinal)).OrderByDescending(l => l.Height).First();
+        return (skill, line);
+    }
 
     public static string? Pick(IEnumerable<ScreenLine> lines, IEnumerable<string> skillNames)
     {

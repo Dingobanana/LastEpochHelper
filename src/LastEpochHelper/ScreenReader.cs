@@ -34,6 +34,7 @@ internal sealed class ScreenReader
         int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
         if (_engine is null || width < 200 || height < 200) return lines;
 
+        double scale = 1;
         try
         {
             using var stream = new MemoryStream();
@@ -49,7 +50,7 @@ internal sealed class ScreenReader
                 int limit = (int)OcrEngine.MaxImageDimension;
                 if (width > limit || height > limit)
                 {
-                    double scale = Math.Min((double)limit / width, (double)limit / height);
+                    scale = Math.Min((double)limit / width, (double)limit / height);
                     using var small = new Drawing.Bitmap(shot, (int)(width * scale), (int)(height * scale));
                     small.Save(stream, Drawing.Imaging.ImageFormat.Bmp);
                 }
@@ -61,7 +62,14 @@ internal sealed class ScreenReader
             using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
             var result = await _engine.RecognizeAsync(bitmap);
             foreach (var line in result.Lines)
-                lines.Add(new ScreenLine(line.Text, line.Words.Count > 0 ? line.Words.Max(w => w.BoundingRect.Height) : 0));
+            {
+                if (line.Words.Count == 0) continue;
+                // Back to screen coordinates, whatever the capture was scaled by.
+                double left = line.Words.Min(w => w.BoundingRect.Left), right = line.Words.Max(w => w.BoundingRect.Right);
+                double top = line.Words.Min(w => w.BoundingRect.Top);
+                lines.Add(new ScreenLine(line.Text, line.Words.Max(w => w.BoundingRect.Height) / scale,
+                    bounds.Left + left / scale, bounds.Top + top / scale, (right - left) / scale));
+            }
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
                                       or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)

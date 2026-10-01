@@ -36,9 +36,7 @@ internal sealed class TreeWindow : Window
     private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(0, 4, 0, 0) };
     private readonly TextBlock _points = new() { Foreground = Muted, VerticalAlignment = VerticalAlignment.Center };
     private Border _markers = null!;
-    private Border _sync = null!;
-    private string _syncMessage = "";
-    private bool _syncing;
+    private Border _amounts = null!;
     private readonly TextBlock _empty = new()
     {
         Foreground = Muted, TextWrapping = TextWrapping.Wrap, Width = 420, TextAlignment = TextAlignment.Center,
@@ -47,6 +45,7 @@ internal sealed class TreeWindow : Window
 
     private BitmapSource? _atlas;
     private bool _atlasTried;
+    private DateTime _atlasRetryAt = DateTime.MaxValue;
     private readonly Dictionary<int, ImageBrush> _icons = new();
 
     /// <summary>Raised when the window was dragged or closed by the user, so the owner can save that.</summary>
@@ -86,12 +85,12 @@ internal sealed class TreeWindow : Window
         plus.ToolTip = "I have one point more than shown";
         var footer = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
         _markers = HeaderButton("① order", ToggleMarkers);
-        _markers.ToolTip = "Show or hide the green rings that mark the next points (remembered separately for passives and skills)";
-        _sync = HeaderButton("⟳ sync", Sync);
-        _sync.ToolTip = "Read this character's real passive and skill points from its public Last Epoch Tools profile.\nClick again while synced to go back to following the plan.";
+        _markers.ToolTip = "Show or hide the numbers that mark the order of the next points (remembered separately for passives and skills)";
+        _amounts = HeaderButton("+N points", ToggleAmounts);
+        _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
-        adjust.Children.Add(_sync);
         adjust.Children.Add(_markers);
+        adjust.Children.Add(_amounts);
         adjust.Children.Add(minus);
         adjust.Children.Add(plus);
         DockPanel.SetDock(adjust, Dock.Right);
@@ -146,9 +145,10 @@ internal sealed class TreeWindow : Window
     private ImageBrush? IconBrush(TreeNode node, BuildTree build)
     {
         if (node.IconIndex < 0) return null;
-        if (!_atlasTried)
+        if (!_atlasTried || (_atlas is null && DateTime.UtcNow >= _atlasRetryAt))
         {
             _atlasTried = true;
+            _atlasRetryAt = DateTime.MaxValue;
             try
             {
                 string path = System.IO.Path.Combine(_session.DataDir, BuildTree.AtlasFile);
@@ -163,9 +163,13 @@ internal sealed class TreeWindow : Window
                     _atlas = image;
                 }
             }
-            catch (Exception e) when (e is NotSupportedException or IOException or FileFormatException or System.Runtime.InteropServices.COMException)
+            catch (Exception e)
             {
+                // Whatever went wrong, the tree is still usable without pictures - but say why, once.
                 _atlas = null;
+                _atlasRetryAt = DateTime.UtcNow.AddSeconds(5); // a busy moment should not cost the icons for the whole session
+                try { File.AppendAllText(System.IO.Path.Combine(_session.DataDir, "errors.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\nTree icons unavailable: {e}\n\n"); }
+                catch (IOException) { }
             }
         }
         if (_atlas is null) return null;
@@ -219,51 +223,20 @@ internal sealed class TreeWindow : Window
         if (tree is not null && tree != Current()) Select(tree);
     }
 
-    /// <summary>
-    /// Fetches the character's trees from Last Epoch Tools, or - when already synced - drops them and
-    /// returns to the plan-based view.
-    /// </summary>
-    private async void Sync()
-    {
-        if (_syncing) return;
-        if (_session.Profile.Actual is not null)
-        {
-            _syncMessage = "";
-            _session.SetActual(null);
-            return;
-        }
-        string account = _session.Settings.AccountName;
-        if (account.Length == 0)
-        {
-            _syncMessage = "Sync needs your account name: enter it in settings.";
-            Render();
-            return;
-        }
-        _syncing = true;
-        _syncMessage = "Reading your character from Last Epoch Tools...";
-        Render();
-        try
-        {
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-            var actual = await LetProfile.FetchAsync(account, _session.Profile.Name, http);
-            _syncMessage = actual is null
-                ? $"Last Epoch Tools has no data for {account} / {_session.Profile.Name} yet. Open {LetProfile.ProfilePage(account)} once so it fetches your characters, then sync again."
-                : "";
-            if (actual is not null) _session.SetActual(actual);
-        }
-        catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
-        {
-            _syncMessage = "Could not reach Last Epoch Tools: " + e.Message;
-        }
-        finally
-        {
-            _syncing = false;
-            Render();
-        }
-    }
-
     private bool MarkersOn(TreeDef tree) =>
         tree.Kind == TreeDef.PassiveKind ? _session.Settings.ShowOrderPassives : _session.Settings.ShowOrderSkills;
+
+    private bool AmountsOn(TreeDef tree) =>
+        tree.Kind == TreeDef.PassiveKind ? _session.Settings.ShowAmountPassives : _session.Settings.ShowAmountSkills;
+
+    private void ToggleAmounts()
+    {
+        if (Current() is not { } tree) return;
+        if (tree.Kind == TreeDef.PassiveKind) _session.Settings.ShowAmountPassives = !_session.Settings.ShowAmountPassives;
+        else _session.Settings.ShowAmountSkills = !_session.Settings.ShowAmountSkills;
+        _session.SaveSettings();
+        Render();
+    }
 
     private void ToggleMarkers()
     {
@@ -320,6 +293,7 @@ internal sealed class TreeWindow : Window
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
         ((TextBlock)_markers.Child).Foreground = MarkersOn(tree) ? Green : Muted;
+        ((TextBlock)_amounts.Child).Foreground = AmountsOn(tree) ? Green : Muted;
         var running = new Dictionary<int, int>(state.Allocated);
         var parts = new List<string>();
         for (int i = 0; i < state.Next.Count; i++)
@@ -340,11 +314,8 @@ internal sealed class TreeWindow : Window
             : passive
                 ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
                 : $"{state.Points} of {state.StagePoints} points in {tree.Name}  -  use + each time you spend a skill point";
-        _points.Text = _syncMessage.Length > 0 ? _syncMessage : $"{state.Stage}  ·  {source}";
-        _points.TextWrapping = TextWrapping.Wrap;
-        _points.MaxWidth = 600;
-        ((TextBlock)_sync.Child).Text = _session.Profile.Actual is null ? "⟳ sync" : "⟳ synced";
-        ((TextBlock)_sync.Child).Foreground = _session.Profile.Actual is null ? Muted : Green;
+        _points.Text = $"{state.Stage}  ·  {source}";
+        _points.TextTrimming = TextTrimming.CharacterEllipsis;
     }
 
     private static string Age(DateTime when)
@@ -382,7 +353,9 @@ internal sealed class TreeWindow : Window
             int have = state.Allocated.GetValueOrDefault(node.Id);
             int target = state.Target.GetValueOrDefault(node.Id);
             int run = state.Next.ToList().FindIndex(r => r.Node == node.Id);
-            int order = MarkersOn(tree) ? run : -1;
+            // The node is ringed green if either marker is on; which labels it gets depends on each.
+            bool showOrder = MarkersOn(tree), showAmount = AmountsOn(tree);
+            int order = showOrder || showAmount ? run : -1;
             bool offPlan = state.OffPlan.Contains(node.Id);
             // A node the character has points in is drawn full size even if the build never takes it.
             bool planned = target > 0 || have > 0;
@@ -415,6 +388,8 @@ internal sealed class TreeWindow : Window
             Place(Label(node.Name, lit ? Text : Muted, 10, FontWeights.Normal, 92), p.X - 46, p.Y + NodeSize / 2 + 6);
 
             if (order < 0) continue;
+            if (showOrder)
+            {
             var badge = new Border
             {
                 Width = 16, Height = 16, CornerRadius = new CornerRadius(8), Background = Green,
@@ -426,6 +401,8 @@ internal sealed class TreeWindow : Window
                 IsHitTestVisible = false,
             };
             Place(badge, p.X + NodeSize / 2 - 9, p.Y - NodeSize / 2 - 6);
+            }
+            if (!showAmount) continue;
 
             // How many points this step puts here.
             var add = new Border
