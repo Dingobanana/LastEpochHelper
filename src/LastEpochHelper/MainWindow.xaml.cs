@@ -55,9 +55,15 @@ public partial class MainWindow : Window
     // Following the open skill tree: a quick look at where the heading was last seen, several times a
     // second, and a full read of the game window only when that spot stops showing a skill name.
     private readonly DispatcherTimer _followTimer = new() { Interval = TimeSpan.FromMilliseconds(200) };
-    private Native.RECT? _titleRegion;
-    private int _titleMisses;
+    private Native.RECT? _panelRegion;
+    private int _panelMisses;
+    private bool _forceFullRead;
     private DateTime _lastFullRead = DateTime.MinValue;
+    private DateTime _lastPanelKey = DateTime.MinValue;
+    private DateTime _verifyUntil = DateTime.MinValue;
+    private GamePanel _expectedPanel;
+    /// <summary>Opened by hand (hotkey or menu), so it stays until closed by hand.</summary>
+    private bool _treePinned;
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(6);
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private bool _updating;
@@ -129,7 +135,7 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
-        _followTimer.Tick += (_, _) => FollowSkillOnScreen();
+        _followTimer.Tick += (_, _) => WatchPanel();
         _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
@@ -233,7 +239,7 @@ public partial class MainWindow : Window
         Register(Settings.HotkeyCompact, ToggleCompact);
         Register(Settings.HotkeyMap, CycleMapMode);
         Register(Settings.HotkeyCapture, CaptureMap);
-        Register(Settings.HotkeyTree, () => ShowTree(!_treeWanted));
+        Register(Settings.HotkeyTree, () => { _treePinned = !_treeWanted; ShowTree(!_treeWanted); });
         Register(Settings.HotkeyPlanner, () => ShowPlanner(!_plannerWanted));
         Register(Settings.HotkeyLookup, LookUpItem);
 
@@ -370,6 +376,7 @@ public partial class MainWindow : Window
     private void ShowTree(bool show, string? kind = null)
     {
         _treeWanted = show;
+        if (!show) { _panelRegion = null; _panelMisses = 0; }
         if (show)
         {
             if (_treeWindow is null)
@@ -381,7 +388,7 @@ public partial class MainWindow : Window
                     Settings.TreeTop = _treeWindow.Top;
                     SaveSettings();
                 };
-                _treeWindow.CloseRequested += () => ShowTree(false);
+                _treeWindow.CloseRequested += () => { _treePinned = false; ShowTree(false); };
                 _treeWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                 _treeWindow.Left = Usable(Settings.TreeLeft) ?? Math.Max(0, (SystemParameters.PrimaryScreenWidth - 900) / 2);
                 _treeWindow.Top = Usable(Settings.TreeTop) ?? 40;
@@ -393,60 +400,110 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// While the skill tabs are showing, reads the game window and switches to the skill whose name
-    /// is the heading on screen - i.e. the tree the player just opened in the game.
+    /// Keeps the tree view in step with the game by reading the screen: is the passive panel or a
+    /// skill tree showing, and which skill. Runs several times a second; normally it only looks at
+    /// the small area where the panel's heading was last seen, and reads the whole game window just
+    /// after a panel key was pressed or when that area stops showing the heading.
     /// </summary>
-    private async void FollowSkillOnScreen()
+    private async void WatchPanel()
     {
-        if (_reading || !Settings.FollowSkillOnScreen || !_treeWanted || _treeWindow is not { IsVisible: true } tree) return;
-        if (!_game.GameFocused || tree.CurrentKind != TreeDef.SkillKind) return;
+        if (_reading || !Settings.FollowSkillOnScreen || !_game.GameFocused || _session.Tree is null) return;
+        bool verifying = DateTime.UtcNow < _verifyUntil;
+        bool shown = _treeWanted && _treeWindow is { IsVisible: true };
+        // Nothing to mirror while the tree is closed, unless a panel key was just pressed.
+        if (!shown && !verifying) return;
         _screenReader ??= new ScreenReader();
         if (!_screenReader.Available) return;
 
-        bool quick = _titleRegion is not null;
+        bool quick = shown && _panelRegion is not null && !_forceFullRead;
+        // A panel this machine has never recognised is not worth reading the whole screen for, over and over.
+        if (!quick && !verifying && !SeenOnScreen(_treeWindow?.CurrentKind)) return;
         // A full read of an ultrawide takes a few hundred milliseconds; do not chain them back to back.
-        if (!quick && DateTime.UtcNow - _lastFullRead < TimeSpan.FromMilliseconds(600)) return;
+        if (!quick && DateTime.UtcNow - _lastFullRead < TimeSpan.FromMilliseconds(450)) return;
+        // Give the game a moment to draw the panel after the key press.
+        if (!quick && DateTime.UtcNow - _lastPanelKey < TimeSpan.FromMilliseconds(250)) return;
 
         _reading = true;
         try
         {
-            var masks = new List<Native.RECT> { ScreenRect(this), ScreenRect(tree) };
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
             if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
-            if (!quick) _lastFullRead = DateTime.UtcNow;
-            var lines = await _screenReader.ReadAsync(_titleRegion ?? _game.GameBounds, masks);
-            var names = tree.SkillNames.ToList();
-            if (SkillTitleMatcher.PickLine(lines, names) is { } found)
+            if (!quick) { _lastFullRead = DateTime.UtcNow; _forceFullRead = false; }
+
+            var tabs = (_treeWindow?.PassiveTabNames ?? PassiveTabNamesOf(_session.Tree)).ToList();
+            var skills = _session.Tree.Trees.Where(t => t.Kind == TreeDef.SkillKind).Select(t => t.Name).ToList();
+            var lines = await _screenReader.ReadAsync(quick ? _panelRegion!.Value : _game.GameBounds, masks);
+            var reading = PanelDetector.Detect(lines, tabs, skills, _expectedPanel);
+            if (!quick && verifying) WritePanelDiagnostics(lines, reading);
+
+            if (reading.Panel != GamePanel.None)
             {
-                _titleMisses = 0;
-                if (!quick)
-                {
-                    // Remember a band around the heading; other skills' names are of similar length.
-                    var game = _game.GameBounds;
-                    _titleRegion = new Native.RECT
-                    {
-                        Left = Math.Max(game.Left, (int)(found.Line.X - 350)),
-                        Right = Math.Min(game.Right, (int)(found.Line.X + found.Line.Width + 350)),
-                        Top = Math.Max(game.Top, (int)(found.Line.Y - found.Line.Height * 1.5)),
-                        Bottom = Math.Min(game.Bottom, (int)(found.Line.Y + found.Line.Height * 3)),
-                    };
-                    if (_titleRegion.Value.Right - _titleRegion.Value.Left < 200 || _titleRegion.Value.Bottom - _titleRegion.Value.Top < 200)
-                    {
-                        // The reader needs a minimum size; pad the band downwards.
-                        var r = _titleRegion.Value;
-                        r.Bottom = Math.Min(game.Bottom, r.Top + 220);
-                        _titleRegion = r;
-                    }
-                }
-                if (_treeWanted) tree.SelectSkill(found.Skill);
+                _panelMisses = 0;
+                if (reading.Panel == GamePanel.Passives && !Settings.PanelSeenPassives) { Settings.PanelSeenPassives = true; SaveSettings(); }
+                if (reading.Panel == GamePanel.Skills && !Settings.PanelSeenSkills) { Settings.PanelSeenSkills = true; SaveSettings(); }
+                if (!quick) _panelRegion = reading.Anchor is { } anchor ? RegionAround(anchor) : null;
+
+                string kind = reading.Panel == GamePanel.Passives ? TreeDef.PassiveKind : TreeDef.SkillKind;
+                if (!_treeWanted) ShowTree(true, kind);                       // the game opened a panel we missed
+                else if (_treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
+                if (reading.Skill is not null) _treeWindow?.SelectSkill(reading.Skill);
             }
-            else if (quick && ++_titleMisses >= 2)
+            else if (quick)
             {
-                // The heading moved or the panel closed: look everywhere again.
-                _titleRegion = null;
-                _titleMisses = 0;
+                // The heading left its spot: the panel closed or changed. Look at everything next time.
+                if (++_panelMisses >= 2) { _panelRegion = null; _panelMisses = 0; _forceFullRead = true; }
+            }
+            else if (shown && SeenOnScreen(_treeWindow!.CurrentKind) && !_treePinned && ++_panelMisses >= 2)
+            {
+                // Two full reads without any panel: it is closed in the game, so close here too.
+                _panelMisses = 0;
+                ShowTree(false);
             }
         }
         finally { _reading = false; }
+    }
+
+    /// <summary>Has the game's panel for this kind of tree ever been recognised here?</summary>
+    private bool SeenOnScreen(string? kind) =>
+        kind == TreeDef.PassiveKind ? Settings.PanelSeenPassives : kind == TreeDef.SkillKind && Settings.PanelSeenSkills;
+
+    private static IEnumerable<string> PassiveTabNamesOf(BuildTree build) =>
+        build.PassiveTabNames.Count > 0 ? build.PassiveTabNames : build.Trees.Where(t => t.Kind == TreeDef.PassiveKind).Select(t => t.Name);
+
+    /// <summary>A band around a heading, big enough for the reader and for longer names in the same place.</summary>
+    private Native.RECT RegionAround(ScreenLine line)
+    {
+        var game = _game.GameBounds;
+        var region = new Native.RECT
+        {
+            Left = Math.Max(game.Left, (int)(line.X - 350)),
+            Right = Math.Min(game.Right, (int)(line.X + line.Width + 350)),
+            Top = Math.Max(game.Top, (int)(line.Y - line.Height * 1.5)),
+            Bottom = Math.Min(game.Bottom, (int)(line.Y + line.Height * 3)),
+        };
+        if (region.Bottom - region.Top < 220) region.Bottom = Math.Min(game.Bottom, region.Top + 220);
+        if (region.Right - region.Left < 220) region.Right = Math.Min(game.Right, region.Left + 220);
+        return region;
+    }
+
+    /// <summary>
+    /// Leaves what the reader saw right after a panel key in panel-ocr.txt (and, once per panel, a
+    /// picture of the game window) in the data folder. Local only; it is how detection gets tuned.
+    /// </summary>
+    private void WritePanelDiagnostics(List<ScreenLine> lines, PanelReading reading)
+    {
+        try
+        {
+            string name = _expectedPanel == GamePanel.Skills ? "skills" : "passives";
+            var text = new List<string> { $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  key={name}  detected={reading.Panel}  skill={reading.Skill}" };
+            text.AddRange(lines.OrderByDescending(l => l.Height).Take(120).Select(l => $"{l.Height,4:0} @{l.X,5:0},{l.Y,5:0}  {l.Text}"));
+            File.WriteAllLines(Path.Combine(_session.DataDir, $"panel-ocr-{name}.txt"), text);
+
+            string picture = Path.Combine(_session.DataDir, $"panel-{name}.png");
+            if (!File.Exists(picture)) ScreenCapture.Save(_game.GameBounds, picture, maxWidth: int.MaxValue);
+        }
+        catch (IOException) { }
     }
 
     private static Native.RECT ScreenRect(Window window)
@@ -458,25 +515,40 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Mirrors the game's panel keys: the passives key toggles the passive tree, the skills key the
-    /// skill trees, Escape closes. Typing in chat (between two Enter presses) is ignored.
+    /// The game's panel keys. A key press shows or hides the tree at once, so it feels immediate;
+    /// <see cref="WatchPanel"/> then checks the screen and corrects it if the game did something
+    /// else (the panel was already closed with the mouse, the key went to a text box, ...).
     /// </summary>
     private void OnGameKey(int key)
     {
         if (!_game.GameFocused) return;
         const int Enter = 0x0D, Escape = 0x1B;
+        bool trustScreen = Settings.FollowSkillOnScreen && SeenOnScreen(_treeWindow?.CurrentKind);
+
         if (key == Enter) { _chatting = !_chatting; return; }
         if (key == Escape)
         {
-            if (_chatting) _chatting = false;
-            else if (_treeWanted) ShowTree(false);
+            if (_chatting) { _chatting = false; return; }
+            if (!_treeWanted || _treePinned) return;
+            // Escape closes one panel at a time in the game; let the screen say whether ours went.
+            if (trustScreen) { _forceFullRead = true; _lastPanelKey = DateTime.UtcNow; }
+            else ShowTree(false);
             return;
         }
-        if (_chatting) return;
 
         string? kind = key == KeyboardWatcher.VirtualKey(Settings.GameKeyPassives) ? TreeDef.PassiveKind
             : key == KeyboardWatcher.VirtualKey(Settings.GameKeySkills) ? TreeDef.SkillKind : null;
         if (kind is null) return;
+
+        _expectedPanel = kind == TreeDef.PassiveKind ? GamePanel.Passives : GamePanel.Skills;
+        _lastPanelKey = DateTime.UtcNow;
+        _verifyUntil = DateTime.UtcNow.AddSeconds(2.5);
+        _forceFullRead = true;
+        _panelMisses = 0;
+        // While typing in chat the key is just a letter - unless the screen later shows a panel.
+        if (_chatting) return;
+
+        _treePinned = false;
         // Pressing the same panel's key again closes it in the game, so close here too.
         if (_treeWanted && _treeWindow?.CurrentKind == kind) ShowTree(false);
         else ShowTree(true, kind);

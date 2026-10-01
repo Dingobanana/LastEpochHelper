@@ -438,6 +438,59 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Records that a node really has one point more or fewer than shown. The first correction takes
+    /// over that tree from the plan: it starts from what the plan assumed and is the truth from then on.
+    /// </summary>
+    public void AdjustNode(TreeDef tree, TreeNode node, int delta)
+    {
+        if (Tree is null) return;
+        var actual = Profile.Actual ??= new ActualTrees { Fetched = DateTime.Now, Level = Profile.Level };
+        Dictionary<int, int> points;
+        if (tree.Kind == TreeDef.PassiveKind)
+        {
+            if (actual.Passives.Count == 0 && !_passivesTaken)
+            {
+                // Passive points are one pool across all tabs, so seed every tab from the plan.
+                int have = BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset;
+                foreach (var tab in Tree.Trees.Where(t => t.Kind == TreeDef.PassiveKind))
+                    foreach (var (id, count) in Tree.State(tab, have, Profile.Level).Allocated)
+                        actual.Passives[id] = count;
+                _passivesTaken = true;
+            }
+            points = actual.Passives;
+        }
+        else
+        {
+            string key = BuildTree.SkillKey(tree);
+            if (!actual.Skills.TryGetValue(key, out points!))
+                actual.Skills[key] = points = new Dictionary<int, int>(
+                    Tree.State(tree, Profile.SkillPoints.GetValueOrDefault(tree.Name), Profile.Level).Allocated);
+        }
+
+        int next = Math.Clamp(points.GetValueOrDefault(node.Id) + delta, 0, Math.Max(node.Max, 1));
+        if (next == 0) points.Remove(node.Id); else points[node.Id] = next;
+        actual.Fetched = DateTime.Now;
+        Save();
+        Changed?.Invoke();
+    }
+    private bool _passivesTaken;
+
+    /// <summary>True when this tree shows hand-set (or imported) points instead of the plan's assumption.</summary>
+    public bool HasActual(TreeDef tree) => Profile.Actual is { } actual &&
+        (tree.Kind == TreeDef.PassiveKind ? actual.Passives.Count > 0 || _passivesTaken : actual.Skills.ContainsKey(BuildTree.SkillKey(tree)));
+
+    /// <summary>Goes back to following the plan for one tree.</summary>
+    public void ResetActual(TreeDef tree)
+    {
+        if (Profile.Actual is not { } actual) return;
+        if (tree.Kind == TreeDef.PassiveKind) { actual.Passives.Clear(); _passivesTaken = false; }
+        else actual.Skills.Remove(BuildTree.SkillKey(tree));
+        if (actual.Passives.Count == 0 && actual.Skills.Count == 0) Profile.Actual = null;
+        Save();
+        Changed?.Invoke();
+    }
+
     /// <summary>Stores (or with null, forgets) the tree points read from the character's public profile.</summary>
     public void SetActual(ActualTrees? actual)
     {
@@ -449,7 +502,7 @@ public sealed class Session
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
-        if (Profile.Actual is { } actual && Tree!.State(tree, actual, Profile.Level) is { } real) return real;
+        if (HasActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level) is { } real) return real;
 
         int points = tree.Kind == TreeDef.PassiveKind
             ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset

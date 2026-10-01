@@ -50,6 +50,13 @@ public sealed class Settings
     public bool FollowGameKeys { get; set; } = true;
     /// <summary>Switch to the skill tab whose name is on screen (read with Windows OCR).</summary>
     public bool FollowSkillOnScreen { get; set; } = true;
+    /// <summary>
+    /// Set once the game's passive / skill panel has been recognised on this machine. From then on
+    /// the screen decides whether that tree view shows; before that, key presses do. Kept per
+    /// panel, so trouble recognising one never makes the other close by itself.
+    /// </summary>
+    public bool PanelSeenPassives { get; set; }
+    public bool PanelSeenSkills { get; set; }
     /// <summary>Green rings and numbers marking the next points, per kind of tree.</summary>
     public bool ShowOrderPassives { get; set; } = true;
     public bool ShowOrderSkills { get; set; } = true;

@@ -168,7 +168,11 @@ public static partial class MaxrollImporter
         if (game["treeAtlas"] is JsonArray cells)
             for (int i = 0; i < cells.Count; i++)
                 if (cells[i]?.GetValue<string>() is { } cell) atlas[cell] = i;
-        var build = new BuildTree { Name = name, AtlasCells = atlas.Count };
+        var build = new BuildTree
+        {
+            Name = name, AtlasCells = atlas.Count,
+            PassiveTabNames = Enumerable.Range(0, masteries.Count).Select(MasteryName).ToList(),
+        };
         var skillTrees = new Dictionary<string, JsonNode>();
         var skillTreeIds = new Dictionary<string, string>();
 

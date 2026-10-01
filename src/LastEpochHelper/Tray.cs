@@ -59,7 +59,7 @@ internal static class ScreenCapture
 {
     private const int MaxWidth = 1600;
 
-    public static bool Save(Native.RECT bounds, string path)
+    public static bool Save(Native.RECT bounds, string path, int maxWidth = MaxWidth)
     {
         int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
         if (width < 200 || height < 200) return false;
@@ -70,14 +70,14 @@ internal static class ScreenCapture
                 g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, shot.Size);
 
             // Full-resolution screenshots of an ultrawide are needlessly large for a reference picture.
-            if (width > MaxWidth)
+            if (width > maxWidth)
             {
-                int scaledHeight = height * MaxWidth / width;
-                using var scaled = new Drawing.Bitmap(MaxWidth, scaledHeight);
+                int scaledHeight = height * maxWidth / width;
+                using var scaled = new Drawing.Bitmap(maxWidth, scaledHeight);
                 using (var g = Drawing.Graphics.FromImage(scaled))
                 {
                     g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(shot, 0, 0, MaxWidth, scaledHeight);
+                    g.DrawImage(shot, 0, 0, maxWidth, scaledHeight);
                 }
                 scaled.Save(path, Drawing.Imaging.ImageFormat.Png);
             }

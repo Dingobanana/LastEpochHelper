@@ -37,6 +37,8 @@ internal sealed class TreeWindow : Window
     private readonly TextBlock _points = new() { Foreground = Muted, VerticalAlignment = VerticalAlignment.Center };
     private Border _markers = null!;
     private Border _amounts = null!;
+    private Border _reset = null!;
+    private Border _minus = null!, _plus = null!;
     private readonly TextBlock _empty = new()
     {
         Foreground = Muted, TextWrapping = TextWrapping.Wrap, Width = 420, TextAlignment = TextAlignment.Center,
@@ -79,8 +81,8 @@ internal sealed class TreeWindow : Window
             Moved?.Invoke();
         };
 
-        var minus = HeaderButton("−", () => Adjust(-1));
-        var plus = HeaderButton("+", () => Adjust(+1));
+        var minus = _minus = HeaderButton("−", () => Adjust(-1));
+        var plus = _plus = HeaderButton("+", () => Adjust(+1));
         minus.ToolTip = "I have one point fewer than shown";
         plus.ToolTip = "I have one point more than shown";
         var footer = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
@@ -88,7 +90,10 @@ internal sealed class TreeWindow : Window
         _markers.ToolTip = "Show or hide the numbers that mark the order of the next points (remembered separately for passives and skills)";
         _amounts = HeaderButton("+N points", ToggleAmounts);
         _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
+        _reset = HeaderButton("↺ plan", () => { if (Current() is { } tree) _session.ResetActual(tree); });
+        _reset.ToolTip = "Forget the points set by hand in this tree and follow the build's plan again";
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
+        adjust.Children.Add(_reset);
         adjust.Children.Add(_markers);
         adjust.Children.Add(_amounts);
         adjust.Children.Add(minus);
@@ -216,6 +221,12 @@ internal sealed class TreeWindow : Window
     public IEnumerable<string> SkillNames =>
         _session.Tree?.Trees.Where(t => t.Kind == TreeDef.SkillKind).Select(t => t.Name) ?? Enumerable.Empty<string>();
 
+    /// <summary>Tab names of the game's passive panel, for recognising it on screen.</summary>
+    public IEnumerable<string> PassiveTabNames =>
+        _session.Tree is not { } build ? Enumerable.Empty<string>()
+        : build.PassiveTabNames.Count > 0 ? build.PassiveTabNames
+        : build.Trees.Where(t => t.Kind == TreeDef.PassiveKind).Select(t => t.Name);
+
     /// <summary>Switches to the named skill tab if it is not already showing.</summary>
     public void SelectSkill(string name)
     {
@@ -309,11 +320,15 @@ internal sealed class TreeWindow : Window
             : state.StagePoints == 0 ? "This build puts no points here yet." : "Everything in this tree is taken - nothing more planned.";
 
         string source = state.FromGame
-            ? $"{state.Points} of {state.StagePoints} points, read from your profile {Age(_session.Profile.Actual!.Fetched)}"
+            ? $"{state.Points} of {state.StagePoints} points, set by you"
               + (state.OffPlan.Count > 0 ? $"  ·  {state.OffPlan.Count} node(s) beyond the plan (red)" : "")
             : passive
                 ? $"{state.Points} of {state.StagePoints} passive points  (level {_session.Profile.Level}, incl. quest rewards)"
-                : $"{state.Points} of {state.StagePoints} points in {tree.Name}  -  use + each time you spend a skill point";
+                : $"{state.Points} of {state.StagePoints} points in {tree.Name}";
+        source += "  ·  click a node +1, right-click −1";
+        // Once the tree holds real points, the plan pointer buttons have nothing to move.
+        _reset.Visibility = state.FromGame ? Visibility.Visible : Visibility.Collapsed;
+        _minus.Visibility = _plus.Visibility = state.FromGame ? Visibility.Collapsed : Visibility.Visible;
         _points.Text = $"{state.Stage}  ·  {source}";
         _points.TextTrimming = TextTrimming.CharacterEllipsis;
     }
@@ -375,6 +390,11 @@ internal sealed class TreeWindow : Window
                           + (node.Description.Length > 0 ? "\n" + node.Description : ""),
             };
             if (planned && !lit) circle.StrokeDashArray = new DoubleCollection { 2, 2 };
+            // Correct a node to what the game really shows: click adds a point, right-click removes one.
+            var clicked = node;
+            circle.Cursor = Cursors.Hand;
+            circle.MouseLeftButtonDown += (_, e) => { _session.AdjustNode(tree, clicked, +1); e.Handled = true; };
+            circle.MouseRightButtonDown += (_, e) => { _session.AdjustNode(tree, clicked, -1); e.Handled = true; };
             Place(circle, p.X - size / 2, p.Y - size / 2);
             if (!planned) continue;
 

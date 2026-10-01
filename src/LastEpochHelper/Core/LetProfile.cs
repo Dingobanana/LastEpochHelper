@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace LastEpochHelper.Core;
 
-/// <summary>The points a character really has in its trees, as last seen by Last Epoch Tools.</summary>
+/// <summary>The points a character really has in its trees: set by hand in the tree view, or read from a profile.</summary>
 public sealed class ActualTrees
 {
     public DateTime Fetched { get; set; }

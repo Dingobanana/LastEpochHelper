@@ -99,6 +99,11 @@ public sealed class BuildTree
     public int AtlasCells { get; set; }
     public List<TreeDef> Trees { get; set; } = new();
     public List<TreeStage> Stages { get; set; } = new();
+    /// <summary>The class and all its masteries, as the game names the tabs of its passive panel.</summary>
+    public List<string> PassiveTabNames { get; set; } = new();
+
+    /// <summary>Key under which a skill tree's real points are kept: the game's id, or the name for older imports.</summary>
+    public static string SkillKey(TreeDef tree) => tree.TreeId.Length > 0 ? tree.TreeId : tree.Name;
 
     /// <summary>The stage a character of this level is working towards: the first one not yet outgrown.</summary>
     public TreeStage? StageFor(int level) => Stages.FirstOrDefault(s => s.Level >= level) ?? Stages.LastOrDefault();
@@ -168,8 +173,8 @@ public sealed class BuildTree
     {
         if (Stages.Count == 0) return null;
         bool passive = tree.Kind == TreeDef.PassiveKind;
-        Dictionary<int, int>? have = passive ? actual.Passives : actual.Skills.GetValueOrDefault(tree.TreeId);
-        if (have is null || (!passive && tree.TreeId.Length == 0)) return null;
+        Dictionary<int, int>? have = passive ? actual.Passives : actual.Skills.GetValueOrDefault(SkillKey(tree));
+        if (have is null) return null;
         int total = have.Values.Sum();
         List<int> History(TreeStage s) => passive ? s.Passives : s.Skills.GetValueOrDefault(tree.Name) ?? new List<int>();
 

@@ -32,7 +32,7 @@ internal sealed class SettingsWindow : Window
     private readonly CheckBox _autoTick = new() { Content = "Tick quest steps automatically when the game log reports them" };
     private readonly CheckBox _autoLearn = new() { Content = "Learn unknown zones automatically (new zones after a patch)" };
     private readonly CheckBox _followKeys = new() { Content = "Open the build tree with the game's own passive / skill keys" };
-    private readonly CheckBox _followSkill = new() { Content = "Switch skill tab to the skill tree open in the game (reads the screen)" };
+    private readonly CheckBox _followSkill = new() { Content = "Keep the build tree in step with the game's passive / skill panel (reads the screen)" };
     private readonly CheckBox _orderPassives = new() { Content = "Passive tree: number the next points in order" };
     private readonly CheckBox _orderSkills = new() { Content = "Skill trees: number the next points in order" };
     private readonly CheckBox _amountPassives = new() { Content = "Passive tree: show how many points go into the node (+N)" };
