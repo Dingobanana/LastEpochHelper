@@ -1,0 +1,916 @@
+{
+ "timelines": [
+  {
+   "name": "Fall of the Outcasts",
+   "level": 62,
+   "empoweredLevel": 100,
+   "boss": "Abomination",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): The Ransacked Camp 80/200; Maj'elka Streets 160/400; The Altar of Flesh 240/800. Third quest echo is the boss.",
+    "Stability cap 500 normal / 1600 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Defilement.",
+    "Exclusive echo rewards (unique/set): Bows or Quiver.",
+    "Knowledge of Orobyss for first completion: 1.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R1Q10, R1Q20, R1Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Winds of Fortune",
+     "effect": "(10% to 15%) Increased Unique Drop Rate | Grand (empowered): (16% to 22%) Increased Unique Drop Rate",
+     "offerPool": "any slot",
+     "recommended": true
+    },
+    {
+     "name": "Strength of Mind",
+     "effect": "(4% to 6%) Increased Experience | Grand (empowered): (7% to 10%) Increased Experience",
+     "offerPool": "any slot",
+     "recommended": true
+    },
+    {
+     "name": "Scales of Greed",
+     "effect": "(25% to 40%) Increased Gold Drop Rate | Grand (empowered): (45% to 70%) Increased Gold Drop Rate",
+     "offerPool": "any slot",
+     "recommended": true
+    },
+    {
+     "name": "Pride of Rebellion",
+     "effect": "(30% to 50%) Increased Grand Idol Drop Rate | Grand (empowered): (51% to 100%) Increased Grand Idol Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Sight of the Outcasts",
+     "effect": "(30% to 50%) Increased Large Idol Drop Rate | Grand (empowered): (51% to 100%) Increased Large Idol Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Curse of Flesh",
+     "effect": "(30% to 50%) Increased Huge Idol Drop Rate | Grand (empowered): (51% to 100%) Increased Huge Idol Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Favor of Souls",
+     "effect": "(30% to 50%) Increased Ornate Idol Drop Rate | Grand (empowered): (51% to 100%) Increased Ornate Idol Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Mark of Agony",
+     "effect": "(30% to 50%) Increased Adorned Idol Drop Rate | Grand (empowered): (51% to 100%) Increased Adorned Idol Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Memory of the Living",
+     "effect": "(10% to 15%) Increased Glyph Drop Rate | Grand (empowered): (16% to 25%) Increased Glyph Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Sign of Torment",
+     "effect": "(10% to 15%) Increased Rune Drop Rate | Grand (empowered): (16% to 25%) Increased Rune Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Stolen Lance",
+   "level": 66,
+   "empoweredLevel": 100,
+   "boss": "God Hunter Argentus",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Wengari Stronghold 50/150; The Siege of Farwood 150/400; Argentum Spire 250/800. Third quest echo is the boss.",
+    "Stability cap 500 normal / 1600 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Pride.",
+    "Exclusive echo rewards (unique/set): Staff or Sceptre, Wand or Catalyst.",
+    "Knowledge of Orobyss for first completion: 1.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R5Q10, R5Q20, R5Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Arrogance of Argentus",
+     "effect": "(10% to 20%) Increased Helmet Drop Rate | Grand (empowered): (22% to 50%) Increased Helmet Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Embrace of Ice",
+     "effect": "(10% to 20%) Increased Body Armor Drop Rate | Grand (empowered): (22% to 50%) Increased Body Armor Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Grip of the Lance",
+     "effect": "(15% to 30%) Increased Gloves Drop Rate | Grand (empowered): (35% to 75%) Increased Gloves Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Right of Conquest",
+     "effect": "(15% to 30%) Increased Boots Drop Rate | Grand (empowered): (35% to 75%) Increased Boots Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Reach of Flame",
+     "effect": "(15% to 30%) Increased Off-Hand Catalyst Drop Rate | Grand (empowered): (35% to 75%) Increased Off-Hand Catalyst Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Binds of Sanctuary",
+     "effect": "(15% to 30%) Increased Shield Drop Rate | Grand (empowered): (35% to 75%) Increased Shield Drop Rate",
+     "offerPool": "any slot",
+     "recommended": true
+    },
+    {
+     "name": "Slumber of Morditas",
+     "effect": "(12% to 25%) Increased Relic Drop Rate | Grand (empowered): (30% to 60%) Increased Relic Drop Rate",
+     "offerPool": "any slot",
+     "recommended": true
+    },
+    {
+     "name": "Talon of Grandeur",
+     "effect": "(15% to 30%) Increased Ring Drop Rate | Grand (empowered): (35% to 75%) Increased Ring Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Vision of the Aurora",
+     "effect": "(15% to 30%) Increased Amulet Drop Rate | Grand (empowered): (35% to 75%) Increased Amulet Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Might of the Siege",
+     "effect": "(15% to 30%) Increased Belt Drop Rate | Grand (empowered): (35% to 75%) Increased Belt Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Apex of Fortune",
+     "effect": "(15% to 30%) Increased Quiver Drop Rate | Grand (empowered): (41% to 60%) Increased Quiver Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Black Sun",
+   "level": 70,
+   "empoweredLevel": 100,
+   "boss": "Rahyeh, The Black Sun",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): The Fall of Ledria 50/150; The Dark Ascent 150/450; The Ruins of Solarum 250/800. Third quest echo is the boss.",
+    "Stability cap 550 normal / 1600 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Hatred.",
+    "Exclusive echo rewards (unique/set): Helmet, Shield.",
+    "Knowledge of Orobyss for first completion: 1.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R3Q10, R3Q20, R3Q30; hub M_Rest.",
+    "Maxroll timeline guide (2026-03-27) names \"Binds of Sanctuary and Slumber of Morditas\" as useful here, but those are Stolen Lance blessings (copy-paste error), so nothing is flagged recommended."
+   ],
+   "blessings": [
+    {
+     "name": "Memory of Light",
+     "effect": "+(30 to 42) Health | Grand (empowered): +(45 to 70) Health",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Echo of Solarum",
+     "effect": "+(25% to 40%) Void Resistance | Grand (empowered): +(55% to 75%) Void Resistance",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Shadow of the Eclipse",
+     "effect": "+(60 to 100) Dodge Rating | Grand (empowered): +(101 to 200) Dodge Rating",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Wrath of Rahyeh",
+     "effect": "+(1.2% to 2%) of Throwing Damage Leeched as Health | Grand (empowered): +(2.2% to 3.5%) of Throwing Damage Leeched as Health",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Whisper of Orobyss",
+     "effect": "+(40% to 60%) increased Void Damage | Grand (empowered): +(65% to 100%) increased Void Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Flames of the Black Sun",
+     "effect": "+(40% to 60%) Chance to Ignite on Hit | Grand (empowered): +(65% to 100%) Chance to Ignite on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Hunger of the Void",
+     "effect": "+(1.2% to 2%) of Spell Damage Leeched as Health | Grand (empowered): +(2.2% to 3.5%) of Spell Damage Leeched as Health",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Strength of the Mountain",
+     "effect": "(10 to 14) Health Gain on Block | Grand (empowered): (15 to 22) Health Gain on Block",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Winds of Oblivion",
+     "effect": "+(30% to 50%) increased Critical Strike Chance | Grand (empowered): +(51% to 80%) increased Critical Strike Chance",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Depths of Infinity",
+     "effect": "+(10% to 20%) Chance to Shred Void Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Void Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Greed of Darkness",
+     "effect": "(6 to 10) Ward Gain on Kill; +(60 to 100) Ward Decay Threshold | Grand (empowered): (12 to 18) Ward Gain on Kill; +(120 to 200) Ward Decay Threshold",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Emptiness of Ash",
+     "effect": "+(20% to 26%) Critical Strike Multiplier | Grand (empowered): +(27% to 40%) Critical Strike Multiplier",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Thirst of the Sun",
+     "effect": "(20% to 30%) Increased Leech Rate | Grand (empowered): (35% to 50%) Increased Leech Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Blood, Frost, and Death",
+   "level": 74,
+   "empoweredLevel": 100,
+   "boss": "Frost Lich Formosus",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Wengari Battleground 50/150; Occupied Heoborea 150/450; The Lair of Formosus 300/800. Third quest echo is the boss.",
+    "Stability cap 600 normal / 1600 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of War.",
+    "Exclusive echo rewards (unique/set): Body Armour.",
+    "Knowledge of Orobyss for first completion: 1.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R2Q10, R2Q20, R2Q30; hub M_Rest.",
+    "Boss alias: Maxroll [MXT] calls the boss \"Formosus the Undying\"."
+   ],
+   "blessings": [
+    {
+     "name": "Cruelty of Formosus",
+     "effect": "(30% to 45%) Increased Wand Drop Rate | Grand (empowered): (50% to 90%) Increased Wand Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Savior of the North",
+     "effect": "(30% to 45%) Increased Sceptre Drop Rate | Grand (empowered): (50% to 90%) Increased Sceptre Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Chill of Death",
+     "effect": "(30% to 45%) Increased Two-Handed Staff Drop Rate | Grand (empowered): (50% to 90%) Increased Two-Handed Staff Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Enmity of the Clans",
+     "effect": "(30% to 45%) Increased One-Handed Sword Drop Rate | Grand (empowered): (50% to 90%) Increased One-Handed Sword Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Ambition of the Empire",
+     "effect": "(30% to 45%) Increased Two-Handed Sword Drop Rate | Grand (empowered): (50% to 90%) Increased Two-Handed Sword Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Scars of Blood",
+     "effect": "(30% to 45%) Increased One-Handed Axe Drop Rate | Grand (empowered): (50% to 90%) Increased One-Handed Axe Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Favor of the Wengari",
+     "effect": "(30% to 45%) Increased Two-Handed Axe Drop Rate | Grand (empowered): (50% to 90%) Increased Two-Handed Axe Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Resolve of Frost",
+     "effect": "(30% to 45%) Increased One-Handed Mace Drop Rate | Grand (empowered): (50% to 90%) Increased One-Handed Mace Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Shards of Unity",
+     "effect": "(30% to 45%) Increased Two-Handed Mace Drop Rate | Grand (empowered): (50% to 90%) Increased Two-Handed Mace Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Remorse of Heorot",
+     "effect": "(30% to 45%) Increased Two-Handed Spear Drop Rate | Grand (empowered): (50% to 90%) Increased Two-Handed Spear Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Vigilance of the Damned",
+     "effect": "(30% to 45%) Increased Bow Drop Rate | Grand (empowered): (50% to 75%) Increased Bow Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Subtlety of Slaughter",
+     "effect": "(30% to 45%) Increased Dagger Drop Rate | Grand (empowered): (50% to 75%) Increased Dagger Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Ending the Storm",
+   "level": 78,
+   "empoweredLevel": 100,
+   "boss": "Lagon, God of Storms",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Drowned Thetima 50/150; Island Battlefield 180/500; Eye of the Storm 320/850. Third quest echo is the boss.",
+    "Stability cap 750 normal / 1700 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Chaos.",
+    "Exclusive echo rewards (unique/set): Gloves.",
+    "Knowledge of Orobyss for first completion: 1.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R6Q10, R6Q20, R6Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Bastion of Divinity",
+     "effect": "+(25% to 40%) Lightning Resistance | Grand (empowered): +(55% to 75%) Lightning Resistance",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Light of the Moon",
+     "effect": "+(30 to 50) Mana | Grand (empowered): +(60 to 90) Mana",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Rhythm of the Tide",
+     "effect": "+(60% to 100%) increased Health Regen; +(6 to 10) Health Regen | Grand (empowered): +(120% to 200%) increased Health Regen; +(12 to 20) Health Regen",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Chaos of Lagon",
+     "effect": "+(40% to 60%) increased Lightning Damage | Grand (empowered): +(65% to 100%) increased Lightning Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Might of the Sea Titan",
+     "effect": "+(40% to 60%) increased Cold Damage | Grand (empowered): +(65% to 100%) increased Cold Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Resonance of the Sea",
+     "effect": "+(17 to 25) Ward per Second | Grand (empowered): +(30 to 42) Ward per Second",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Mysteries of the Deep",
+     "effect": "+(10% to 20%) Chance to Shred Lightning Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Lightning Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Cruelty of the Meruna",
+     "effect": "+(40% to 60%) Chance to Shock on Hit | Grand (empowered): +(65% to 100%) Chance to Shock on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Weight of the Abyss",
+     "effect": "+(100% to 180%) Freeze Rate Multiplier | Grand (empowered): +(200% to 300%) Freeze Rate Multiplier",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Crash of the Waves",
+     "effect": "(50% to 90%) Increased Stun Chance | Grand (empowered): (100% to 160%) Increased Stun Chance",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Trance of the Sirens",
+     "effect": "(10% to 14%) Increased Shock Duration | Grand (empowered): (15% to 22%) Increased Shock Duration",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Intellect of Liath",
+     "effect": "(15% to 25%) Chance to Gain 30 Ward when Hit | Grand (empowered): (30% to 50%) Chance to Gain 30 Ward when Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Grace of Water",
+     "effect": "(40 to 70) Ward Gained on Potion Use; +(80 to 140) Ward Decay Threshold | Grand (empowered): (80 to 130) Ward Gained on Potion Use; +(160 to 260) Ward Decay Threshold",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Fall of the Empire",
+   "level": 82,
+   "empoweredLevel": 100,
+   "boss": "Harton's Husk",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Voidscarred Necropolis 50/150; Path of Despair 160/500; Dreadnought's Wreckage 320/850. Third quest echo is the boss.",
+    "Stability cap 800 normal / 1700 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Treason.",
+    "Exclusive echo rewards (unique/set): Belt.",
+    "Knowledge of Orobyss for first completion: 2.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R4Q10, R4Q20, R4Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Hope of the Beginning",
+     "effect": "(7% to 14%) Increased Prefix Shard Drop Rate | Grand (empowered): (15% to 25%) Increased Prefix Shard Drop Rate",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Safety of the Labyrinth",
+     "effect": "(10% to 20%) Increased Amulet Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Amulet Shard Drop Rate",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Remnants of the Living",
+     "effect": "(20% to 30%) Increased Ring Shard Drop Rate | Grand (empowered): (33% to 50%) Increased Ring Shard Drop Rate",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Visions of Death",
+     "effect": "(25% to 35%) Increased Two-Handed Spear Shard Drop Rate | Grand (empowered): (40% to 60%) Increased Two-Handed Spear Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Inevitability of the Void",
+     "effect": "(16% to 26%) Increased Two-Handed Staff Shard Drop Rate | Grand (empowered): (30% to 45%) Increased Two-Handed Staff Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Rot of the World",
+     "effect": "(25% to 35%) Increased Wand Shard Drop Rate | Grand (empowered): (40% to 60%) Increased Wand Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Boon of the Scarab",
+     "effect": "(25% to 35%) Increased Bow Shard Drop Rate | Grand (empowered): (40% to 60%) Increased Bow Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Shadows of Infinity",
+     "effect": "(10% to 20%) Increased Relic Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Relic Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": true
+    },
+    {
+     "name": "Despair of the Empire",
+     "effect": "(25% to 40%) Increased Ailment Shard Drop Rate | Grand (empowered): (45% to 70%) Increased Ailment Shard Drop Rate",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Reign of Dragons",
+   "level": 85,
+   "empoweredLevel": 100,
+   "boss": "Emperor of Corpses",
+   "unlockedBy": [
+    "Open on first entering the Monolith (no prerequisite since 1.4)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Heorot's Sanctum 50/150; Dragons' Grotto 250/450; The Rotting Hoard 400/850. Third quest echo is the boss.",
+    "Stability cap 900 normal / 1700 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Destruction.",
+    "Exclusive echo rewards (unique/set): Sword or Dagger, Axe Mace or Polearm.",
+    "Knowledge of Orobyss for first completion: 2.",
+    "Scene ids (datamine, not checked against a live log): quest echoes R7Q10, R7Q20, R7Q30; hub M_Rest.",
+    "Listed in Maxroll leveling guides (2026-09-29) as the 4th and last timeline of the recommended path; its 2 Knowledge completes the 5 needed for the level 90 timelines."
+   ],
+   "blessings": [
+    {
+     "name": "Resolve of Humanity",
+     "effect": "+(7% to 12%) to All Resistances | Grand (empowered): +(13% to 20%) to All Resistances",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Survival of Might",
+     "effect": "+(30% to 45%) Critical Strike Avoidance; +(30 to 50) Dodge Rating | Grand (empowered): +(50% to 70%) Critical Strike Avoidance; +(51 to 90) Dodge Rating",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Dream of Eterra",
+     "effect": "+(25% to 40%) Necrotic Resistance | Grand (empowered): +(45% to 75%) Necrotic Resistance",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Binds of Nature",
+     "effect": "+(40% to 60%) increased Poison Damage | Grand (empowered): +(65% to 100%) increased Poison Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Despair of Flesh",
+     "effect": "+(40% to 60%) increased Necrotic Damage | Grand (empowered): +(65% to 100%) increased Necrotic Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Cruelty of Strength",
+     "effect": "+(40% to 60%) increased Physical Damage | Grand (empowered): +(65% to 100%) increased Physical Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Hemmorage of Marrow",
+     "effect": "+(40% to 60%) Chance to apply a Bleed on Hit | Grand (empowered): +(65% to 100%) Chance to apply a Bleed on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Taste of Venom",
+     "effect": "+(40% to 60%) Chance to Poison on Hit | Grand (empowered): +(65% to 100%) Chance to Poison on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Hunger of Dragons",
+     "effect": "+(2% to 4%) of Melee Damage Leeched as Health | Grand (empowered): +(4.5% to 7%) of Melee Damage Leeched as Health",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Virtue of Command",
+     "effect": "+(8% to 15%) to Minion All Resistances | Grand (empowered): +(16% to 25%) to Minion All Resistances",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Persistance of Will",
+     "effect": "+(25% to 40%) Poison Resistance | Grand (empowered): +(55% to 75%) Poison Resistance",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Guile of Wyrms",
+     "effect": "+(60% to 90%) Chance to Shred Poison Resistance on Hit | Grand (empowered): +(100% to 150%) Chance to Shred Poison Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Allure of Apathy",
+     "effect": "+(40% to 60%) Chance to Slow on Hit | Grand (empowered): +(65% to 100%) Chance to Slow on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Last Ruin",
+   "level": 90,
+   "empoweredLevel": 100,
+   "boss": "The Husk of Elder Gaspar",
+   "unlockedBy": [
+    "Knowledge of Orobyss quest: 5 Knowledge (stash-shared)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): The Defiled Wood 50/150; The Voidscarred Archive 200/500; The Chambers of Ruin 400/900. Third quest echo is the boss.",
+    "Stability cap 1000 normal / 1800 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Fear.",
+    "Exclusive echo rewards (unique/set): Relic.",
+    "Knowledge of Orobyss for first completion: none (level 90 timeline).",
+    "Scene ids (datamine, not checked against a live log): quest echoes R8Q10, R8Q20, R8Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Temple of the Mind",
+     "effect": "(12% to 20%) Increased Helmet Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Helmet Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Bastion of the Heart",
+     "effect": "(12% to 20%) Increased Body Armor Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Body Armor Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Binding of Ruin",
+     "effect": "(20% to 30%) Increased Belt Shard Drop Rate | Grand (empowered): (32% to 50%) Increased Belt Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Refuge of Despair",
+     "effect": "(20% to 30%) Increased Shield Shard Drop Rate | Grand (empowered): (32% to 50%) Increased Shield Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Comfort of the End",
+     "effect": "(12% to 20%) Increased Suffix Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Suffix Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Memory of Masters",
+     "effect": "(10% to 18%) Increased Class Specific Shard Drop Rate | Grand (empowered): (20% to 30%) Increased Class Specific Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Grasp of Hope",
+     "effect": "(20% to 30%) Increased Gloves Shard Drop Rate | Grand (empowered): (32% to 50%) Increased Gloves Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Remnants of the Elders",
+     "effect": "(20% to 30%) Increased Off-Hand Catalyst Shard Drop Rate | Grand (empowered): (32% to 50%) Increased Off-Hand Catalyst Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    },
+    {
+     "name": "Knowledge of Skill",
+     "effect": "(12% to 20%) Increased Skill Shard Drop Rate | Grand (empowered): (22% to 35%) Increased Skill Shard Drop Rate",
+     "offerPool": "any slot",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "The Age of Winter",
+   "level": 90,
+   "empoweredLevel": 100,
+   "boss": "Heorot",
+   "unlockedBy": [
+    "Knowledge of Orobyss quest: 5 Knowledge (stash-shared)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): The Frozen Fortress 50/150; The Frozen Harbor 250/550; The Frozen Citadel 400/900. Third quest echo is the boss.",
+    "Stability cap 1000 normal / 1800 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Tyranny.",
+    "Exclusive echo rewards (unique/set): Ring, Amulet.",
+    "Knowledge of Orobyss for first completion: none (level 90 timeline).",
+    "Scene ids (datamine, not checked against a live log): quest echoes R9Q10, R9Q20, R9Q30; hub M_Rest."
+   ],
+   "blessings": [
+    {
+     "name": "Resolve of Grael",
+     "effect": "+(25% to 40%) Physical Resistance | Grand (empowered): +(55% to 75%) Physical Resistance",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Protection of Heorot",
+     "effect": "+(25% to 40%) Cold Resistance | Grand (empowered): +(55% to 75%) Cold Resistance",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Vigor of Jormun",
+     "effect": "+(40 to 70) Endurance Threshold | Grand (empowered): +(80 to 150) Endurance Threshold",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Maw of Artor",
+     "effect": "+(40% to 60%) Chance to apply Frostbite on Hit | Grand (empowered): +(65% to 100%) Chance to apply Frostbite on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Winds of Frost",
+     "effect": "+(30% to 50%) Freeze Rate per stack of Chill | Grand (empowered): +(55% to 80%) Freeze Rate per stack of Chill",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Rage of Winter",
+     "effect": "+(10% to 20%) Chance to Shred Cold Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Cold Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Fury of the North",
+     "effect": "+(10% to 20%) Chance to Shred Physical Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Physical Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Heart of Ice",
+     "effect": "+(20% to 35%) Chance to Chill on Hit | Grand (empowered): +(40% to 60%) Chance to Chill on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Bones of Eternity",
+     "effect": "+(3% to 4%) Block Chance; +(100 to 140) Block Effectiveness | Grand (empowered): +(5% to 8%) Block Chance; +(180 to 240) Block Effectiveness",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Bulwark of the Tundra",
+     "effect": "+(12% to 24%) increased Armor | Grand (empowered): +(25% to 55%) increased Armor",
+     "offerPool": "slots 2 & 3",
+     "recommended": true
+    },
+    {
+     "name": "Defiance of Yulia",
+     "effect": "+(5 to 10) Spell Cold Damage While Channelling | Grand (empowered): +(11 to 20) Spell Cold Damage While Channelling",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  },
+  {
+   "name": "Spirits of Fire",
+   "level": 90,
+   "empoweredLevel": 100,
+   "boss": "Volcanic Shaman",
+   "unlockedBy": [
+    "Knowledge of Orobyss quest: 5 Knowledge (stash-shared)"
+   ],
+   "notes": [
+    "Quest echoes (stability needed, normal/empowered): Ash Covered Maj'elka 50/150; The Magma Caverns 220/450; The Caldera of Souls 400/900. Third quest echo is the boss.",
+    "Stability cap 1000 normal / 1800 empowered. Corruption 0-50 normal; empowered starts at 100, no cap.",
+    "Harbinger: Harbinger of Ash.",
+    "Exclusive echo rewards (unique/set): Boots.",
+    "Knowledge of Orobyss for first completion: none (level 90 timeline).",
+    "Scene ids (datamine, not checked against a live log): quest echoes R10Q10, R10Q20, R10Q30; hub M_Rest.",
+    "Boss alias: Maxroll [MXT] names the fight \"Bhuldar, Herkir & Logi\" (three Immortal Shamans)."
+   ],
+   "blessings": [
+    {
+     "name": "Heart of the Caldera",
+     "effect": "+(25% to 40%) Fire Resistance | Grand (empowered): +(55% to 75%) Fire Resistance",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Body of Obsidian",
+     "effect": "+(120 to 180) Armor | Grand (empowered): +(200 to 320) Armor",
+     "offerPool": "slot 1",
+     "recommended": true
+    },
+    {
+     "name": "Curse of Sulphur",
+     "effect": "+(20% to 35%) Chance to apply Frailty on Hit | Grand (empowered): +(40% to 60%) Chance to apply Frailty on Hit",
+     "offerPool": "slot 1",
+     "recommended": false
+    },
+    {
+     "name": "Embers of Immortality",
+     "effect": "+(10% to 14%) Endurance | Grand (empowered): +(18% to 30%) Endurance",
+     "offerPool": "slots 2 & 3",
+     "recommended": true
+    },
+    {
+     "name": "Swiftness of Logi",
+     "effect": "+(15% to 35%) increased Dodge Rating | Grand (empowered): +(40% to 70%) increased Dodge Rating",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Breath of Cinders",
+     "effect": "+(10% to 20%) Chance to Shred Fire Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Fire Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Promise of Death",
+     "effect": "+(10% to 20%) Chance to Shred Necrotic Resistance on Hit | Grand (empowered): +(25% to 50%) Chance to Shred Necrotic Resistance on Hit",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Spirit of Command",
+     "effect": "+(40% to 60%) increased Minion Damage | Grand (empowered): +(65% to 100%) increased Minion Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Might of Bhuldar",
+     "effect": "(20% to 30%) Increased Stun Duration | Grand (empowered): (32% to 50%) Increased Stun Duration",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Flames of Calamity",
+     "effect": "+(40% to 60%) increased Fire Damage | Grand (empowered): +(65% to 100%) increased Fire Damage",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    },
+    {
+     "name": "Patience of Herkir",
+     "effect": "+(200 to 350) Armor While Channelling | Grand (empowered): +(400 to 650) Armor While Channelling",
+     "offerPool": "slots 2 & 3",
+     "recommended": false
+    }
+   ]
+  }
+ ],
+ "general": [
+  "[1.4, F14] All seven pre-level-90 timelines are open from first entering the Monolith; there is no complete-X-to-unlock-Y tree any more.",
+  "[1.4, F14; still present in 1.5 per MX15 and the 1.5-preview1 quest datamine] The three level 90 timelines are behind the quest 'Knowledge of Orobyss' (5 Knowledge). Sources of Knowledge: Campaign Chapter IX 1, Chapter X 1, Fall of the Outcasts 1, The Stolen Lance 1, The Black Sun 1, Blood Frost and Death 1, Ending the Storm 1, Fall of the Empire 2, Reign of Dragons 2. Knowledge is shared by all characters on the same stash.",
+  "[1.5, MX15] Completing the Knowledge of Orobyss quest gives +2 to all attributes.",
+  "[MXL, 2026-09-29] Recommended order for a new character: Fall of the Outcasts, The Stolen Lance, The Black Sun, Reign of Dragons (1+1+1+2 = 5 Knowledge), then one level 90 timeline to unlock Empowered.",
+  "[TUNK] Each normal timeline has 3 quest echoes gated by stability; the third is the boss. [MXB] They must be done in order. [1.4, F14] 'Echo quests are now only present in normal difficulty timelines.'",
+  "[MXB] Stability comes from completing echoes; echoes further from the web centre give more, plus bonus stability from kills in the echo. [MXT] Killing the timeline boss resets stability.",
+  "[MXB/MXG] Killing a timeline boss offers a choice of blessings; a character has one blessing slot per timeline boss. Re-kill the boss for a new offer. A blessing only has to be offered once to be discovered; discovered blessings can be re-selected at Chronomancer Nyx in the End of Time at your best roll.",
+  "[TUNK/MXE] Empowered timelines offer the Grand versions (same stat, higher range). [MXE] At 200+ corruption the boss offers one more blessing option.",
+  "[TUNK/MXB] Corruption: normal timelines run 0 to 50, empowered start at 100 with no cap. It raises enemy health and damage and increases item rarity and experience.",
+  "[MXB/MXS] Corruption is raised by killing the Shade of Orobyss echo; Shades further from the web centre give more, and the kill resets the echo web. Each timeline boss kill adds Gaze of Orobyss, which increases corruption from the next Shade; Gaze is lost if you die to the Shade. The Sanctuary of Eterra echo next to the web start lowers corruption (3 options).",
+  "[1.4, F14 + MXB/MXE] Empowered unlock: complete one level 90 timeline on normal; the first Harbinger appears in that boss echo; defeat it, then open the chest on the centre island between the three level 90 timelines. This unlocks empowered (area level 100) for all 10 timelines and the Forgotten Knights faction (Shattered Road).",
+  "[1.2, F12] Normal timeline unlocks are shared between characters on the same stash; an alt still has to complete one level 90 timeline itself to get Empowered.",
+  "[MXK, 1.3-dated] Aberroth requires killing all 10 Harbingers (in empowered timelines at the corruption shown in the Forgotten Knights panel) and spending 1 Harbinger Eye at the Shattered Road.",
+  "[MXW] The Woven faction and Weaver Tree unlock by completing a Cemetery echo in any timeline web; the exit portal leads to the Haven of Silk, talk to Masque.",
+  "[MXF, 1.5] Item factions (Merchant's Guild / Circle of Fortune) are joined in Maj'elka Upper District in Chapter 9 via Zerrick, then Nama at the Bazaar or Galila at the Observatory; a Temporal Sanctum key plus a Chronomancer Julra kill is a shortcut to Chapter 9.",
+  "[MXL, 2026-09-29] Leveling guides leave the campaign after Chapter 7 with the quest-reward caps reached (15 passive points, 8 idol slots) and go straight to the Monolith. See campaign-research.md for the quest list and the open question about the cap in 1.5.",
+  "[MXDG] Dungeon keys: timeline bosses are the recommended key source (drop chance scales with item rarity). [TUNK] The Abomination loot table has two key rolls of 18%-70% each.",
+  "[MXD] Resistances cap at 75%. Grand Survival of Might (Reign of Dragons) is named as one of the best sources of critical strike avoidance. [MXT] Per-timeline advice is to cap the resistances matching the boss damage types.",
+  "[1.5, MX15] 'Entering an echo that has previously been attempted now provides significantly less XP and favor, in addition to the existing reductions to random encounters and loot.'",
+  "[1.5, MX15] 'Echo of the World has been renamed to Traveler's Rest.' 'Traveler's Rest now has a waypoint, which can be accessed from the End of Time Era.' 'You can now change timelines directly from the Monolith of Fate through the new Nexus UI.'",
+  "[1.5, MX15/MXM] Rage of Morditas: Blood Crystal encounters in echoes feed a kill counter (campaign encounters do not count). Woven echoes unlock at 750 kills (Site of Carnage), 2,000 (Blood of Farwood) and 4,000 (Circle of Frozen Blood = Morditas). Beating Morditas gives the Demigod's Ascendance woven echo (Pinnacle Morditas), which requires 400 corruption. Anger raises difficulty and rewards of the three echoes and can be reduced freely in the Nexus.",
+  "[TUNKJS, 1.5-preview1 scenes; not checked against a live log] Scene ids: MonolithHub = Monolith of Fate (timeline map), M_Rest = Traveler's Rest (in-timeline hub), EoT = The End of Time, M_Shade = Echo of a World (Shade of Orobyss), M_Sanctuary = Sanctuary of Eterra, M_Harbinger = Altar of Orobyss, M_Knight = Shattered Road, WeaversHub = Haven of Silk, PCG_Cemetery / PCG_Tomb, R<n>Q10/20/30 = quest echoes, M_<zone> = normal echoes, M_Arena_* = arena echoes, WE<n> = woven echoes (WE539 Site of Carnage, WE538 Blood of Farwood, WE536 Circle of Frozen Blood, WE537 Demigod's Ascendance).",
+  "UNVERIFIED: normal area levels 62/66/70/74/78/82/85/90 are from tunklab (1.5-preview1); Maxroll's 1.4-dated guides still say the first timeline is level 58. No patch note found for the change.",
+  "UNVERIFIED: the datamine's per-timeline empowered 'sufficientRequirements' (e.g. Fall of the Outcasts empowered lists Reign of Dragons) do not match the 'one level 90 timeline unlocks all' rule from F14/MXB/MXE; the latter is used here.",
+  "UNVERIFIED: 'recommended' flags are Maxroll's 'generally useful choices' from 1.4-dated timeline guides plus the Survival of Might mention; no 1.5-dated blessing recommendation list was found, and none aimed specifically at leveling."
+ ],
+ "sources": [
+  "[TUNK] https://lastepoch.tunklab.com/timelines and /timeline/<slug> (server-rendered HTML, fetched 2026-10-01; the site's changelog page is titled 'Patch 1.5 Changelog')",
+  "[TUNKJS] https://lastepoch.tunklab.com/_next/static/chunks/3nhe36ktaxpqv.js (datamine bundle; scenes block tagged version 1.5-preview1; the timelines array (getTimelines) has no version tag of its own and sits after a dungeonList tagged 1.3.6) and 2d2km6hqs6ajr.js (quests, 1.5-preview1). Chunk names are build hashes and will change.",
+  "[MX15] https://maxroll.gg/last-epoch/news/season-5-patch-notes (Maxroll mirror of the official 1.5 patch notes)",
+  "[F14] https://forum.lastepoch.com/t/last-epoch-shattered-omens-patch-notes/80571 (official 1.4 patch notes, 2026-03-20; raw text: https://forum.lastepoch.com/raw/80571)",
+  "[F12] https://forum.lastepoch.com/t/last-epoch-tombs-of-the-erased-patch-notes/75247 (official 1.2 patch notes, 2025-04-11)",
+  "[MXB] https://maxroll.gg/last-epoch/monolith/beginner-guide (last updated 2026-03-27, Season 4 / 1.4)",
+  "[MXE] https://maxroll.gg/last-epoch/monolith/empowered-guide (2026-03-27, 1.4)",
+  "[MXT] https://maxroll.gg/last-epoch/monolith/<timeline>-timeline-guide, 10 pages (2026-03-27, 1.4; partly stale, see md)",
+  "[MXL] https://maxroll.gg/last-epoch/build-guides/paladin-leveling-guide and necromancer-leveling-guide (2026-09-29, updated just before 1.5 launch)",
+  "[MXD] https://maxroll.gg/last-epoch/getting-started/defenses-for-beginners (2026-03-26, 1.4)",
+  "[MXG] https://maxroll.gg/last-epoch/resources/gear-walkthrough (2026-04-02, 1.4)",
+  "[MXF] https://maxroll.gg/last-epoch/getting-started/item-faction-overview (2026-10-01, 1.5)",
+  "[MXK] https://maxroll.gg/last-epoch/resources/forgotten-knights-overview (2025-07-22, 1.3; partly stale)",
+  "[MXW] https://maxroll.gg/last-epoch/resources/the-woven-faction-overview (2026-04-02, 1.4)",
+  "[MXM] https://maxroll.gg/last-epoch/resources/rage-of-morditas (2026-10-01, 1.5)",
+  "[MXS] https://maxroll.gg/last-epoch/monolith/shade-of-orobyss-boss-guide (2026-04-02, 1.4)",
+  "[MXDG] https://maxroll.gg/last-epoch/dungeons/dungeon-guide (2026-04-02, 1.4) and https://maxroll.gg/last-epoch/resources/idols-guide (2026-03-27, 1.4)"
+ ]
+}
