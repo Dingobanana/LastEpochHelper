@@ -308,6 +308,9 @@ public static partial class MaxrollImporter
                 Skills = skillHistory.Where(kv => skillTrees.ContainsKey(SkillName(kv.Key)))
                     .ToDictionary(kv => SkillName(kv.Key), kv => kv.Value),
             };
+            // The Weaver tree is stored like a skill tree: a click history.
+            var weaver = History(profile["weaver"]);
+            if (weaver.Count > 0) stage.Skills[TreeDef.WeaverName] = weaver;
             MaxrollGear.Fill(stage, profile, data, game);
             build.Stages.Add(stage);
 
@@ -348,6 +351,15 @@ public static partial class MaxrollImporter
                 Nodes = tree["nodes"]!.AsObject().Select(kv => ToNode(kv.Key, kv.Value!, atlas, kv.Key == "0" ? skillIcon : null)).ToList(),
             });
         }
+
+        if (build.Stages.Any(s => s.Skills.ContainsKey(TreeDef.WeaverName)) && game["skillTrees"]?["weaver"]?["nodes"] is JsonObject weaverNodes)
+            build.Trees.Add(new TreeDef
+            {
+                Name = TreeDef.WeaverName,
+                Kind = TreeDef.WeaverKind,
+                TreeId = "weaver",
+                Nodes = weaverNodes.Select(kv => ToNode(kv.Key, kv.Value!, atlas)).ToList(),
+            });
 
         return new Result(name, Render(id, name, steps), steps.Count, build);
     }

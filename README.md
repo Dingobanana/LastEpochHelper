@@ -85,7 +85,10 @@ beder om det, og der hentes kun zip-filer fra dette repos egne releases. Dit fre
 - **Loot filter fra buildet.** Planlæggerens Loot filter-side skriver et leveling-filter ud fra det importerede
   build direkte i spillets mappe (vælg det i spillet med Shift+F). Det viser alt til level 9, rares til level 29
   og derefter kun items med buildets affixes; uniques, sets og exalted skjules aldrig. `check` ud for et filter
-  viser uniques og affixes, der er nyere end noget filteret kender.
+  viser uniques og affixes, der er nyere end noget filteret kender. Kryds flere importerede builds af for ét
+  fælles filter til flere karakterer. `+ build` laver en kopi af et eksisterende filter, hvor det dine builds
+  vil have (uniques, items med to af deres affixes, idols) aldrig skjules; originalen røres ikke.
+- **Search.** Færdige søgestrenge til stash-søgningen ud fra buildets affixes og items; klik for at kopiere.
 - **Targets.** Hvilken timeline der giver hver blessing og unique, buildet vil have, med roll-intervaller.
 - **Item-tjek.** Hold musen over et item og tryk `Ctrl+Shift+E`: overlayet læser tooltippet fra skærmen og
   siger, hvilke af buildets affixes der er på.

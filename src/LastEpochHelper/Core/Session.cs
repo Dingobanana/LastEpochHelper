@@ -357,20 +357,64 @@ public sealed class Session
         Changed?.Invoke();
     }
 
-    /// <summary>
-    /// Writes a loot filter for the imported build into the game's folder. Returns the filter's name,
-    /// or null when there is no build (or it lists no gear) to derive one from.
-    /// </summary>
-    public string? GenerateFilter()
+    /// <summary>Names of the builds imported on this machine (those with tree data).</summary>
+    public List<string> ImportedBuilds()
     {
-        if (Tree is null) return null;
-        string name = LootFilters.FileNameFor(Tree.Name);
-        if (LootFilters.Generate(Tree, name) is not { } xml) return null;
+        try
+        {
+            return Directory.GetFiles(BuildsDir, "*.tree.json")
+                .Select(f => Path.GetFileName(f)[..^".tree.json".Length]).OrderBy(n => n).ToList();
+        }
+        catch (IOException) { return new List<string>(); }
+    }
+
+    private List<BuildTree> LoadBuilds(IEnumerable<string>? names)
+    {
+        if (names is null) return Tree is null ? new List<BuildTree>() : new List<BuildTree> { Tree };
+        return names.Select(n => BuildTree.Load(Path.Combine(BuildsDir, n + ".tree.json"))).Where(b => b is not null).Select(b => b!).ToList();
+    }
+
+    private void WriteFilter(string name, string xml)
+    {
         Directory.CreateDirectory(FiltersDir);
         // The game writes its filters as UTF-8 with a byte order mark.
         File.WriteAllText(Path.Combine(FiltersDir, name + ".xml"), xml, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Writes a loot filter for the given imported builds (default: this character's build) into the
+    /// game's folder. Returns the filter's name, or null when no build lists gear to derive one from.
+    /// </summary>
+    public string? GenerateFilter(IEnumerable<string>? builds = null)
+    {
+        var loaded = LoadBuilds(builds);
+        if (loaded.Count == 0) return null;
+        string name = LootFilters.FileNameFor(string.Join(" + ", loaded.Select(b => b.Name)));
+        if (LootFilters.Generate(loaded, name) is not { } xml) return null;
+        WriteFilter(name, xml);
         return name;
+    }
+
+    /// <summary>
+    /// Writes a copy of an installed filter with the builds' "never hide" rules on top. The original
+    /// file is left untouched. Returns the new filter's name, or null if there was nothing to add.
+    /// </summary>
+    public string? AddBuildRulesTo(string filter, IEnumerable<string>? builds = null)
+    {
+        var loaded = LoadBuilds(builds);
+        if (loaded.Count == 0) return null;
+        try
+        {
+            string name = LootFilters.FileNameFor(filter)[4..] + " + build";
+            string xml = File.ReadAllText(Path.Combine(FiltersDir, filter + ".xml"));
+            if (LootFilters.AddKeepRules(xml, loaded, name) is not { } combined) return null;
+            WriteFilter(name, combined);
+            return name;
+        }
+        catch (IOException) { return null; }
+        catch (System.Xml.XmlException) { return null; }
+        catch (FormatException) { return null; }
     }
 
     /// <summary>Checks an installed filter for signs of age. Null if the file cannot be read as a filter.</summary>

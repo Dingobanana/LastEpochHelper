@@ -29,23 +29,47 @@ public static class LootFilters
     /// and finally rare items unless they carry affixes the build uses. Uniques, sets and exalted
     /// items are never hidden. Returns null if the build has no gear to derive affixes from.
     /// </summary>
-    public static string? Generate(BuildTree build, string name)
+    public static string? Generate(BuildTree build, string name) => Generate(new[] { build }, name);
+
+    /// <summary>What one or more builds want from drops: the ids loot filter rules are written with.</summary>
+    private sealed record Wanted(List<int> GearAffixes, List<int> IdolAffixes, List<int> Uniques)
     {
-        var gear = build.Stages.SelectMany(s => s.Gear).ToList();
-        var idols = build.Stages.SelectMany(s => s.Idols).ToList();
-        var gearAffixes = gear.SelectMany(g => g.AffixIds).Distinct().OrderBy(i => i).ToList();
-        var idolAffixes = idols.SelectMany(g => g.AffixIds).Distinct().OrderBy(i => i).ToList();
-        var uniques = gear.Concat(idols).Where(g => g.UniqueId is not null).Select(g => g.UniqueId!.Value).Distinct().OrderBy(i => i).ToList();
+        public static Wanted From(IEnumerable<BuildTree> builds)
+        {
+            var stages = builds.SelectMany(b => b.Stages).ToList();
+            var gear = stages.SelectMany(s => s.Gear).ToList();
+            var idols = stages.SelectMany(s => s.Idols).ToList();
+            return new Wanted(
+                gear.SelectMany(g => g.AffixIds).Distinct().OrderBy(i => i).ToList(),
+                idols.SelectMany(g => g.AffixIds).Distinct().OrderBy(i => i).ToList(),
+                gear.Concat(idols).Where(g => g.UniqueId is not null).Select(g => g.UniqueId!.Value).Distinct().OrderBy(i => i).ToList());
+        }
+    }
+
+    /// <summary>The "never hide these" rules, highest priority first, numbered from <paramref name="firstOrder"/>.</summary>
+    private static List<XElement> KeepRules(Wanted wanted, int firstOrder = 0)
+    {
+        var rules = new List<XElement>();
+        void Add(string title, params XElement[] conditions) => rules.Add(Rule("SHOW", title, firstOrder + rules.Count, true, conditions));
+        if (wanted.Uniques.Count > 0) Add("Uniques the build uses", UniqueCondition(wanted.Uniques));
+        if (wanted.GearAffixes.Count > 0) Add("Two or more build affixes", Rarity("NORMAL MAGIC RARE EXALTED"), Affixes(wanted.GearAffixes, onSameItem: 2));
+        if (wanted.IdolAffixes.Count > 0) Add("Idols with a build affix", Types(Idols), Affixes(wanted.IdolAffixes));
+        return rules;
+    }
+
+    /// <summary>One filter for several builds (a main character and an alt, say): anything either wants is shown.</summary>
+    public static string? Generate(IReadOnlyCollection<BuildTree> builds, string name)
+    {
+        var wanted = Wanted.From(builds);
+        var gearAffixes = wanted.GearAffixes;
         if (gearAffixes.Count == 0) return null;
+        var build = builds.Count == 1 ? builds.First() : new BuildTree { Name = string.Join(" + ", builds.Select(b => b.Name)) };
 
         // Highest priority first; the game evaluates Order 0 before Order 1 and so on.
-        var rules = new List<XElement>();
+        var rules = KeepRules(wanted);
         void Add(string type, string title, bool emphasized, params XElement[] conditions) =>
             rules.Add(Rule(type, title, rules.Count, emphasized, conditions));
 
-        if (uniques.Count > 0) Add("SHOW", "Uniques the build uses", true, UniqueCondition(uniques));
-        Add("SHOW", "Two or more build affixes", true, Rarity("NORMAL MAGIC RARE EXALTED"), Affixes(gearAffixes, onSameItem: 2));
-        if (idolAffixes.Count > 0) Add("SHOW", "Idols with a build affix", true, Types(Idols), Affixes(idolAffixes));
         Add("SHOW", "One build affix", false, Rarity("NORMAL MAGIC RARE"), Affixes(gearAffixes));
         Add("SHOW", "Idols while leveling", false, Types(Idols), CharacterLevel(0, 49));
         Add("SHOW", "Rares while leveling", false, Rarity("RARE"), CharacterLevel(0, 29));
@@ -111,6 +135,30 @@ public static class LootFilters
     private static XElement UniqueCondition(IEnumerable<int> ids) =>
         Condition("UniqueModifiersCondition",
             ids.Select(i => new XElement("Uniques", new XElement("UniqueId", i), new XElement("Rolls"))));
+
+    /// <summary>
+    /// A copy of an existing filter with the builds' "never hide" rules placed above everything in
+    /// it: their uniques, items with two or more of their affixes, idols with their affixes. The
+    /// filter's own rules keep their order, just below.
+    /// </summary>
+    /// <returns>Null if the builds have nothing to add or the file is not a filter.</returns>
+    public static string? AddKeepRules(string filterXml, IReadOnlyCollection<BuildTree> builds, string newName)
+    {
+        var document = XDocument.Parse(filterXml);
+        var rules = document.Root?.Element("rules");
+        if (document.Root is null || rules is null) return null;
+        var keep = KeepRules(Wanted.From(builds));
+        if (keep.Count == 0) return null;
+
+        // Everything already there moves down by as many places as are inserted at the top.
+        foreach (var order in rules.Elements("Rule").Select(r => r.Element("Order")).Where(o => o is not null))
+            order!.Value = ((int)order + keep.Count).ToString();
+        // The file lists the lowest priority first, so the new top rules go last, Order 0 at the very end.
+        keep.Reverse();
+        rules.Add(keep);
+        if (document.Root.Element("name") is { } name) name.Value = newName;
+        return document.ToString();
+    }
 
     // ------------------------------------------------------------------ inspecting
 

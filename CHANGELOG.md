@@ -5,6 +5,11 @@ Shown inside the app after an update. One section per version: `## <version> - <
 ## 0.7.0 - Filters from your build, real tree points, item check
 
 - Loot filter from your build: the planner's Loot filter page writes a leveling filter for the imported build straight into the game's folder.
+- One filter for several builds: tick more than one imported build before generating, for a main and an alt sharing loot.
+- "+ build" next to a filter makes a copy that never hides what your builds want (their uniques, items with two of their affixes, idols), on top of the filter's own rules.
+- Search page: ready-made stash search strings for the build's affixes and items; click to copy.
+- Weaver tree: shown as a tab in the build tree when the imported build has one.
+- Prophecies page rewritten in plain words, with every lens and what it does.
 - Filter check: "check" next to a filter lists uniques and affixes that are newer than anything the filter knows.
 - Targets page: which timeline gives each blessing and unique the build wants, with the roll ranges.
 - Item check (Ctrl+Shift+E): hover an item and the overlay says which of the build's affixes are on it.

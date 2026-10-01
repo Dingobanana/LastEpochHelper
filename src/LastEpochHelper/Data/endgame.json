@@ -840,14 +840,24 @@
   {
    "title": "Prophecies",
    "lines": [
-    "!Circle of Fortune in 1.5: no more rerolling. You pick a reward category per slot; slots gain charges (up to 99) as you earn Favor.",
-    "!Mesembria - rank 1 - triggers on: defeat a Rift Beast or activate a Shrine.",
-    "!Dysis - rank 3 - triggers on: defeat a Nemesis or open a Lost Cache.",
-    "!Eos - rank 6 - triggers on: defeat an Exiled Mage or a Timeline Boss.",
-    "!Arctis - rank 9 - triggers on: defeat a Fateweaver or an Omen.",
-    "Lenses can be bought from rank 3. Lens of Tyranny doubles the charge rate.",
-    "Before 1.5, Weaver idol prophecies needed rank 9-10 and the game did not say so; whether that still holds after the rework is unconfirmed.",
-    "Guides written before 1.5 describe the old reroll system and no longer apply."
+    "!How it works in 1.5",
+    "You no longer roll and reroll prophecies. At a telescope you pick the kind of reward you want for a slot, and that is it.",
+    "The slot then fills up by itself as you earn Favor. Each time it is full it stores one charge (up to 99).",
+    "Do the slot's task while it holds a charge and the reward drops. Several charges: it drops that many times at once.",
+    "!The four slots and what triggers them",
+    "Mesembria (rank 1): kill a Rift Beast or use a Shrine.",
+    "Dysis (rank 3): kill a Nemesis or open a Lost Cache.",
+    "Eos (rank 6): kill an Exiled Mage or a Timeline Boss.",
+    "Arctis (rank 9): kill a Fateweaver or an Omen.",
+    "!Lenses - a modifier you put on a slot",
+    "Faster: Celerity (rank 5) charges this slot faster. Charity (rank 7) charges your OTHER slots faster. Tyranny (rank 3) doubles the charge rate but eats your existing Favor.",
+    "More loot: Duplication (rank 5) can duplicate the reward. Celestial Scales (rank 7) can double it, with a small chance of getting a single Grole Egg instead.",
+    "Easier trigger: Acceleration (rank 6) also counts rare enemies as a target.",
+    "Better rares and exalteds: Origin (rank 4) higher prefix tiers, Finality (rank 4) higher suffix tiers, Anomaly (rank 6) evens out which affixes roll, Prowess (rank 6) more skill-level affixes on helmet, body and relic.",
+    "Better uniques: Curiosity (rank 8) evens out which uniques and sets drop (rare ones more often). Quality (rank 9) more Legendary Potential on uniques, and a chance to raise an affix tier on rares and exalteds.",
+    "!Good to know",
+    "Guides from before 1.5 describe the old reroll system and no longer apply.",
+    "Before 1.5, Weaver idol prophecies needed rank 9-10 without the game saying so; whether that still holds is unconfirmed."
    ]
   }
  ]

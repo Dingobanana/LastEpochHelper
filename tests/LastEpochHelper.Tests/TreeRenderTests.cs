@@ -89,7 +89,7 @@ public sealed class TreeRenderTests : IDisposable
                 session.Handle(new PlayerDiedEvent(), live: true);
                 session.SetDeathCause(session.Profile.DeathLog[0], "Boss mechanic");
                 session.Handle(new PlayerDiedEvent(), live: true);
-                foreach (string tab in new[] { "Gear", "Idols", "Targets", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" })
+                foreach (string tab in new[] { "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" })
                 {
                     session.Profile.PlannerTab = tab;
                     planner.Render();

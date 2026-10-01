@@ -23,6 +23,9 @@ public sealed class TreeDef
 {
     public const string PassiveKind = "passive";
     public const string SkillKind = "skill";
+    /// <summary>The Weaver tree: laid out and ordered like a skill tree, but not one of the game's skills.</summary>
+    public const string WeaverKind = "weaver";
+    public const string WeaverName = "Weaver";
 
     public string Name { get; set; } = "";
     public string Kind { get; set; } = PassiveKind;

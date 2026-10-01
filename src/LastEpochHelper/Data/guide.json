@@ -2897,7 +2897,7 @@
   {
    "id": "leveling",
    "name": "Leveling: Chapters 1-7, then Monolith",
-   "description": "Stops the campaign once the quest caps (15 passives, 8 idol slots) are reached and goes to the Monolith.",
+   "description": "The least campaign you need: both quest caps (15 passive points, 8 idol slots) are reached by the end of Chapter 7, and nothing in Chapters 8-10 is required for the Monolith. Chapter 9 is where the item factions are - go there when you want one.",
    "chapters": [
     {
      "id": 1,

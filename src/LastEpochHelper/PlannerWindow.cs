@@ -17,7 +17,7 @@ namespace LastEpochHelper;
 /// </summary>
 internal sealed class PlannerWindow : Window
 {
-    private static readonly string[] Tabs = { "Gear", "Idols", "Targets", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" };
+    private static readonly string[] Tabs = { "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" };
 
     private static readonly Brush Gold = Frozen("#C9A85C");
     private static readonly Brush Green = Frozen("#7BE06A");
@@ -34,6 +34,7 @@ internal sealed class PlannerWindow : Window
     private readonly StackPanel _body = new() { Width = 560 };
     private readonly Dictionary<string, FilterReport?> _reports = new();
     private string _filterMessage = "";
+    private HashSet<string>? _filterBuilds;
 
     public event Action? Moved;
     public event Action? CloseRequested;
@@ -144,6 +145,7 @@ internal sealed class PlannerWindow : Window
             case "Gear": RenderGear(); break;
             case "Idols": RenderIdols(); break;
             case "Targets": RenderTargets(); break;
+            case "Search": RenderSearch(); break;
             case "Loot filter": RenderFilters(); break;
             case "Monolith": RenderMonolith(); break;
             case "Morditas" or "Prophecies": RenderReference(current); break;
@@ -270,6 +272,29 @@ internal sealed class PlannerWindow : Window
         if (stage.Blessings.Count > 0) Note("Ticked when the same blessing is chosen on the Monolith page. The top of each range is a good roll; re-kill the boss for a new offer.");
     }
 
+    private void RenderSearch()
+    {
+        if (Stage() is not { } stage) return;
+        Heading($"{stage.Name}  ·  stash search strings");
+        Note("Click a line to copy it, then paste it into the stash search box (Ctrl+V).");
+        foreach (var search in StashSearch.For(stage))
+        {
+            var captured = search;
+            var row = Line("", top: 6);
+            row.Cursor = Cursors.Hand;
+            row.Inlines.Add(new Run(search.Label + "\n") { Foreground = Muted, FontSize = 12 });
+            row.Inlines.Add(new Run("   " + search.Text) { Foreground = Green, FontFamily = new FontFamily("Consolas") });
+            row.MouseLeftButtonDown += (_, e) =>
+            {
+                try { Clipboard.SetText(captured.Text); _session.ShowAlert($"Copied: {captured.Text}", 6); }
+                catch (System.Runtime.InteropServices.ExternalException) { }
+                e.Handled = true;
+            };
+            _body.Children.Add(row);
+        }
+        Note("Affix names are matched against the tooltip text, so an affix the game words differently will not be found. Combine your own with & (and), | (or) and ! (not).");
+    }
+
     private void RenderReference(string title)
     {
         var page = _session.Endgame.Reference.FirstOrDefault(p => p.Title == title);
@@ -315,11 +340,31 @@ internal sealed class PlannerWindow : Window
 
     private void RenderFilters()
     {
-        Heading("Loot filter from your build");
-        Note("Writes a filter into the game's folder that shows everything at first, then only rares, then only items with the affixes your imported build uses. Uniques, sets and exalted items always show. Select it in game with Shift+F.");
-        var generate = Button("Generate filter from build", () =>
+        Heading("Loot filter from your builds");
+        Note("Writes a filter into the game's folder that shows everything at first, then only rares, then only items with the affixes of the chosen builds. Uniques, sets and exalted items always show. Pick more than one build to share a filter between characters. Select it in game with Shift+F.");
+
+        // Which imported builds the filter tools work from; this character's own by default.
+        var imported = _session.ImportedBuilds();
+        string own = Path.GetFileNameWithoutExtension(_session.Profile.BuildPlan);
+        _filterBuilds ??= imported.Contains(own) ? new HashSet<string> { own } : new HashSet<string>();
+        _filterBuilds.IntersectWith(imported);
+        if (imported.Count > 0)
         {
-            string? name = _session.GenerateFilter();
+            var chips = new WrapPanel { Margin = new Thickness(0, 5, 0, 0) };
+            foreach (string build in imported)
+            {
+                string captured = build;
+                bool on = _filterBuilds.Contains(build);
+                var chip = Check(build, on, () => { if (!_filterBuilds.Remove(captured)) _filterBuilds.Add(captured); Render(); });
+                chip.Margin = new Thickness(0, 0, 4, 3);
+                chips.Children.Add(chip);
+            }
+            _body.Children.Add(chips);
+        }
+
+        var generate = Button("Generate filter", () =>
+        {
+            string? name = _filterBuilds.Count == 0 ? null : _session.GenerateFilter(_filterBuilds);
             _filterMessage = name is null
                 ? "No build with gear to generate from - import a Maxroll build first (and re-import builds imported before 0.7)."
                 : $"Wrote \"{name}\". In game: Shift+F, then pick it from the list.";
@@ -341,11 +386,23 @@ internal sealed class PlannerWindow : Window
             var stepper = Stepper("from level", level, delta => _session.SetFilterLevel(name, Math.Clamp(level + delta, 0, 100)), step: 5);
             DockPanel.SetDock(stepper, Dock.Right);
             row.Children.Add(stepper);
+            var keep = Button("+ build", () =>
+            {
+                string? created = _filterBuilds is { Count: > 0 } ? _session.AddBuildRulesTo(name, _filterBuilds) : null;
+                _filterMessage = created is null
+                    ? "Nothing to add: tick a build with gear above first."
+                    : $"Wrote \"{created}\": your filter with the builds' uniques, 2+ affix items and idols always shown on top.";
+                Render();
+            });
+            keep.ToolTip = "Make a copy of this filter that never hides what the ticked builds want";
+            keep.Margin = new Thickness(0, 0, 4, 0);
+            DockPanel.SetDock(keep, Dock.Right);
             var check = Button("check", () => { _reports[name] = _session.InspectFilter(name); Render(); });
             check.ToolTip = "Look for signs that this filter is older than the game";
             check.Margin = new Thickness(0, 0, 8, 0);
             DockPanel.SetDock(check, Dock.Right);
             row.Children.Add(check);
+            row.Children.Add(keep);
             row.Children.Add(new TextBlock { Text = name, Foreground = level > 0 ? Brushes.White : Muted, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
             _body.Children.Add(row);
             if (_reports.TryGetValue(name, out var report)) RenderReport(report);

@@ -342,7 +342,7 @@ internal sealed class TreeWindow : Window
         _slider.Maximum = Math.Max(Math.Max(state.StagePoints, state.Points), passive ? build.Stages.Max(s => s.Passives.Count) : 20);
         _slider.Value = Math.Min(state.Points, _slider.Maximum);
         _settingSlider = false;
-        _sliderLabel.Text = passive ? "Passive points" : "Skill level";
+        _sliderLabel.Text = passive ? "Passive points" : tree.Kind == TreeDef.WeaverKind ? "Weaver points" : "Skill level";
         _sliderValue.Text = state.Points.ToString();
         _sliderRow.ToolTip = null;
         _slider.ToolTip = (passive
