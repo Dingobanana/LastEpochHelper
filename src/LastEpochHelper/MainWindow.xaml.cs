@@ -148,7 +148,7 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
-        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); };
+        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); UpdateHover(); };
         _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
@@ -398,6 +398,34 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(combo)) return;
             if (!_hotkeys.Register(combo, action)) _hotkeyErrors.Add(combo);
         }
+    }
+
+    private bool _faded;
+    private int _hoverTicks, _appliedBoxMode = -1;
+
+    /// <summary>
+    /// "Only while the mouse is over it": away from the mouse the box fades to a faint outline that
+    /// lets clicks through to the game; resting the mouse on it brings it back. A message (a death,
+    /// an item check) also brings it up, so nothing is said to an empty screen.
+    /// </summary>
+    private void UpdateHover()
+    {
+        if (Settings.BoxMode != 1 || !IsVisible) { Fade(false); return; }
+        var cursor = System.Windows.Forms.Cursor.Position;
+        var box = ScreenRect(this);
+        bool inside = cursor.X >= box.Left && cursor.X <= box.Right && cursor.Y >= box.Top && cursor.Y <= box.Bottom;
+        _hoverTicks = inside ? _hoverTicks + 1 : 0;
+        // A moment of rest is needed to bring it up, so sweeping the mouse across in a fight does not.
+        bool show = _session.Alert is not null || (inside && (!_faded || _hoverTicks >= 2));
+        Fade(!show);
+    }
+
+    private void Fade(bool faded)
+    {
+        if (faded == _faded) return;
+        _faded = faded;
+        Opacity = faded ? 0.1 : 1;
+        Native.ApplyOverlayStyle(_hwnd, faded || Settings.Locked);
     }
 
     private void ToggleVisible()
@@ -1050,6 +1078,14 @@ public partial class MainWindow : Window
 
     private void ApplyAppearance()
     {
+        // "Hidden" starts the box hidden; the show/hide hotkey and the tray icon still bring it up.
+        if (Settings.BoxMode != _appliedBoxMode)
+        {
+            if (Settings.BoxMode == 2) _userHidden = true;
+            else if (_appliedBoxMode == 2) _userHidden = false;
+            _appliedBoxMode = Settings.BoxMode;
+            if (_hwnd != IntPtr.Zero) UpdateVisibility();
+        }
         Width = Settings.BarLayout ? Math.Clamp(Settings.BarWidth, 500, 3000) : Math.Clamp(Settings.Width, 260, 900);
         Panel.Visibility = Settings.BarLayout ? Visibility.Collapsed : Visibility.Visible;
         Bar.Visibility = Settings.BarLayout ? Visibility.Visible : Visibility.Collapsed;

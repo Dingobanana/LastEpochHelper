@@ -77,6 +77,10 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "destroy the 4 Soul Vessels first; the boss is immune until then",
+    "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
    ]
   },
   {
@@ -162,13 +166,17 @@
      "offerPool": "any slot",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots",
+    "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
    ]
   },
   {
    "name": "The Black Sun",
    "level": 70,
    "empoweredLevel": 100,
-   "boss": "Rahyeh, The Black Sun",
+   "boss": "Rahyeh",
    "unlockedBy": [
     "Open on first entering the Monolith (no prerequisite since 1.4)"
    ],
@@ -260,13 +268,17 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "Void Flare: he goes to the centre and fires cones - stand between the cones",
+    "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
    ]
   },
   {
    "name": "Blood, Frost, and Death",
    "level": 74,
    "empoweredLevel": 100,
-   "boss": "Frost Lich Formosus",
+   "boss": "Formosus the Undying",
    "unlockedBy": [
     "Open on first entering the Monolith (no prerequisite since 1.4)"
    ],
@@ -352,13 +364,17 @@
      "offerPool": "any slot",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay",
+    "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
    ]
   },
   {
    "name": "Ending the Storm",
    "level": 78,
    "empoweredLevel": 100,
-   "boss": "Lagon, God of Storms",
+   "boss": "Lagon",
    "unlockedBy": [
     "Open on first entering the Monolith (no prerequisite since 1.4)"
    ],
@@ -449,6 +465,10 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle",
+    "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
    ]
   },
   {
@@ -522,6 +542,10 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time",
+    "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
    ]
   },
   {
@@ -620,6 +644,10 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "when he rears up, run out of the huge Soul Bomb circle and come back after it explodes",
+    "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
    ]
   },
   {
@@ -693,6 +721,10 @@
      "offerPool": "any slot",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems",
+    "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
    ]
   },
   {
@@ -778,13 +810,17 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb",
+    "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
    ]
   },
   {
    "name": "Spirits of Fire",
    "level": 90,
    "empoweredLevel": 100,
-   "boss": "Volcanic Shaman",
+   "boss": "Bhuldar, Herkir and Logi (the Shamans)",
    "unlockedBy": [
     "Knowledge of Orobyss quest: 5 Knowledge (stash-shared)"
    ],
@@ -864,6 +900,10 @@
      "offerPool": "slots 2 & 3",
      "recommended": false
     }
+   ],
+   "mechanics": [
+    "kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage",
+    "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
    ]
   }
  ],
@@ -911,6 +951,7 @@
   "[MXW] https://maxroll.gg/last-epoch/resources/the-woven-faction-overview (2026-04-02, 1.4)",
   "[MXM] https://maxroll.gg/last-epoch/resources/rage-of-morditas (2026-10-01, 1.5)",
   "[MXS] https://maxroll.gg/last-epoch/monolith/shade-of-orobyss-boss-guide (2026-04-02, 1.4)",
-  "[MXDG] https://maxroll.gg/last-epoch/dungeons/dungeon-guide (2026-04-02, 1.4) and https://maxroll.gg/last-epoch/resources/idols-guide (2026-03-27, 1.4)"
+  "[MXDG] https://maxroll.gg/last-epoch/dungeons/dungeon-guide (2026-04-02, 1.4) and https://maxroll.gg/last-epoch/resources/idols-guide (2026-03-27, 1.4)",
+  "Boss mechanics: Maxroll's timeline boss guides (maxroll.gg/last-epoch/monolith/..., read October 2026)"
  ]
 }

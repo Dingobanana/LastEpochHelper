@@ -221,7 +221,7 @@
         },
         {
          "type": "boss",
-         "text": "Haruspex Orian - step out of the ground markers"
+         "text": "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath"
         }
        ]
       },
@@ -453,7 +453,11 @@
         },
         {
          "type": "boss",
-         "text": "Voidfused Forge - avoid the lava pools under the boss"
+         "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
+        },
+        {
+         "type": "boss",
+         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -468,7 +472,11 @@
         },
         {
          "type": "boss",
-         "text": "Husk of Elder Pannion - stay out of the lightning bubble and fire beam"
+         "text": "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"
+        },
+        {
+         "type": "boss",
+         "text": "Step out of the void circles and the falling stalactite markers"
         }
        ]
       },
@@ -645,7 +653,7 @@
         },
         {
          "type": "boss",
-         "text": "Void Amalgamation - kill the summoned adds first"
+         "text": "Void Amalgamation - kill the summoned monsters first; they deal most of the damage"
         }
        ]
       },
@@ -818,7 +826,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor's Remains - kill the Omen eyes when they spawn"
+         "text": "Emperor's Remains - kill the Omen eyes as soon as they appear; stay out of the purple mist"
+        },
+        {
+         "type": "boss",
+         "text": "Below half health the void beams and exploding orbs get much deadlier"
         }
        ]
       }
@@ -972,7 +984,11 @@
         },
         {
          "type": "boss",
-         "text": "Prophet of Ruin + Idol of Ruin - leave the big purple circle"
+         "text": "Prophet of Ruin - do not stand in the big purple circle on the ground"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"
         }
        ]
       },
@@ -1056,7 +1072,11 @@
         },
         {
          "type": "boss",
-         "text": "Admiral Harton - stay close, he casts lightning at range"
+         "text": "Admiral Harton - stay very close: at range he keeps casting lightning at you"
+        },
+        {
+         "type": "boss",
+         "text": "Kill the Storm Wisps first when he summons them"
         }
        ]
       }
@@ -1258,7 +1278,11 @@
         },
         {
          "type": "boss",
-         "text": "Spymaster Zerrick - only takes damage while exposed; avoid poison pools"
+         "text": "Spymaster Zerrick - he only takes hits while his head is out: stand in melee range so he attacks"
+        },
+        {
+         "type": "boss",
+         "text": "Stay out of every poison pool, especially the ones under his body"
         },
         {
          "type": "tip",
@@ -1438,7 +1462,11 @@
         },
         {
          "type": "boss",
-         "text": "Kill order: Yulia, then Harton, then Zerrick. The arena shrinks"
+         "text": "Pontifex Yulia, Harton and Zerrick at once - kill Yulia first, then Harton, then Zerrick"
+        },
+        {
+         "type": "boss",
+         "text": "The arena shrinks with each kill; Zerrick still needs someone in melee to expose his head"
         }
        ]
       }
@@ -1574,7 +1602,7 @@
         },
         {
          "type": "boss",
-         "text": "Patriarch + Matriarch - kill the Patriarch first"
+         "text": "Wengari Patriarch + Matriarch - kill the Patriarch first (the one with the staff; cold boulder avalanches)"
         }
        ]
       },
@@ -1665,7 +1693,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - circle around it, avoid the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
         }
        ]
       },
@@ -1707,7 +1735,7 @@
         },
         {
          "type": "boss",
-         "text": "Frostroot Warden - watch the root slam when you are in melee"
+         "text": "Frostroot Warden - when it lifts its two front roots, step back until the frontal attack ends"
         }
        ]
       },
@@ -1952,7 +1980,11 @@
         },
         {
          "type": "boss",
-         "text": "Architect Liath - kill the summon first, dodge ground lightning"
+         "text": "Architect Liath - step off the lightning ground markers and mines; kill her constructs first"
+        },
+        {
+         "type": "boss",
+         "text": "She teleports and throws homing orbs - lightning resistance helps"
         }
        ]
       },
@@ -1967,7 +1999,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon - watch for the beam sweeps and tentacle slams"
+         "text": "Lagon - phases 1 and 3: hit the tentacles, not Lagon; dodge the arm slams and the sweeping beam"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"
         }
        ]
       },
@@ -2277,6 +2313,14 @@
          "type": "main",
          "quest": "Apophis and Majasa",
          "text": "Confront Majasa → Subdue Majasa → Confront Apophis → Enter the Time Rift"
+        },
+        {
+         "type": "boss",
+         "text": "Majasa - get out of the giant red circle (Siege Bolt can one-shot); 4 Stone Stare stacks petrify you"
+        },
+        {
+         "type": "boss",
+         "text": "At 66% and 33% kill the 3 Essences, the Fire one first. Phase 2: avoid the blood pools; she heals at 50%"
         }
        ]
       }
@@ -2565,7 +2609,11 @@
         },
         {
          "type": "boss",
-         "text": "Abomination"
+         "text": "Abomination - destroy the 4 Soul Vessels first; the boss is immune until then"
+        },
+        {
+         "type": "boss",
+         "text": "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
         },
         {
          "type": "main",
@@ -2599,7 +2647,11 @@
         },
         {
          "type": "boss",
-         "text": "God Hunter Argentus"
+         "text": "God Hunter Argentus - run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
         },
         {
          "type": "main",
@@ -2629,7 +2681,11 @@
         },
         {
          "type": "boss",
-         "text": "Rahyeh, The Black Sun"
+         "text": "Rahyeh - Void Flare: he goes to the centre and fires cones - stand between the cones"
+        },
+        {
+         "type": "boss",
+         "text": "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
         },
         {
          "type": "main",
@@ -2651,7 +2707,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor of Corpses"
+         "text": "Emperor of Corpses - when he rears up, run out of the huge Soul Bomb circle and come back after it explodes"
+        },
+        {
+         "type": "boss",
+         "text": "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
         },
         {
          "type": "main",
@@ -2677,7 +2737,11 @@
         },
         {
          "type": "boss",
-         "text": "Heorot"
+         "text": "Heorot - Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb"
+        },
+        {
+         "type": "boss",
+         "text": "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
         },
         {
          "type": "tip",
@@ -2715,7 +2779,11 @@
         },
         {
          "type": "boss",
-         "text": "Volcanic Shaman"
+         "text": "Bhuldar, Herkir and Logi (the Shamans) - kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage"
+        },
+        {
+         "type": "boss",
+         "text": "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
         },
         {
          "type": "tip",
@@ -2749,7 +2817,11 @@
         },
         {
          "type": "boss",
-         "text": "The Husk of Elder Gaspar"
+         "text": "The Husk of Elder Gaspar - when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems"
+        },
+        {
+         "type": "boss",
+         "text": "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
         },
         {
          "type": "tip",
@@ -2771,7 +2843,11 @@
         },
         {
          "type": "boss",
-         "text": "Frost Lich Formosus"
+         "text": "Formosus the Undying - get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay"
+        },
+        {
+         "type": "boss",
+         "text": "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
         },
         {
          "type": "main",
@@ -2793,7 +2869,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon, God of Storms"
+         "text": "Lagon - eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
         },
         {
          "type": "main",
@@ -2815,7 +2895,11 @@
         },
         {
          "type": "boss",
-         "text": "Harton's Husk"
+         "text": "Harton's Husk - step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time"
+        },
+        {
+         "type": "boss",
+         "text": "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
         },
         {
          "type": "main",
@@ -3112,7 +3196,7 @@
         },
         {
          "type": "boss",
-         "text": "Haruspex Orian - step out of the ground markers"
+         "text": "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath"
         }
        ]
       },
@@ -3344,7 +3428,11 @@
         },
         {
          "type": "boss",
-         "text": "Voidfused Forge - avoid the lava pools under the boss"
+         "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
+        },
+        {
+         "type": "boss",
+         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -3359,7 +3447,11 @@
         },
         {
          "type": "boss",
-         "text": "Husk of Elder Pannion - stay out of the lightning bubble and fire beam"
+         "text": "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"
+        },
+        {
+         "type": "boss",
+         "text": "Step out of the void circles and the falling stalactite markers"
         }
        ]
       },
@@ -3536,7 +3628,7 @@
         },
         {
          "type": "boss",
-         "text": "Void Amalgamation - kill the summoned adds first"
+         "text": "Void Amalgamation - kill the summoned monsters first; they deal most of the damage"
         }
        ]
       },
@@ -3709,7 +3801,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor's Remains - kill the Omen eyes when they spawn"
+         "text": "Emperor's Remains - kill the Omen eyes as soon as they appear; stay out of the purple mist"
+        },
+        {
+         "type": "boss",
+         "text": "Below half health the void beams and exploding orbs get much deadlier"
         }
        ]
       }
@@ -3863,7 +3959,11 @@
         },
         {
          "type": "boss",
-         "text": "Prophet of Ruin + Idol of Ruin - leave the big purple circle"
+         "text": "Prophet of Ruin - do not stand in the big purple circle on the ground"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"
         }
        ]
       },
@@ -3947,7 +4047,11 @@
         },
         {
          "type": "boss",
-         "text": "Admiral Harton - stay close, he casts lightning at range"
+         "text": "Admiral Harton - stay very close: at range he keeps casting lightning at you"
+        },
+        {
+         "type": "boss",
+         "text": "Kill the Storm Wisps first when he summons them"
         }
        ]
       }
@@ -4149,7 +4253,11 @@
         },
         {
          "type": "boss",
-         "text": "Spymaster Zerrick - only takes damage while exposed; avoid poison pools"
+         "text": "Spymaster Zerrick - he only takes hits while his head is out: stand in melee range so he attacks"
+        },
+        {
+         "type": "boss",
+         "text": "Stay out of every poison pool, especially the ones under his body"
         },
         {
          "type": "tip",
@@ -4329,7 +4437,11 @@
         },
         {
          "type": "boss",
-         "text": "Kill order: Yulia, then Harton, then Zerrick. The arena shrinks"
+         "text": "Pontifex Yulia, Harton and Zerrick at once - kill Yulia first, then Harton, then Zerrick"
+        },
+        {
+         "type": "boss",
+         "text": "The arena shrinks with each kill; Zerrick still needs someone in melee to expose his head"
         }
        ]
       }
@@ -4465,7 +4577,7 @@
         },
         {
          "type": "boss",
-         "text": "Patriarch + Matriarch - kill the Patriarch first"
+         "text": "Wengari Patriarch + Matriarch - kill the Patriarch first (the one with the staff; cold boulder avalanches)"
         }
        ]
       },
@@ -4556,7 +4668,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - circle around it, avoid the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
         }
        ]
       },
@@ -4598,7 +4710,7 @@
         },
         {
          "type": "boss",
-         "text": "Frostroot Warden - watch the root slam when you are in melee"
+         "text": "Frostroot Warden - when it lifts its two front roots, step back until the frontal attack ends"
         }
        ]
       },
@@ -4678,7 +4790,11 @@
         },
         {
          "type": "boss",
-         "text": "Abomination"
+         "text": "Abomination - destroy the 4 Soul Vessels first; the boss is immune until then"
+        },
+        {
+         "type": "boss",
+         "text": "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
         },
         {
          "type": "main",
@@ -4712,7 +4828,11 @@
         },
         {
          "type": "boss",
-         "text": "God Hunter Argentus"
+         "text": "God Hunter Argentus - run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
         },
         {
          "type": "main",
@@ -4742,7 +4862,11 @@
         },
         {
          "type": "boss",
-         "text": "Rahyeh, The Black Sun"
+         "text": "Rahyeh - Void Flare: he goes to the centre and fires cones - stand between the cones"
+        },
+        {
+         "type": "boss",
+         "text": "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
         },
         {
          "type": "main",
@@ -4764,7 +4888,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor of Corpses"
+         "text": "Emperor of Corpses - when he rears up, run out of the huge Soul Bomb circle and come back after it explodes"
+        },
+        {
+         "type": "boss",
+         "text": "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
         },
         {
          "type": "main",
@@ -4790,7 +4918,11 @@
         },
         {
          "type": "boss",
-         "text": "Heorot"
+         "text": "Heorot - Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb"
+        },
+        {
+         "type": "boss",
+         "text": "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
         },
         {
          "type": "tip",
@@ -4828,7 +4960,11 @@
         },
         {
          "type": "boss",
-         "text": "Volcanic Shaman"
+         "text": "Bhuldar, Herkir and Logi (the Shamans) - kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage"
+        },
+        {
+         "type": "boss",
+         "text": "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
         },
         {
          "type": "tip",
@@ -4862,7 +4998,11 @@
         },
         {
          "type": "boss",
-         "text": "The Husk of Elder Gaspar"
+         "text": "The Husk of Elder Gaspar - when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems"
+        },
+        {
+         "type": "boss",
+         "text": "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
         },
         {
          "type": "tip",
@@ -4884,7 +5024,11 @@
         },
         {
          "type": "boss",
-         "text": "Frost Lich Formosus"
+         "text": "Formosus the Undying - get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay"
+        },
+        {
+         "type": "boss",
+         "text": "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
         },
         {
          "type": "main",
@@ -4906,7 +5050,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon, God of Storms"
+         "text": "Lagon - eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
         },
         {
          "type": "main",
@@ -4928,7 +5076,11 @@
         },
         {
          "type": "boss",
-         "text": "Harton's Husk"
+         "text": "Harton's Husk - step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time"
+        },
+        {
+         "type": "boss",
+         "text": "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
         },
         {
          "type": "main",
@@ -5225,7 +5377,7 @@
         },
         {
          "type": "boss",
-         "text": "Haruspex Orian - step out of the ground markers"
+         "text": "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath"
         }
        ]
       },
@@ -5457,7 +5609,11 @@
         },
         {
          "type": "boss",
-         "text": "Voidfused Forge - avoid the lava pools under the boss"
+         "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
+        },
+        {
+         "type": "boss",
+         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -5472,7 +5628,11 @@
         },
         {
          "type": "boss",
-         "text": "Husk of Elder Pannion - stay out of the lightning bubble and fire beam"
+         "text": "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"
+        },
+        {
+         "type": "boss",
+         "text": "Step out of the void circles and the falling stalactite markers"
         }
        ]
       },
@@ -5606,7 +5766,11 @@
         },
         {
          "type": "boss",
-         "text": "The Mountain Beneath"
+         "text": "The Mountain Beneath - immune at first: destroy the Root Walls and light both Pyres with Burning Amber"
+        },
+        {
+         "type": "boss",
+         "text": "The shockwave one-shots: it is a double slam, left side first. Phase 2: kill the Heart, dodge the split Spore Beam"
         },
         {
          "type": "tip",
@@ -5759,7 +5923,11 @@
         },
         {
          "type": "boss",
-         "text": "Prophet of Ruin + Idol of Ruin - leave the big purple circle"
+         "text": "Prophet of Ruin - do not stand in the big purple circle on the ground"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"
         }
        ]
       },
@@ -5830,7 +5998,11 @@
         },
         {
          "type": "boss",
-         "text": "Fire Lich Cremorus"
+         "text": "Fire Lich Cremorus - stay off the lit floor; once it covers the arena, swap Soulfire Shield to the floor's type"
+        },
+        {
+         "type": "boss",
+         "text": "Run from the chasing Thrall before it bursts; leave the Incendiary Torrent fire line"
         },
         {
          "type": "tip",
@@ -5882,7 +6054,7 @@
         },
         {
          "type": "boss",
-         "text": "Patriarch + Matriarch - kill the Patriarch first"
+         "text": "Wengari Patriarch + Matriarch - kill the Patriarch first (the one with the staff; cold boulder avalanches)"
         }
        ]
       },
@@ -5975,7 +6147,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - circle around it, avoid the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
         }
        ]
       },
@@ -6017,7 +6189,7 @@
         },
         {
          "type": "boss",
-         "text": "Frostroot Warden - watch the root slam when you are in melee"
+         "text": "Frostroot Warden - when it lifts its two front roots, step back until the frontal attack ends"
         }
        ]
       },
@@ -6256,7 +6428,11 @@
         },
         {
          "type": "boss",
-         "text": "Architect Liath - kill the summon first, dodge ground lightning"
+         "text": "Architect Liath - step off the lightning ground markers and mines; kill her constructs first"
+        },
+        {
+         "type": "boss",
+         "text": "She teleports and throws homing orbs - lightning resistance helps"
         }
        ]
       },
@@ -6271,7 +6447,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon - watch for the beam sweeps and tentacle slams"
+         "text": "Lagon - phases 1 and 3: hit the tentacles, not Lagon; dodge the arm slams and the sweeping beam"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"
         }
        ]
       },
@@ -6621,6 +6801,14 @@
          "type": "main",
          "quest": "Apophis and Majasa",
          "text": "Confront Majasa → Subdue Majasa → Confront Apophis → Enter the Time Rift"
+        },
+        {
+         "type": "boss",
+         "text": "Majasa - get out of the giant red circle (Siege Bolt can one-shot); 4 Stone Stare stacks petrify you"
+        },
+        {
+         "type": "boss",
+         "text": "At 66% and 33% kill the 3 Essences, the Fire one first. Phase 2: avoid the blood pools; she heals at 50%"
         }
        ]
       }
@@ -6909,7 +7097,11 @@
         },
         {
          "type": "boss",
-         "text": "Abomination"
+         "text": "Abomination - destroy the 4 Soul Vessels first; the boss is immune until then"
+        },
+        {
+         "type": "boss",
+         "text": "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
         },
         {
          "type": "main",
@@ -6943,7 +7135,11 @@
         },
         {
          "type": "boss",
-         "text": "God Hunter Argentus"
+         "text": "God Hunter Argentus - run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
         },
         {
          "type": "main",
@@ -6973,7 +7169,11 @@
         },
         {
          "type": "boss",
-         "text": "Rahyeh, The Black Sun"
+         "text": "Rahyeh - Void Flare: he goes to the centre and fires cones - stand between the cones"
+        },
+        {
+         "type": "boss",
+         "text": "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
         },
         {
          "type": "main",
@@ -6995,7 +7195,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor of Corpses"
+         "text": "Emperor of Corpses - when he rears up, run out of the huge Soul Bomb circle and come back after it explodes"
+        },
+        {
+         "type": "boss",
+         "text": "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
         },
         {
          "type": "main",
@@ -7021,7 +7225,11 @@
         },
         {
          "type": "boss",
-         "text": "Heorot"
+         "text": "Heorot - Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb"
+        },
+        {
+         "type": "boss",
+         "text": "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
         },
         {
          "type": "tip",
@@ -7059,7 +7267,11 @@
         },
         {
          "type": "boss",
-         "text": "Volcanic Shaman"
+         "text": "Bhuldar, Herkir and Logi (the Shamans) - kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage"
+        },
+        {
+         "type": "boss",
+         "text": "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
         },
         {
          "type": "tip",
@@ -7093,7 +7305,11 @@
         },
         {
          "type": "boss",
-         "text": "The Husk of Elder Gaspar"
+         "text": "The Husk of Elder Gaspar - when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems"
+        },
+        {
+         "type": "boss",
+         "text": "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
         },
         {
          "type": "tip",
@@ -7115,7 +7331,11 @@
         },
         {
          "type": "boss",
-         "text": "Frost Lich Formosus"
+         "text": "Formosus the Undying - get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay"
+        },
+        {
+         "type": "boss",
+         "text": "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
         },
         {
          "type": "main",
@@ -7137,7 +7357,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon, God of Storms"
+         "text": "Lagon - eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
         },
         {
          "type": "main",
@@ -7159,7 +7383,11 @@
         },
         {
          "type": "boss",
-         "text": "Harton's Husk"
+         "text": "Harton's Husk - step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time"
+        },
+        {
+         "type": "boss",
+         "text": "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
         },
         {
          "type": "main",
@@ -7456,7 +7684,7 @@
         },
         {
          "type": "boss",
-         "text": "Haruspex Orian - step out of the ground markers"
+         "text": "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath"
         }
        ]
       },
@@ -7688,7 +7916,11 @@
         },
         {
          "type": "boss",
-         "text": "Voidfused Forge - avoid the lava pools under the boss"
+         "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
+        },
+        {
+         "type": "boss",
+         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -7703,7 +7935,11 @@
         },
         {
          "type": "boss",
-         "text": "Husk of Elder Pannion - stay out of the lightning bubble and fire beam"
+         "text": "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"
+        },
+        {
+         "type": "boss",
+         "text": "Step out of the void circles and the falling stalactite markers"
         }
        ]
       },
@@ -7837,7 +8073,11 @@
         },
         {
          "type": "boss",
-         "text": "The Mountain Beneath"
+         "text": "The Mountain Beneath - immune at first: destroy the Root Walls and light both Pyres with Burning Amber"
+        },
+        {
+         "type": "boss",
+         "text": "The shockwave one-shots: it is a double slam, left side first. Phase 2: kill the Heart, dodge the split Spore Beam"
         },
         {
          "type": "tip",
@@ -7990,7 +8230,11 @@
         },
         {
          "type": "boss",
-         "text": "Prophet of Ruin + Idol of Ruin - leave the big purple circle"
+         "text": "Prophet of Ruin - do not stand in the big purple circle on the ground"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"
         }
        ]
       },
@@ -8074,7 +8318,11 @@
         },
         {
          "type": "boss",
-         "text": "Admiral Harton - stay close, he casts lightning at range"
+         "text": "Admiral Harton - stay very close: at range he keeps casting lightning at you"
+        },
+        {
+         "type": "boss",
+         "text": "Kill the Storm Wisps first when he summons them"
         }
        ]
       }
@@ -8305,7 +8553,11 @@
         },
         {
          "type": "boss",
-         "text": "Chronomancer Julra - swap eras to dodge her big attacks"
+         "text": "Chronomancer Julra - switch era before the big clock reaches 12: the implosion hits everything and applies Doom"
+        },
+        {
+         "type": "boss",
+         "text": "Drop the void puddles at the room's edge; destroy her Healing Fountain; stand in the gaps of the 4 beams"
         },
         {
          "type": "tip",
@@ -8573,6 +8825,14 @@
          "type": "main",
          "quest": "Apophis and Majasa",
          "text": "Confront Majasa → Subdue Majasa → Confront Apophis → Enter the Time Rift"
+        },
+        {
+         "type": "boss",
+         "text": "Majasa - get out of the giant red circle (Siege Bolt can one-shot); 4 Stone Stare stacks petrify you"
+        },
+        {
+         "type": "boss",
+         "text": "At 66% and 33% kill the 3 Essences, the Fire one first. Phase 2: avoid the blood pools; she heals at 50%"
         }
        ]
       }
@@ -8861,7 +9121,11 @@
         },
         {
          "type": "boss",
-         "text": "Abomination"
+         "text": "Abomination - destroy the 4 Soul Vessels first; the boss is immune until then"
+        },
+        {
+         "type": "boss",
+         "text": "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
         },
         {
          "type": "main",
@@ -8895,7 +9159,11 @@
         },
         {
          "type": "boss",
-         "text": "God Hunter Argentus"
+         "text": "God Hunter Argentus - run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
         },
         {
          "type": "main",
@@ -8925,7 +9193,11 @@
         },
         {
          "type": "boss",
-         "text": "Rahyeh, The Black Sun"
+         "text": "Rahyeh - Void Flare: he goes to the centre and fires cones - stand between the cones"
+        },
+        {
+         "type": "boss",
+         "text": "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
         },
         {
          "type": "main",
@@ -8947,7 +9219,11 @@
         },
         {
          "type": "boss",
-         "text": "Emperor of Corpses"
+         "text": "Emperor of Corpses - when he rears up, run out of the huge Soul Bomb circle and come back after it explodes"
+        },
+        {
+         "type": "boss",
+         "text": "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
         },
         {
          "type": "main",
@@ -8973,7 +9249,11 @@
         },
         {
          "type": "boss",
-         "text": "Heorot"
+         "text": "Heorot - Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb"
+        },
+        {
+         "type": "boss",
+         "text": "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
         },
         {
          "type": "tip",
@@ -9011,7 +9291,11 @@
         },
         {
          "type": "boss",
-         "text": "Volcanic Shaman"
+         "text": "Bhuldar, Herkir and Logi (the Shamans) - kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage"
+        },
+        {
+         "type": "boss",
+         "text": "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
         },
         {
          "type": "tip",
@@ -9045,7 +9329,11 @@
         },
         {
          "type": "boss",
-         "text": "The Husk of Elder Gaspar"
+         "text": "The Husk of Elder Gaspar - when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems"
+        },
+        {
+         "type": "boss",
+         "text": "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
         },
         {
          "type": "tip",
@@ -9067,7 +9355,11 @@
         },
         {
          "type": "boss",
-         "text": "Frost Lich Formosus"
+         "text": "Formosus the Undying - get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay"
+        },
+        {
+         "type": "boss",
+         "text": "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
         },
         {
          "type": "main",
@@ -9089,7 +9381,11 @@
         },
         {
          "type": "boss",
-         "text": "Lagon, God of Storms"
+         "text": "Lagon - eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
         },
         {
          "type": "main",
@@ -9111,7 +9407,11 @@
         },
         {
          "type": "boss",
-         "text": "Harton's Husk"
+         "text": "Harton's Husk - step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time"
+        },
+        {
+         "type": "boss",
+         "text": "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
         },
         {
          "type": "main",

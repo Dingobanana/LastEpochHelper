@@ -191,60 +191,94 @@ KEEP_QUESTS = {"Merchants and Fortune Tellers"}
 TIPS = {
     (1, "The Keepers' Camp", 1): [("tip", "Buy a weapon / gear upgrade at the vendor if you have gold")],
     (1, "The Fortress Walls", 1): [("tip", "The Storerooms entrance is off the main path - do it before the Vault")],
-    (1, "The Summit", 1): [("boss", "Haruspex Orian - step out of the ground markers")],
+    (1, "The Summit", 1): [("boss", "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath")],
     (2, "The Council Chambers", 1): [("tip", "Hub: vendor, gambler and respec NPC are here")],
     (2, "Pannion's Study", 1): [("tip", "Waypoint back to The Council Chambers to turn in, then return here")],
     (2, "The Precipice", 1): [("boss", "Idol of Loathing, then take the Time Rift")],
-    (2, "The Armory", 1): [("boss", "Voidfused Forge - avoid the lava pools under the boss")],
-    (2, "The Lower District", 1): [("boss", "Husk of Elder Pannion - stay out of the lightning bubble and fire beam")],
+    (2, "The Armory", 1): [
+        ("boss", "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"),
+        ("boss", "It also summons voidlings - clear them when they pile up"),
+    ],
+    (2, "The Lower District", 1): [
+        ("boss", "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"),
+        ("boss", "Step out of the void circles and the falling stalactite markers"),
+    ],
     (2, "The End of Time", 1): [("tip", "Pick your Mastery here - the choice is permanent")],
     (3, "The Surface", 1): [("tip", "Dungeon entrance (Lightless Arbor) is north in The Shrouded Ridge - optional")],
     (3, "The Forsaken Trail", 1): [("tip", "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5")],
     (3, "The Shrouded Ridge", 1): [("tip", "Lightless Arbor entrance - needs a Lightless Arbor Key (free one in the Forsaken Trail cache)")],
     (3, "Titan's Rest", 1): [
-        ("boss", "The Mountain Beneath"),
+        ("boss", "The Mountain Beneath - immune at first: destroy the Root Walls and light both Pyres with Burning Amber"),
+        ("boss", "The shockwave one-shots: it is a double slam, left side first. Phase 2: kill the Heart, dodge the split Spore Beam"),
         ("tip", "Leave through the ALTERNATE exit behind the boss to skip ahead (datamine: leads to The End of Time)"),
     ],
     (4, "The Ruins of Etendell", 1): [("tip", "Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5")],
     (4, "The Felled Wood", 1): [("tip", "Soulfire Bastion entrance - needs a Soulfire Bastion Key")],
     (4, "The Soul Furnace", 1): [
-        ("boss", "Fire Lich Cremorus"),
+        ("boss", "Fire Lich Cremorus - stay off the lit floor; once it covers the arena, swap Soulfire Shield to the floor's type"),
+        ("boss", "Run from the chasing Thrall before it bursts; leave the Incendiary Torrent fire line"),
         ("tip", "Leave through the ALTERNATE exit - it leads to Kolheim Pass (Chapter 7)"),
     ],
     (5, "The Ruined Coast", 2): [("tip", "Temporal Sanctum entrance - needs a Temporal Sanctum Key (from the Catacombs cache)")],
     (5, "The Sanctum Archive", 1): [
-        ("boss", "Chronomancer Julra - swap eras to dodge her big attacks"),
+        ("boss", "Chronomancer Julra - switch era before the big clock reaches 12: the implosion hits everything and applies Doom"),
+        ("boss", "Drop the void puddles at the room's edge; destroy her Healing Fountain; stand in the gaps of the 4 beams"),
         ("tip", "Leave through the ALTERNATE exit - it leads to The Radiant Dunes (Chapter 9)"),
     ],
     (7, "Heoborea", 3): [("tip", "Quest caps reached (15 passives / 8 idol slots) if you did the marked side quests - you can leave for the Monolith via The End of Time now")],
     (7, "Kolheim Pass", 1): [("tip", "After a skip the quest log may differ from this list - follow the in-game marker")],
     (9, "The Radiant Dunes", 1): [("tip", "Arriving from the Temporal Sanctum? Quest steps may differ - follow the in-game marker")],
     (3, "Welryn Docks", 1): [("boss", "Void Centipede spawns when you approach the chest")],
-    (3, "The Ritual Site", 1): [("boss", "Void Amalgamation - kill the summoned adds first")],
+    (3, "The Ritual Site", 1): [("boss", "Void Amalgamation - kill the summoned monsters first; they deal most of the damage")],
     (3, "The Ancient Forest", 1): [("boss", "Primeval Dragon in the far corner of the zone")],
     (3, "The Lotus Halls", 1): [("tip", "You only need ONE of the two orbs")],
-    (3, "The End of Ruin", 1): [("boss", "Emperor's Remains - kill the Omen eyes when they spawn")],
+    (3, "The End of Ruin", 1): [
+        ("boss", "Emperor's Remains - kill the Omen eyes as soon as they appear; stay out of the purple mist"),
+        ("boss", "Below half health the void beams and exploding orbs get much deadlier"),
+    ],
     (4, "The Outcast Camp", 1): [("tip", "Crafting (the Forge) unlocks here")],
     (4, "The Risen Lake", 1): [
         ("tip", "Take the Time Rift north to The Corrupted Lake before moving on"),
         ("tip", "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"),
     ],
-    (4, "The Corrupted Lake", 1): [("boss", "Prophet of Ruin + Idol of Ruin - leave the big purple circle")],
-    (4, "The Dreadnought's Deck", 1): [("boss", "Admiral Harton - stay close, he casts lightning at range")],
+    (4, "The Corrupted Lake", 1): [
+        ("boss", "Prophet of Ruin - do not stand in the big purple circle on the ground"),
+        ("boss", "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"),
+    ],
+    (4, "The Dreadnought's Deck", 1): [
+        ("boss", "Admiral Harton - stay very close: at range he keeps casting lightning at you"),
+        ("boss", "Kill the Storm Wisps first when he summons them"),
+    ],
     (5, "The Maj'elkan Catacombs", 1): [("tip", "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5")],
-    (5, "Titan's Canyon", 1): [("boss", "Spymaster Zerrick - only takes damage while exposed; avoid poison pools")],
+    (5, "Titan's Canyon", 1): [
+        ("boss", "Spymaster Zerrick - he only takes hits while his head is out: stand in melee range so he attacks"),
+        ("boss", "Stay out of every poison pool, especially the ones under his body"),
+    ],
     (5, "The Oracle's Abode", 1): [("tip", "Waypoint to The Shining Cove for The Sapphire Tablet, then come back")],
     (6, "The Citadel Sewers", 1): [("tip", "The 3 Imperial Watchers patrol in a circle - walk against them")],
-    (6, "The Immortal Citadel", 1): [("boss", "Kill order: Yulia, then Harton, then Zerrick. The arena shrinks")],
-    (7, "The Wengari Fortress", 1): [("boss", "Patriarch + Matriarch - kill the Patriarch first")],
-    (7, "The Temple of Heorot", 1): [("boss", "Spreading Frost - circle around it, avoid the cold beam")],
-    (7, "The Tomb of Morditas", 1): [("boss", "Frostroot Warden - watch the root slam when you are in melee")],
+    (6, "The Immortal Citadel", 1): [
+        ("boss", "Pontifex Yulia, Harton and Zerrick at once - kill Yulia first, then Harton, then Zerrick"),
+        ("boss", "The arena shrinks with each kill; Zerrick still needs someone in melee to expose his head"),
+    ],
+    (7, "The Wengari Fortress", 1): [("boss", "Wengari Patriarch + Matriarch - kill the Patriarch first (the one with the staff; cold boulder avalanches)")],
+    (7, "The Temple of Heorot", 1): [("boss", "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam")],
+    (7, "The Tomb of Morditas", 1): [("boss", "Frostroot Warden - when it lifts its two front roots, step back until the frontal attack ends")],
     (8, "Moonlit Shrine", 1): [("tip", "If the pool needs moon fragments: west = The Strand of Storms, east = The Coral Pools")],
-    (8, "Sanctum of the Architect", 1): [("boss", "Architect Liath - kill the summon first, dodge ground lightning")],
-    (8, "Seafloor Colosseum", 1): [("boss", "Lagon - watch for the beam sweeps and tentacle slams")],
+    (8, "Sanctum of the Architect", 1): [
+        ("boss", "Architect Liath - step off the lightning ground markers and mines; kill her constructs first"),
+        ("boss", "She teleports and throws homing orbs - lightning resistance helps"),
+    ],
+    (8, "Seafloor Colosseum", 1): [
+        ("boss", "Lagon - phases 1 and 3: hit the tentacles, not Lagon; dodge the arm slams and the sweeping beam"),
+        ("boss", "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"),
+    ],
     (9, "Maj'elka Lower District", 1): [("tip", "Scalebane Bodyguard: refuse to pay and fight him (paying costs up to 100,000 gold)")],
     (9, "Maj'elka Upper District", 1): [("tip", "Item factions unlock here: Circle of Fortune (find loot) or Merchant's Guild (trade)")],
     (10, "The End of Time", 1): [("tip", "The Monolith of Fate (endgame) is open from here; Chapter 10 can be done now or later")],
+    (9, "The Chamber of Vessels", 1): [
+        ("boss", "Majasa - get out of the giant red circle (Siege Bolt can one-shot); 4 Stone Stare stacks petrify you"),
+        ("boss", "At 66% and 33% kill the 3 Essences, the Fire one first. Phase 2: avoid the blood pools; she heals at 50%"),
+    ],
     (10, "The Observer's Prison", 1): [("boss", "The Observer - final campaign boss")],
 }
 
@@ -736,7 +770,8 @@ def load_endgame():
             continue
         echoes = note(timeline, "Quest echoes (stability needed, normal/empowered):").split(". ")[0]
         tasks = [{"type": "main", "text": f"Quest echoes (stability normal/empowered): {echoes}"},
-                 {"type": "boss", "text": timeline["boss"]}]
+                 {"type": "boss", "text": timeline["boss"] + (" - " + timeline["mechanics"][0] if timeline.get("mechanics") else "")}]
+        tasks.extend({"type": "boss", "text": line} for line in timeline.get("mechanics", [])[1:])
         knowledge = note(timeline, "Knowledge of Orobyss for first completion:").rstrip(".")
         if knowledge and knowledge[0].isdigit():
             tasks.append({"type": "main", "text": f"First completion: +{knowledge} Knowledge of Orobyss"})

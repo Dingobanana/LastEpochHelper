@@ -152,7 +152,7 @@
   {
    "name": "The Black Sun",
    "level": 70,
-   "boss": "Rahyeh, The Black Sun",
+   "boss": "Rahyeh",
    "knowledge": 1,
    "echoes": "The Fall of Ledria 50/150; The Dark Ascent 150/450; The Ruins of Solarum 250/800",
    "harbinger": "Harbinger of Hatred",
@@ -407,7 +407,7 @@
   {
    "name": "Spirits of Fire",
    "level": 90,
-   "boss": "Volcanic Shaman",
+   "boss": "Bhuldar, Herkir and Logi (the Shamans)",
    "knowledge": 0,
    "echoes": "Ash Covered Maj'elka 50/150; The Magma Caverns 220/450; The Caldera of Souls 400/900",
    "harbinger": "Harbinger of Ash",
@@ -549,7 +549,7 @@
   {
    "name": "Blood, Frost, and Death",
    "level": 74,
-   "boss": "Frost Lich Formosus",
+   "boss": "Formosus the Undying",
    "knowledge": 1,
    "echoes": "Wengari Battleground 50/150; Occupied Heoborea 150/450; The Lair of Formosus 300/800",
    "harbinger": "Harbinger of War",
@@ -632,7 +632,7 @@
   {
    "name": "Ending the Storm",
    "level": 78,
-   "boss": "Lagon, God of Storms",
+   "boss": "Lagon",
    "knowledge": 1,
    "echoes": "Drowned Thetima 50/150; Island Battlefield 180/500; Eye of the Storm 320/850",
    "harbinger": "Harbinger of Chaos",

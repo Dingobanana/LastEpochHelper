@@ -2,6 +2,13 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.10 - Out of the way, and room on small screens
+
+- The guide box can now be shown only while the mouse rests on it (it fades to a faint outline that lets clicks through, and comes up by itself for a message), or be hidden altogether until you ask for it with the show / hide hotkey or the tray icon. Settings → Overlay → Show the box.
+- The build tree fits small screens: it shrinks by itself when the screen is too small for it, Settings → Following the game has a size slider, and a new "Mini" switch at the bottom right of the tree puts the picture away and leaves just the tabs and the next points.
+- Boss notes: the red boss card now says what to do or avoid for most campaign bosses, the three dungeon bosses, Majasa and all ten Monolith timeline bosses (from Maxroll's boss guides and campaign walkthrough). Still name-only, for lack of a good source: Idol of Loathing, Void Centipede, Primeval Dragon and The Observer.
+- The README is now in English.
+
 ## 0.7.9 - Choose what the overlay shows
 
 - Every part of the overlay can now be switched on or off in Settings → Overlay: zone name and steps, boss notes, unclaimed rewards, next zone, reminders, the passive / idol counters, your level, the timer and the zone map.

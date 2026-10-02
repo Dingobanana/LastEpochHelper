@@ -48,6 +48,9 @@ internal sealed class TreeWindow : Window
     private Border _amounts = null!;
     private Border _reset = null!;
     private Border _stage = null!;
+    private Border _mini = null!;
+    private Border _canvasFrame = null!;
+    private Border _root = null!;
     private Border _minus = null!, _plus = null!;
     private readonly Slider _slider = new() { Minimum = 0, Maximum = 20, Width = 260, IsSnapToTickEnabled = true, TickFrequency = 1, Focusable = false, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _sliderLabel = new() { Foreground = Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
@@ -115,11 +118,19 @@ internal sealed class TreeWindow : Window
         adjust.Children.Add(_reset);
         adjust.Children.Add(_markers);
         adjust.Children.Add(_amounts);
+        // For a small screen: put the picture away and keep just the tabs and the "next points" line.
+        _mini = HeaderButton("mini", () =>
+        {
+            _session.Settings.TreeMini = !_session.Settings.TreeMini;
+            _session.SaveSettings();
+            Render();
+        });
+        adjust.Children.Add(_mini);
 
         // The slider is always there. It shows how many points the tree is drawn with; moving it asks
         // for the plan at that many points (hover any control for an explanation).
         _sliderRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        foreach (var chip in new[] { _stage, _reset, _markers, _amounts })
+        foreach (var chip in new[] { _stage, _reset, _markers, _amounts, _mini })
         {
             chip.BorderThickness = new Thickness(1);
             chip.CornerRadius = new CornerRadius(10);
@@ -141,12 +152,13 @@ internal sealed class TreeWindow : Window
 
         var body = new StackPanel();
         body.Children.Add(header);
-        body.Children.Add(new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) });
+        _canvasFrame = new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) };
+        body.Children.Add(_canvasFrame);
         body.Children.Add(_next);
         body.Children.Add(_check);
         body.Children.Add(_sliderRow);
 
-        Content = new Border
+        Content = _root = new Border
         {
             Background = Frozen("#F00E0F14"),
             BorderBrush = Frozen("#5A4B2A"),
@@ -156,6 +168,24 @@ internal sealed class TreeWindow : Window
             Child = body,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: false);
+        // Growing or shrinking (another tab, mini, another size) must not leave part of it off the screen.
+        SizeChanged += (_, _) =>
+        {
+            var area = SystemParameters.WorkArea;
+            if (Left + ActualWidth > area.Right) Left = Math.Max(area.Left, area.Right - ActualWidth);
+            if (Top + ActualHeight > area.Bottom) Top = Math.Max(area.Top, area.Bottom - ActualHeight);
+        };
+    }
+
+    /// <summary>
+    /// The size chosen in the settings - but never larger than the screen allows, so the window is
+    /// usable on a small monitor without the player having to find the setting first.
+    /// </summary>
+    private double Scale()
+    {
+        var area = SystemParameters.WorkArea;
+        double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (CanvasHeight + 170));
+        return Math.Clamp(Math.Min(_session.Settings.TreeScale, fit), 0.4, 1);
     }
 
     private static Brush Frozen(string hex)
@@ -337,6 +367,10 @@ internal sealed class TreeWindow : Window
 
     public void Render()
     {
+        double scale = Scale();
+        if (_root.LayoutTransform is not ScaleTransform { ScaleX: var current } || Math.Abs(current - scale) > 0.001)
+            _root.LayoutTransform = scale < 0.999 ? new ScaleTransform(scale, scale) : Transform.Identity;
+
         var build = _session.Tree;
         var tree = Current();
         if (build is null || tree is null)
@@ -365,7 +399,7 @@ internal sealed class TreeWindow : Window
             string.Join(",", state.Next.Select(n => $"{n.Node}+{n.Count}")), string.Join(",", state.OffPlan.OrderBy(n => n)),
             MarkersOn(tree), AmountsOn(tree), _session.HasActual(tree), _session.ActualPoints(tree),
             _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null,
-            _session.Profile.StagePin, build.Variant, _session.Stage?.Name);
+            _session.Profile.StagePin, build.Variant, _session.Stage?.Name, _session.Settings.TreeMini);
         bool iconRetryDue = _atlas is null && _atlasTried && DateTime.UtcNow >= _atlasRetryAt;
         if (signature == _signature && !iconRetryDue) return;
         _signature = signature;
@@ -407,6 +441,16 @@ internal sealed class TreeWindow : Window
             }
         }
         ShowCheck(passive);
+
+        // Mini: just the tabs, the "next points" line and the switches.
+        bool mini = _session.Settings.TreeMini;
+        var whole = mini ? Visibility.Collapsed : Visibility.Visible;
+        _canvasFrame.Visibility = whole;
+        if (mini) _check.Visibility = Visibility.Collapsed;
+        foreach (var part in new UIElement[] { _sliderLabel, _minus, _slider, _plus, _sliderValue }) part.Visibility = whole;
+        ((TextBlock)_mini.Child).Text = mini ? "▣ Full" : "▁ Mini";
+        Chip(_mini, mini, Gold, Frozen("#33C9A85C"));
+        _mini.ToolTip = mini ? "Show the tree again." : "Hide the picture and keep only the tabs and the next points - for a small screen.";
 
         // The slider always shows the number of points the tree is drawn with.
         int byLevel = _session.PassivePointsByLevel();

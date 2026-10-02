@@ -30,6 +30,12 @@ public sealed class Settings
     public bool AutoHide { get; set; } = true;
     public bool ShowTimer { get; set; } = true;
     public bool ShowBuild { get; set; } = true;
+    /// <summary>When the guide box shows: 0 = always, 1 = only while the mouse is over it, 2 = hidden until asked for.</summary>
+    public int BoxMode { get; set; }
+    /// <summary>Size of the build tree window, 0.5 - 1 (it is also shrunk to fit a small screen).</summary>
+    public double TreeScale { get; set; } = 1;
+    /// <summary>The build tree window shows only the tabs and the "next points" line, without the picture.</summary>
+    public bool TreeMini { get; set; }
     // The parts of the overlay box, each of which can be left out.
     /// <summary>Zone name and the zone's steps.</summary>
     public bool ShowZone { get; set; } = true;

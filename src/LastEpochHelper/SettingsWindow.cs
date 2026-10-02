@@ -44,6 +44,8 @@ internal sealed class SettingsWindow : Window
     private readonly TextBox _keyPassives = new();
     private readonly TextBox _keySkills = new();
     private readonly TextBox _keyMap = new();
+    private readonly ComboBox _boxMode = new() { ItemsSource = new[] { "Always", "Only while the mouse is over it", "Hidden (the show / hide hotkey or the tray icon brings it up)" } };
+    private readonly Slider _treeScale = new() { Minimum = 0.5, Maximum = 1, TickFrequency = 0.05, IsSnapToTickEnabled = true };
     private readonly CheckBox _hideGuide = new() { Content = "Hide the campaign guide for this character (endgame) - also in the ☰ menu" };
     /// <summary>The "show this part of the overlay" boxes: what each one reads and writes.</summary>
     private readonly List<(CheckBox Box, Func<Settings, bool> Get, Action<Settings, bool> Set)> _parts = new();
@@ -110,6 +112,7 @@ internal sealed class SettingsWindow : Window
         overlayTab.Children.Add(Row("Opacity", _opacity));
         overlayTab.Children.Add(Row("Text size", _fontSize));
         overlayTab.Children.Add(Row("Width", _width));
+        overlayTab.Children.Add(Row("Show the box", _boxMode));
         Boxes(overlayTab, _autoHide);
         overlayTab.Children.Add(Heading("Show in the overlay"));
         Boxes(overlayTab,
@@ -136,6 +139,12 @@ internal sealed class SettingsWindow : Window
         Boxes(gameTab, _autoTick, _autoLearn, _readMap);
         gameTab.Children.Add(Heading("Build tree"));
         Boxes(gameTab, _followKeys, _followSkill, _readPoints, _orderPassives, _amountPassives, _orderSkills, _amountSkills);
+        gameTab.Children.Add(Row("Tree size", _treeScale));
+        gameTab.Children.Add(Indented(new TextBlock
+        {
+            Text = "The build tree is also shrunk by itself to fit a small screen. Its \"Mini\" switch (bottom right of the tree) leaves just the tabs and the next points.",
+            TextWrapping = TextWrapping.Wrap, Opacity = 0.7,
+        }));
         gameTab.Children.Add(Heading("The game's own keys"));
         gameTab.Children.Add(Row("Passives", _keyPassives));
         gameTab.Children.Add(Row("Skills", _keySkills));
@@ -327,6 +336,8 @@ internal sealed class SettingsWindow : Window
         _keyPassives.Text = settings.GameKeyPassives;
         _keySkills.Text = settings.GameKeySkills;
         _keyMap.Text = settings.GameKeyMap;
+        _boxMode.SelectedIndex = Math.Clamp(settings.BoxMode, 0, 2);
+        _treeScale.Value = Math.Clamp(settings.TreeScale, 0.5, 1);
         _hideGuide.IsChecked = profile.HideGuide;
         foreach (var (box, get, _) in _parts) box.IsChecked = get(settings);
         foreach (var (key, box) in _hotkeys)
@@ -377,6 +388,8 @@ internal sealed class SettingsWindow : Window
         if (KeyboardWatcher.VirtualKey(_keySkills.Text) != 0) settings.GameKeySkills = _keySkills.Text.Trim();
         if (KeyboardWatcher.VirtualKey(_keyMap.Text) != 0) settings.GameKeyMap = _keyMap.Text.Trim();
         profile.HideGuide = _hideGuide.IsChecked == true;
+        settings.BoxMode = Math.Max(0, _boxMode.SelectedIndex);
+        settings.TreeScale = _treeScale.Value;
         foreach (var (box, _, set) in _parts) set(settings, box.IsChecked == true);
         foreach (var (key, box) in _hotkeys)
             typeof(Settings).GetProperty(key)!.SetValue(settings, box.Text.Trim());
