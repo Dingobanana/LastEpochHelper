@@ -15,6 +15,11 @@ internal sealed class SettingsWindow : Window
     private readonly Session _session;
     private readonly MainWindow _overlay;
     private readonly CheckBox _autoUpdate = new() { Content = "Look for new versions automatically (never installs without asking)" };
+    private readonly CheckBox _shareCountry = new()
+    {
+        Content = "Tell us which country the overlay is used in",
+        ToolTip = "Once per version the overlay sends two things: the country Windows is set to (like \"DK\") and the overlay's version. No name, no id, nothing about you or your machine.",
+    };
     private readonly TextBlock _updateInfo = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8, Margin = new Thickness(0, 2, 0, 2) };
     private readonly Button _install = new() { Content = "Install update", Padding = new Thickness(10, 3, 10, 3), Margin = new Thickness(0, 0, 6, 4), Visibility = Visibility.Collapsed };
     private readonly ComboBox _profile = new();
@@ -192,6 +197,7 @@ internal sealed class SettingsWindow : Window
         updateButtons.Children.Insert(1, _install);
         versionTab.Children.Add(updateButtons);
         versionTab.Children.Add(_autoUpdate);
+        versionTab.Children.Add(_shareCountry);
         versionTab.Children.Add(Indented(Buttons(("Open data folder", () => Open(_session.DataDir)))));
         ShowUpdateState();
 
@@ -327,6 +333,7 @@ internal sealed class SettingsWindow : Window
         _autoLearn.IsChecked = settings.AutoLearn;
         _followKeys.IsChecked = settings.FollowGameKeys;
         _autoUpdate.IsChecked = settings.AutoCheckUpdates;
+        _shareCountry.IsChecked = settings.ShareCountry;
         _followSkill.IsChecked = settings.FollowSkillOnScreen;
         _orderPassives.IsChecked = settings.ShowOrderPassives;
         _orderSkills.IsChecked = settings.ShowOrderSkills;
@@ -378,6 +385,7 @@ internal sealed class SettingsWindow : Window
         settings.AutoLearn = _autoLearn.IsChecked == true;
         settings.FollowGameKeys = _followKeys.IsChecked == true;
         settings.AutoCheckUpdates = _autoUpdate.IsChecked == true;
+        settings.ShareCountry = _shareCountry.IsChecked == true;
         settings.FollowSkillOnScreen = _followSkill.IsChecked == true;
         settings.ShowOrderPassives = _orderPassives.IsChecked == true;
         settings.ShowOrderSkills = _orderSkills.IsChecked == true;

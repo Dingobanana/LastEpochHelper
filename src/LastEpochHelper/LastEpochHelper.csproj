@@ -11,7 +11,7 @@
     <!-- Only for the tray icon and screen capture; see the Using Remove items below. -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.7.16</Version>
+    <Version>0.7.17</Version>
     <!-- The manifest is how a WPF app declares DPI awareness; the WinForms analyzer does not apply. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>
@@ -42,6 +42,14 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(ReportEndpoint)' != ''">
     <AssemblyMetadata Include="ReportEndpoint" Value="$(ReportEndpoint)" />
+  </ItemGroup>
+
+  <!-- Where the country code goes (see Core/UsagePing.cs); kept out of the repository the same way. Without the file nothing is sent. -->
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\usage-endpoint.local.txt')">
+    <UsageEndpoint>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\..\usage-endpoint.local.txt').Trim())</UsageEndpoint>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UsageEndpoint)' != ''">
+    <AssemblyMetadata Include="UsageEndpoint" Value="$(UsageEndpoint)" />
   </ItemGroup>
 
 </Project>

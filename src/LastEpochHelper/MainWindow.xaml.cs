@@ -360,6 +360,26 @@ public partial class MainWindow : Window
         Render();
     }
 
+    private readonly DateTime _startedAt = DateTime.UtcNow;
+    private bool _sendingCountry;
+
+    /// <summary>Once per version, after the overlay has run a while: the country Windows is set to and the version. See <see cref="UsagePing"/>.</summary>
+    private async void SendCountryInBackground()
+    {
+        if (_sendingCountry || UsagePing.Endpoint is not { } endpoint || DateTime.UtcNow - _startedAt < UsagePing.Delay) return;
+        string version = Updater.Display(Updater.Current);
+        if (!UsagePing.Due(Settings, version)) return;
+        _sendingCountry = true; // one attempt per run; a failure is tried again next time the overlay starts
+        try
+        {
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            if (!await UsagePing.SendAsync(endpoint, UsagePing.Message(UsagePing.Country(), version), http)) return;
+            Settings.CountrySentFor = version;
+            _session.SaveSettings();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
     private async void CheckForUpdateInBackground()
     {
         if (!Settings.AutoCheckUpdates || _updating || DateTime.UtcNow - _lastUpdateCheck < UpdateInterval) return;
@@ -1077,6 +1097,7 @@ public partial class MainWindow : Window
         UpdateVisibility();
         // Checked even while hidden, so the notice is waiting when the game gets focus again.
         CheckForUpdateInBackground();
+        SendCountryInBackground();
         if (!IsVisible) return;
         if (_alertShown && _session.Alert is null) Render(); // the alert ran out
         RenderTimer();

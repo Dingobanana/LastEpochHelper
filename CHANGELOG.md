@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.17 - A new setting
+
+- There is a new option under Settings → Version.
+
 ## 0.7.16 - Put the box away
 
 - New in the ☰ menu: Hide this box. The guide box goes away and stays away, also after a restart; the build tree, the planner and the item check work as before. The show / hide hotkey (Ctrl+Shift+H unless you changed it) brings it back, and so does the tray icon. It is the same as Settings → Overlay → Show the box → Hidden, one click away.

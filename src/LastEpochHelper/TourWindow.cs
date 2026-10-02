@@ -50,7 +50,8 @@ internal sealed class TourWindow : Window
             + "Lock the overlay to make it click-through; the tray icon unlocks it again.", "overlay"),
         new("Updates and problems",
             "The overlay checks for a new version by itself and tells you; Settings → Look for update does it on demand, and \"What's new\" lists the changes.\n\n"
-            + "If something misbehaves: ☰ → Report a bug. Describe it, press Send, and the report with the overlay's logs goes to us.\n\nThat's the tour - good luck out there."),
+            + "If something misbehaves: ☰ → Report a bug. Describe it, press Send, and the report with the overlay's logs goes to us.\n\n"
+            + "One more thing: once per version the overlay tells us which country it is used in - the country code and the version, nothing else. Settings → Version switches it off.\n\nThat's the tour - good luck out there."),
     };
 
     private readonly Action<string?> _show;

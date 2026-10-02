@@ -13,6 +13,10 @@ public sealed class Settings
     public bool Locked { get; set; }
     /// <summary>Look for a new version on GitHub at start and a few times a day. Nothing installs by itself.</summary>
     public bool AutoCheckUpdates { get; set; } = true;
+    /// <summary>Tell the maintainers which country the overlay is used in: a country code and the version, once per version.</summary>
+    public bool ShareCountry { get; set; } = true;
+    /// <summary>The version the country was last sent for; it is sent once per version.</summary>
+    public string CountrySentFor { get; set; } = "";
     /// <summary>Version that last ran here; a difference triggers the "What's new" window.</summary>
     public string LastRunVersion { get; set; } = "";
     /// <summary>Only the zone title and counters; for boss fights and small screens.</summary>
