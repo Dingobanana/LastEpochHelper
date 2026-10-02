@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.9 - Put the campaign guide away
+
+- New in the ☰ menu: Hide the campaign guide (endgame). For a character that is in the Monolith and no longer cares which zone comes next, the zone steps, boss notes and unclaimed rewards are put away; the build reminders, the passive / idol counters and the timer stay. It is remembered per character - tick it again to bring the guide back. The overlay mentions it once when you reach the Monolith.
+
 ## 0.7.8 - Only the stage's skills
 
 - With a guide that has stages, the build tree now shows only the skills of the stage in use - not every skill the guide ever uses. A skill the game has open stays visible even if the stage does not use it.

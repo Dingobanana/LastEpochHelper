@@ -72,7 +72,7 @@
                     <TextBlock x:Name="AlertText" TextWrapping="Wrap" Foreground="#E8E4D8"/>
                 </Border>
 
-                <DockPanel Margin="0,2,0,4">
+                <DockPanel x:Name="ZoneRow" Margin="0,2,0,4">
                     <TextBlock x:Name="WaypointText" DockPanel.Dock="Right" Foreground="#5FC9B8" VerticalAlignment="Bottom" Margin="8,0,0,3" Text="⚑ Waypoint"/>
                     <TextBlock x:Name="ZoneText" FontSize="19" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
                 </DockPanel>

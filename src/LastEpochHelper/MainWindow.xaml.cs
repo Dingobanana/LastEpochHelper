@@ -1067,7 +1067,14 @@ public partial class MainWindow : Window
         var step = tracker.Step;
         int? level = _session.Profile.Level > 0 ? _session.Profile.Level : null;
 
-        ChapterText.Text = $"{chapter.Title} · {chapter.Era}  ({tracker.IndexInChapter + 1}/{chapter.Steps.Count})";
+        // With the campaign guide put away (endgame), the box keeps the build reminders, counters and timer.
+        bool guide = !_session.Profile.HideGuide;
+        ChapterText.Text = guide ? $"{chapter.Title} · {chapter.Era}  ({tracker.IndexInChapter + 1}/{chapter.Steps.Count})"
+            : "Endgame" + (_session.Plan is { } followed ? $"  ·  {followed.Name}" : "");
+        ZoneRow.Visibility = TaskList.Visibility = NextText.Visibility = guide ? Visibility.Visible : Visibility.Collapsed;
+        if (guide && _session.ShouldOfferHidingGuide())
+            // Not from inside this method: showing an alert draws the overlay again.
+            Dispatcher.BeginInvoke(() => _session.ShowAlert("In the Monolith now? Menu (☰) → Hide the campaign guide puts the zone steps away and keeps your build reminders.", 40));
         string? alert = _session.Alert;
         AlertSection.Visibility = alert is null ? Visibility.Collapsed : Visibility.Visible;
         AlertText.Text = alert ?? "";
@@ -1095,7 +1102,7 @@ public partial class MainWindow : Window
             string key = Session.Key(tracker.Index, i);
             TaskList.Children.Add(BuildTaskRow(task, _session.IsDone(key), () => _session.ToggleDone(key)));
         }
-        BossSection.Visibility = BossList.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BossSection.Visibility = guide && BossList.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var (passive, idol, pending) = _session.Rewards();
         PendingList.Children.Clear();
@@ -1107,10 +1114,11 @@ public partial class MainWindow : Window
             row.MouseRightButtonUp += (_, e) => { _session.SkipReward(reward.Key); e.Handled = true; };
             PendingList.Children.Add(row);
         }
-        PendingSection.Visibility = pending.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PendingSection.Visibility = guide && pending.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         RenderBuild(level);
         RenderMap(step);
+        if (!guide) MapSection.Visibility = Visibility.Collapsed;
 
         NextText.Text = tracker.NextStep is { } next ? $"Next ▸ {next.Zone}" : "End of the guide";
 
@@ -1121,7 +1129,7 @@ public partial class MainWindow : Window
 
         LevelText.Inlines.Clear();
         if (level is { } lvl) LevelText.Inlines.Add(new Run($"You {lvl}"));
-        if (step.Level > 0)
+        if (guide && step.Level > 0)
         {
             // Being well under the zone level is the usual reason the campaign starts to hurt.
             bool under = level is { } l && l < step.Level - 2;
@@ -1141,10 +1149,18 @@ public partial class MainWindow : Window
     private void RenderBar(GuideStep step, int passive, int idol, int? level)
     {
         var tracker = _session.Tracker;
-        BarZone.Text = $"{tracker.Chapter.Id}.{tracker.IndexInChapter + 1}  {step.Zone}";
+        bool guide = !_session.Profile.HideGuide;
+        BarZone.Text = guide ? $"{tracker.Chapter.Id}.{tracker.IndexInChapter + 1}  {step.Zone}" : "Endgame";
         BarText.Inlines.Clear();
         bool first = true;
-        for (int i = 0; i < step.Tasks.Count; i++)
+        if (!guide)
+        {
+            // In place of the zone's steps: the reminders that are due, or just the build's name.
+            var (due, _) = BuildPlan.View(Settings.ShowBuildLines ? _session.Plan : null, level ?? 0, _session.Profile.PlanDone, extra: _session.FilterEntries());
+            BarText.Inlines.Add(new Run(due.Count > 0 ? string.Join("    ", due.Select(d => "• " + d.Text)) : _session.Plan?.Name ?? "")
+                { Foreground = due.Count > 0 ? BuildBrush : DimBrush });
+        }
+        for (int i = 0; guide && i < step.Tasks.Count; i++)
         {
             var task = step.Tasks[i];
             if (task.Type is "tip" or "skip" or "res" or "boss") continue; // bosses get their own row below; details stay in the box layout
@@ -1156,7 +1172,7 @@ public partial class MainWindow : Window
             if (task.Passive > 0) BarText.Inlines.Add(new Run($" +{task.Passive}P") { Foreground = PassiveBrush, FontWeight = FontWeights.Bold });
             if (task.Idol > 0) BarText.Inlines.Add(new Run(" +Idol") { Foreground = IdolBrush, FontWeight = FontWeights.Bold });
         }
-        if (tracker.NextStep is { } next)
+        if (guide && tracker.NextStep is { } next)
             BarText.Inlines.Add(new Run($"{(first ? "" : "    ")}▸ next: {next.Zone}") { Foreground = DimBrush });
 
         BarRight.Inlines.Clear();
@@ -1164,13 +1180,13 @@ public partial class MainWindow : Window
         BarRight.Inlines.Add(new Run("  "));
         BarRight.Inlines.Add(new Run($"{idol}/{_session.Guide.IdolCap}") { Foreground = IdolBrush });
         if (level is { } lvl)
-            BarRight.Inlines.Add(new Run($"   lvl {lvl}{(step.Level > 0 ? $" / zone {step.Level}" : "")}")
-                { Foreground = step.Level > 0 && lvl < step.Level - 2 ? UnderLevelBrush : BarRight.Foreground });
+            BarRight.Inlines.Add(new Run($"   lvl {lvl}{(guide && step.Level > 0 ? $" / zone {step.Level}" : "")}")
+                { Foreground = guide && step.Level > 0 && lvl < step.Level - 2 ? UnderLevelBrush : BarRight.Foreground });
         if (Settings.ShowTimer) BarRight.Inlines.Add(new Run($"   ⏱ {Clock(_session.Profile.PlaySeconds)}"));
         BarButtons.Visibility = Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
 
         BarBoss.Children.Clear();
-        foreach (var boss in step.Tasks.Where(t => t.Type == "boss"))
+        foreach (var boss in step.Tasks.Where(t => guide && t.Type == "boss"))
             BarBoss.Children.Add(BuildBossLine(boss.Text));
         BarBoss.Visibility = BarBoss.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         BarAlert.Text = _session.Alert ?? "";
@@ -1443,6 +1459,10 @@ public partial class MainWindow : Window
         var planner = new MenuItem { Header = "Planner: gear, idols, loot filter, Monolith, dungeons" };
         planner.Click += (_, _) => ShowPlanner(true);
         menu.Items.Add(planner);
+        var hideGuide = new MenuItem { Header = "Hide the campaign guide (endgame)", IsChecked = _session.Profile.HideGuide };
+        hideGuide.ToolTip = "Puts the zone steps, boss notes and unclaimed rewards away for this character and keeps the build reminders, counters and timer. Tick again to bring the guide back.";
+        hideGuide.Click += (_, _) => _session.SetGuideHidden(!_session.Profile.HideGuide);
+        menu.Items.Add(hideGuide);
         var layout = new MenuItem { Header = "Bar layout (one line across the screen)", IsChecked = Settings.BarLayout };
         layout.Click += (_, _) =>
         {

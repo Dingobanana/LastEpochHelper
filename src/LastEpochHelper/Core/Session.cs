@@ -652,6 +652,27 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    /// <summary>Puts the campaign guide away for this character, or brings it back.</summary>
+    public void SetGuideHidden(bool hidden)
+    {
+        Profile.HideGuide = hidden;
+        Profile.HideGuideOffered = true;
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// True the first time the character stands in the route's last chapter (the Monolith) with the
+    /// guide still showing: the moment to mention that it can be hidden. Asking marks it as mentioned.
+    /// </summary>
+    public bool ShouldOfferHidingGuide()
+    {
+        if (Profile.HideGuide || Profile.HideGuideOffered || Route.Chapters.Count < 2 || Tracker.Chapter != Route.Chapters[^1]) return false;
+        Profile.HideGuideOffered = true;
+        Save();
+        return true;
+    }
+
     /// <summary>The stage of the guide chosen by hand, if any (and if the build still has it).</summary>
     public TreeStage? PinnedStage => Profile.StagePin.Length == 0 ? null : Tree?.Stages.FirstOrDefault(s => s.Name == Profile.StagePin);
 

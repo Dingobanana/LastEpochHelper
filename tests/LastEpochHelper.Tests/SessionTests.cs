@@ -161,6 +161,24 @@ public sealed class SessionTests : IDisposable
     }
 
     [Fact]
+    public void HidingTheGuide_IsOfferedOnce_InTheLastChapter_AndRememberedPerCharacter()
+    {
+        var session = MakeSession();
+        EnterWorld(session, "ZA", 1, 0, created: "Hero");
+        Assert.False(session.ShouldOfferHidingGuide()); // still in the first chapter
+
+        session.Tracker.JumpTo(3); // D: first step of the last chapter
+        Assert.True(session.ShouldOfferHidingGuide());
+        Assert.False(session.ShouldOfferHidingGuide()); // only once
+
+        session.SetGuideHidden(true);
+        Assert.True(session.Profile.HideGuide);
+        session.SetGuideHidden(false);
+        Assert.False(session.Profile.HideGuide);
+        Assert.False(session.ShouldOfferHidingGuide()); // the player knows where it is by now
+    }
+
+    [Fact]
     public void Rewards_MainCountsWhenPassed_SideIsPendingUntilTickedOrSkipped()
     {
         var session = MakeSession();

@@ -126,6 +126,13 @@ public sealed class Profile
     /// <summary>Tree points as last read from the character's public profile; null = follow the plan instead.</summary>
     public ActualTrees? Actual { get; set; }
     public List<DeathEntry> DeathLog { get; set; } = new();
+    /// <summary>
+    /// The campaign guide is put away for this character (it is in the Monolith and no longer cares
+    /// which zone comes next); the overlay keeps only the build reminders, counters and timer.
+    /// </summary>
+    public bool HideGuide { get; set; }
+    /// <summary>The hint that the guide can be hidden has been shown for this character.</summary>
+    public bool HideGuideOffered { get; set; }
     /// <summary>Trees where the slider's plan view was chosen over the points read from the game.</summary>
     public HashSet<string> PlanViewTrees { get; set; } = new();
     /// <summary>Name of the guide stage chosen by hand; "" = follow the character's level.</summary>
