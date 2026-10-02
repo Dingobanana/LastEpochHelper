@@ -15,15 +15,29 @@ public partial class App : Application
         // A UI glitch should never take the overlay down mid-session: log it and keep running.
         DispatcherUnhandledException += (_, e) =>
         {
-            try
-            {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LastEpochHelper");
-                Directory.CreateDirectory(dir);
-                File.AppendAllText(Path.Combine(dir, "errors.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n{e.Exception}\n\n");
-            }
-            catch (IOException) { }
+            LogError("UI", e.Exception);
             e.Handled = true;
         };
+        // Errors outside the UI thread cannot be survived, but they can at least leave a trace for a bug report.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => LogError("fatal", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            LogError("background", e.Exception);
+            e.SetObserved();
+        };
+    }
+
+    private static void LogError(string where, Exception? error)
+    {
+        try
+        {
+            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LastEpochHelper");
+            Directory.CreateDirectory(dir);
+            File.AppendAllText(Path.Combine(dir, "errors.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  [{where}] version {Updater.Display(Updater.Current)}\n{error}\n\n");
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        ActivityLog.Write($"ERROR [{where}] {error?.GetType().Name}: {error?.Message}");
     }
 
     protected override void OnStartup(StartupEventArgs e)

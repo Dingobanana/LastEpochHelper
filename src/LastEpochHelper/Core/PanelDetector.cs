@@ -36,8 +36,12 @@ public static class PanelDetector
 
         // Without a heading, fall back on the tabs naming the class and its masteries - but the skill
         // overview prints those names too ("Unlocked by spending points in the Shaman passive tree").
-        // "Minimum Specialized Level" is printed under the heading of every open skill tree, and nowhere else.
-        bool skillTree = text.Any(t => t.Letters.Contains("specializedlevel", StringComparison.Ordinal));
+        // "Minimum Specialized Level" is printed under the heading of every open skill tree, and nowhere
+        // else; failing that, its BACK and RESPEC buttons together. This holds for any skill - also one
+        // the imported build does not use, whose name the overlay has no way of knowing.
+        var treeMarker = text.Where(t => t.Letters.Contains("specializedlevel", StringComparison.Ordinal)).Select(t => t.Line).FirstOrDefault()
+            ?? (text.Any(t => t.Letters == "back") ? text.Where(t => t.Letters == "respec").Select(t => t.Line).FirstOrDefault() : null);
+        bool skillTree = treeMarker is not null;
 
         PanelReading? passives = null;
         if (passiveHeading is not null) passives = new PanelReading(GamePanel.Passives, Anchor: passiveHeading);
@@ -51,7 +55,10 @@ public static class PanelDetector
         PanelReading? skillPanel = null;
         // One skill name standing out in bigger letters is an open tree, with or without the overview's heading.
         var openTree = passiveHeading is null ? SkillTitleMatcher.PickLine(lines, skills) : null;
+        // A heading read with a letter or two wrong ("SUMM0N TH0RN TOTEM") is still that skill.
+        if (openTree is null && skillTree) openTree = SkillTitleMatcher.PickClosest(lines, skills);
         if (openTree is { } heading) skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line);
+        else if (skillTree) skillPanel = new PanelReading(GamePanel.Skills, Anchor: treeMarker);
         else if (skillsHeading is not null) skillPanel = new PanelReading(GamePanel.Skills, Anchor: skillsHeading);
         else if (passiveHeading is null)
         {

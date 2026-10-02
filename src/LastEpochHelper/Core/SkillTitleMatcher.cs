@@ -21,6 +21,44 @@ public static class SkillTitleMatcher
         return (skill, line);
     }
 
+    /// <summary>
+    /// For a heading the reader got slightly wrong: the skill whose name is nearest to some line,
+    /// allowing about one wrong letter in six. Only for use when a skill tree is known to be open.
+    /// </summary>
+    public static (string Skill, ScreenLine Line)? PickClosest(IReadOnlyList<ScreenLine> lines, IReadOnlyList<string> skillNames)
+    {
+        (string Skill, ScreenLine Line, int Distance)? best = null;
+        foreach (var line in lines)
+        {
+            string text = Letters(line.Text);
+            if (text.Length is < 4 or > 40) continue;
+            foreach (string name in skillNames)
+            {
+                string key = Letters(name);
+                if (key.Length < 5 || Math.Abs(key.Length - text.Length) > 3) continue;
+                int distance = Distance(text, key);
+                if (distance == 0 || distance > Math.Max(1, key.Length / 6)) continue;
+                if (best is null || distance < best.Value.Distance || (distance == best.Value.Distance && line.Height > best.Value.Line.Height))
+                    best = (name, line, distance);
+            }
+        }
+        return best is { } found ? (found.Skill, found.Line) : null;
+    }
+
+    private static int Distance(string a, string b)
+    {
+        var previous = Enumerable.Range(0, b.Length + 1).ToArray();
+        for (int i = 1; i <= a.Length; i++)
+        {
+            var row = new int[b.Length + 1];
+            row[0] = i;
+            for (int j = 1; j <= b.Length; j++)
+                row[j] = Math.Min(Math.Min(row[j - 1], previous[j]) + 1, previous[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+            previous = row;
+        }
+        return previous[b.Length];
+    }
+
     public static string? Pick(IEnumerable<ScreenLine> lines, IEnumerable<string> skillNames)
     {
         var best = new Dictionary<string, double>();

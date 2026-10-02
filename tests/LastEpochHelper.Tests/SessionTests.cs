@@ -145,31 +145,6 @@ public sealed class SessionTests : IDisposable
     }
 
     [Fact]
-    public void PassiveCheck_ComparesPointsInTheGame_WithLevelAndQuestRewards()
-    {
-        var session = MakeSession();
-        EnterWorld(session, "ZA", 13, 0, created: "Hero");
-        session.SetMapCounters(6, 1);
-
-        var unread = session.CheckPassives();
-        Assert.False(unread.Known);
-        Assert.Equal(17, unread.Expected); // 11 from level 13, 6 from quests
-
-        session.Profile.Actual = new ActualTrees { Passives = { [1] = 8, [3] = 5, [6] = 3 } };
-        session.UnspentPassives = 1;
-        var good = session.CheckPassives();
-        Assert.True(good.Agrees);
-        Assert.Equal(17, good.InGame);
-        Assert.Equal(13, good.ImpliedLevel);
-
-        // One point more than level and quests explain: it would take level 14.
-        session.UnspentPassives = 2;
-        var off = session.CheckPassives();
-        Assert.False(off.Agrees);
-        Assert.Equal(14, off.ImpliedLevel);
-    }
-
-    [Fact]
     public void MapCounters_TickUnclaimedSideRewards_WhenTheNumbersShowTheyAreDone()
     {
         var session = MakeSession();

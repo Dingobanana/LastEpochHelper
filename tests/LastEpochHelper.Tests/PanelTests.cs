@@ -84,6 +84,32 @@ public class SkillTreeWithUnspentPointsTests
     }
 
     [Fact]
+    public void AnySkillTree_IsASkillPanel_EvenOneTheBuildDoesNotKnow()
+    {
+        var tabs = new[] { "Sentinel", "Void Knight", "Forge Guard", "Paladin" };
+        var skills = new[] { "Smite", "Judgement", "Holy Aura" };
+        // A skill the imported build does not use: its name means nothing to the overlay.
+        var unknown = new[]
+        {
+            new ScreenLine("SHIELD RUSH", 21, 1435, 156, 300), new ScreenLine("Minimum Specialized Level: 1", 19, 1434, 259, 300),
+            new ScreenLine("LEVEL 3", 16, 1436, 208, 80), new ScreenLine("0/5", 15, 2000, 725, 30),
+        };
+        var reading = PanelDetector.Detect(unknown, tabs, skills, GamePanel.Skills);
+        Assert.Equal(GamePanel.Skills, reading.Panel);
+        Assert.Null(reading.Skill);
+        Assert.NotNull(reading.Anchor);
+
+        // Without that line, the BACK and RESPEC buttons together say the same.
+        var buttons = new[] { new ScreenLine("SHIELD RUSH", 21), new ScreenLine("BACK", 14), new ScreenLine("RESPEC", 15) };
+        Assert.Equal(GamePanel.Skills, PanelDetector.Detect(buttons, tabs, skills).Panel);
+        Assert.Equal(GamePanel.None, PanelDetector.Detect(new[] { new ScreenLine("BACK", 14) }, tabs, skills).Panel);
+
+        // A heading read with a wrong letter is still matched to its skill.
+        var misread = new[] { new ScreenLine("JUDGEMEMT", 21, 1435, 156, 300), new ScreenLine("Minimum Specialized Level: 4", 19) };
+        Assert.Equal("Judgement", PanelDetector.Detect(misread, tabs, skills).Skill);
+    }
+
+    [Fact]
     public void LabelsFromTwoReads_AreCombinedWithoutDoubles()
     {
         var first = new[] { new TreeReader.Token(100, 100, 1, 3), new TreeReader.Token(400, 100, 0, 4) };
@@ -249,6 +275,12 @@ public sealed class HandSetPointsTests : IDisposable
         // Correcting a node by hand is about the real points, so it leaves the plan view too.
         session.SetTreePoints(passives, 4);
         session.AdjustNode(passives, passives.Nodes[0], +1);
+        Assert.True(session.TreeState(passives).FromGame);
+
+        // A preview lasts while the tree is open: closing it goes back to mirroring the game.
+        session.SetTreePoints(passives, 4);
+        Assert.False(session.TreeState(passives).FromGame);
+        session.ClearPlanViews();
         Assert.True(session.TreeState(passives).FromGame);
     }
 

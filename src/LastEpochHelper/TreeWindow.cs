@@ -61,6 +61,7 @@ internal sealed class TreeWindow : Window
 
     private BitmapSource? _atlas;
     private bool _atlasTried;
+    private string _atlasName = "";
     private DateTime _atlasRetryAt = DateTime.MaxValue;
     private readonly Dictionary<int, ImageBrush> _icons = new();
 
@@ -182,13 +183,19 @@ internal sealed class TreeWindow : Window
     private ImageBrush? IconBrush(TreeNode node, BuildTree build)
     {
         if (node.IconIndex < 0) return null;
+        string sheet = build.AtlasName.Length > 0 ? build.AtlasName : BuildTree.AtlasFile;
+        if (sheet != _atlasName)
+        {
+            ResetIcons(); // another build, made with another sheet
+            _atlasName = sheet;
+        }
         if (!_atlasTried || (_atlas is null && DateTime.UtcNow >= _atlasRetryAt))
         {
             _atlasTried = true;
             _atlasRetryAt = DateTime.MaxValue;
             try
             {
-                string path = System.IO.Path.Combine(_session.DataDir, BuildTree.AtlasFile);
+                string path = System.IO.Path.Combine(_session.DataDir, sheet);
                 if (File.Exists(path))
                 {
                     var image = new BitmapImage();
@@ -399,33 +406,17 @@ internal sealed class TreeWindow : Window
     }
 
     /// <summary>
-    /// A self-check under the passive tree: do the points seen in the game match the level and the
-    /// quest rewards the overlay has counted? If not, one of the two was read or counted wrong.
+    /// Under the passive tree: how many passive points the character has in total, from two things
+    /// the game itself reports - the level (its log) and the quest rewards (its map). Spent plus
+    /// unspent points in the game's passive panel should add up to this.
     /// </summary>
     private void ShowCheck(bool passive)
     {
         _check.Visibility = passive ? Visibility.Visible : Visibility.Collapsed;
         if (!passive) return;
-        var check = _session.CheckPassives();
-        string quests = check.Quest == 1 ? "1 quest passive" : $"{check.Quest} quest passives";
-        if (!check.Known)
-        {
-            _check.Foreground = Muted;
-            _check.Text = $"Check:  level {check.Level} + {quests} should give {check.Expected} passive points. Open the passive tree in the game to compare.";
-            return;
-        }
-        string seen = check.Unspent is { } unspent ? $"{check.InGame} points in the game ({check.Spent} spent + {unspent} unspent)" : $"{check.Spent} points spent in the game";
-        if (check.Agrees)
-        {
-            _check.Foreground = Green;
-            _check.Text = $"✓  {seen} = level {check.Level} + {quests}. The overlay reads your character correctly.";
-            return;
-        }
-        _check.Foreground = Amber;
-        _check.Text = $"⚠  {seen}: with {quests} you should be level {check.ImpliedLevel}, but you are level {check.Level} ({check.Expected} points expected).  "
-            + (check.InGame > check.Expected
-                ? "A quest reward is missing from the count - open the map (M) - or your level has not refreshed yet (it does on a zone change)."
-                : "Unspent points, points in a tab not opened in the game yet, or a quest counted that you have not done.");
+        int level = _session.Profile.Level, quest = _session.Rewards().Passive;
+        int fromLevel = Math.Max(0, level - 2);
+        _check.Text = $"Level {level} gives {fromLevel} points + {quest} from quests = {fromLevel + quest} passive points in total (spent + unspent in the game).";
     }
 
     private static string Age(DateTime when)

@@ -100,6 +100,11 @@ public sealed class BuildTree
     public string Name { get; set; } = "";
     /// <summary>Number of cells the atlas had at import time; icons are positional, so a different atlas must not be used.</summary>
     public int AtlasCells { get; set; }
+    /// <summary>
+    /// File name (in the data folder) of the icon sheet this build was imported with. Maxroll renames
+    /// the sheet whenever its contents move; "" = an import from before sheets were kept by name.
+    /// </summary>
+    public string AtlasName { get; set; } = "";
     public List<TreeDef> Trees { get; set; } = new();
     public List<TreeStage> Stages { get; set; } = new();
     /// <summary>The class and all its masteries, as the game names the tabs of its passive panel.</summary>

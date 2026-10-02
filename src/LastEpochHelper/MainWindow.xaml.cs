@@ -152,8 +152,70 @@ public partial class MainWindow : Window
         _watcher.Event += (ev, live) => Dispatcher.BeginInvoke(() => _session.Handle(ev, live));
         _watcher.Start();
 
+        ActivityLog.Start(_session.DataDir);
+        ActivityLog.Write($"---- started, version {Updater.Display(Updater.Current)}, screen {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0}, "
+                          + $"build '{_session.Profile.BuildPlan}', follow keys={Settings.FollowGameKeys} screen={Settings.FollowSkillOnScreen} points={Settings.ReadPointsFromScreen}");
+
         Render();
         ShowWhatsNew();
+        MentionNewErrors();
+    }
+
+    /// <summary>If something was written to the error log since the last look, point at the bug report.</summary>
+    private void MentionNewErrors()
+    {
+        long size = 0;
+        try { size = new FileInfo(Path.Combine(_session.DataDir, "errors.log")) is { Exists: true } log ? log.Length : 0; }
+        catch (IOException) { }
+        if (size == Settings.ErrorLogBytes) return;
+        if (size > Settings.ErrorLogBytes) _session.ShowAlert("The overlay ran into an error last time. Menu (☰) → Report a bug packs the details for us.", 30);
+        Settings.ErrorLogBytes = size;
+        SaveSettings();
+    }
+
+    private BugReportWindow? _reportWindow;
+
+    /// <summary>Opens "Report a bug". The picture of the game is taken first, before the window covers it.</summary>
+    private void ReportBug()
+    {
+        if (_reportWindow is not null) { _reportWindow.Activate(); return; }
+        string shot = Path.Combine(_session.DataDir, "report-screenshot.png");
+        bool haveShot = false;
+        try
+        {
+            if (File.Exists(shot)) File.Delete(shot);
+            haveShot = ScreenCapture.Save(_game.GameBounds, shot, maxWidth: 2560);
+        }
+        catch (IOException) { }
+
+        string version = Updater.Display(Updater.Current);
+        _reportWindow = new BugReportWindow((description, includeShot) =>
+        {
+            var game = _game.GameBounds;
+            var profile = _session.Profile;
+            var facts = new List<string>
+            {
+                $"Version: {version}",
+                $"Windows: {Environment.OSVersion.VersionString}",
+                $"Primary screen: {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0} (WPF units)",
+                $"Game window: {game.Right - game.Left}x{game.Bottom - game.Top} at {game.Left},{game.Top}",
+                $"Text recognition available: {(_screenReader ?? new ScreenReader()).Available}",
+                $"Character: class {profile.ClassId}, mastery {profile.Mastery}, level {profile.Level}, route {profile.RouteId}, step {profile.Index}",
+                $"Build: {profile.BuildPlan}; trees: {string.Join(", ", _session.Tree?.Trees.Select(t => t.Name) ?? Enumerable.Empty<string>())}",
+                $"Icon sheet: {_session.Tree?.AtlasName} ({_session.Tree?.AtlasCells} cells)",
+                $"Tree window: wanted={_treeWanted} pinned={_treePinned} tab={profile.TreeTab}",
+            };
+            var names = _session.Store.Profiles.Select(p => p.Name)
+                // Profiles without a known character name are called after their class; that is no secret.
+                .Where(n => _session.Tree?.PassiveTabNames.Contains(n) != true)
+                .Append(Settings.AccountName).Append(Environment.UserName).ToList();
+            string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
+            ActivityLog.Write("bug report created");
+            return BugReport.Create(new BugReportInput(_session.DataDir, description, facts, logPath, includeShot ? shot : null, names),
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
+        }, haveShot, version);
+        _reportWindow.Closed += (_, _) => _reportWindow = null;
+        _reportWindow.Show();
     }
 
     // ------------------------------------------------------------------ updates
@@ -384,8 +446,14 @@ public partial class MainWindow : Window
 
     private void ShowTree(bool show, string? kind = null)
     {
+        if (show != _treeWanted) ActivityLog.Write($"tree window {(show ? "shown" : "hidden")}{(kind is null ? "" : " for " + kind)}");
         _treeWanted = show;
-        if (!show) { _panelRegion = null; _panelMisses = 0; _gameView = null; _gameTab = null; }
+        if (!show)
+        {
+            _panelRegion = null; _panelMisses = 0; _gameView = null; _gameTab = null;
+            // A plan preview (the slider) lasts while the tree is open; next time it mirrors the game again.
+            _session.ClearPlanViews();
+        }
         if (show)
         {
             if (_treeWindow is null)
@@ -448,6 +516,9 @@ public partial class MainWindow : Window
             if (quick) lines = await _screenReader.ReadAsync(_panelRegion!.Value, masks);
             else (lines, words) = await _screenReader.ReadBothAsync(_game.GameBounds, masks);
             var reading = PanelDetector.Detect(lines, tabs, skills, _expectedPanel);
+            // A quick look that misses is routine (the next full look decides), so it is not worth a line.
+            if (!quick || reading.Panel != GamePanel.None)
+                ActivityLog.Change("panel", $"game shows {reading.Panel}{(reading.Skill is null ? "" : $" / {reading.Skill}")} ({lines.Count} lines read)");
             if (!quick && verifying) WritePanelDiagnostics(lines, reading);
 
             if (reading.Panel != GamePanel.None)
@@ -466,11 +537,7 @@ public partial class MainWindow : Window
                 if (!_treeWanted) ShowTree(true, kind);                       // the game opened a panel we missed
                 else if (changed && _treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
                 if (changed && reading.Skill is not null) _treeWindow?.SelectSkill(reading.Skill);
-                if (!quick)
-                {
-                    if (reading.Panel == GamePanel.Passives) ReadUnspent(lines);
-                    ReadNodePoints(words, reading);
-                }
+                if (!quick) ReadNodePoints(words, reading);
             }
             else if (quick)
             {
@@ -481,22 +548,12 @@ public partial class MainWindow : Window
             {
                 // Two full reads without any panel: it is closed in the game, so close here too.
                 _panelMisses = 0;
+                ActivityLog.Write("tree closed: no panel in two full reads. Largest text: "
+                                  + string.Join(" | ", lines.OrderByDescending(l => l.Height).Take(10).Select(l => $"{l.Height:0}px '{l.Text}'")));
                 ShowTree(false);
             }
         }
         finally { _reading = false; }
-    }
-
-    /// <summary>"3 UNSPENT POINTS" on the passive panel, for the level self-check in the tree window.</summary>
-    private void ReadUnspent(List<ScreenLine> lines)
-    {
-        int? unspent = null;
-        foreach (var line in lines)
-            if (System.Text.RegularExpressions.Regex.Match(line.Text.Replace('O', '0'), @"(\d{1,3})\s*UNSPENT\s*POINT", System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } m)
-                unspent = int.Parse(m.Groups[1].Value);
-        if (unspent is null || unspent == _session.UnspentPassives) return;
-        _session.UnspentPassives = unspent;
-        _treeWindow?.Render();
     }
 
     /// <summary>
@@ -511,7 +568,11 @@ public partial class MainWindow : Window
 
         if (reading.Panel == GamePanel.Passives)
         {
-            if (TreeReader.ReadBest(tokens, build.Trees.Where(t => t.Kind == TreeDef.PassiveKind)) is { } fit)
+            var fitted = TreeReader.ReadBest(tokens, build.Trees.Where(t => t.Kind == TreeDef.PassiveKind));
+            ActivityLog.Change("passive-read", fitted is { } f
+                ? $"passive labels: {tokens.Count} read, fit {f.Tree.Name}, {f.Points.Count} of {f.Tree.Nodes.Count(n => n.Max >= 1)} nodes, {f.Points.Values.Sum()} points"
+                : $"passive labels: {tokens.Count} read, no tree fits");
+            if (fitted is { } fit)
             {
                 _session.SetReadPoints(fit.Tree, fit.Points);
                 // Show the same tab the game is showing, when the game switches tab.
@@ -561,6 +622,9 @@ public partial class MainWindow : Window
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
             var points = TreeReader.Read(tokens, skill);
             if (points is not null) _session.SetReadPoints(skill, points);
+            ActivityLog.Change("skill-read:" + skill.Name, points is null
+                ? $"skill labels ({skill.Name}): {tokens.Count} read, no fit"
+                : $"skill labels ({skill.Name}): {tokens.Count} read, {points.Count} of {skill.Nodes.Count(n => n.Max >= 1)} nodes, {points.Values.Sum()} points");
             WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
         }
         finally { _readingLabels = false; }
@@ -593,7 +657,11 @@ public partial class MainWindow : Window
             };
             var lines = await _screenReader.ReadAsync(corner, masks);
             var counters = MapCounters.Parse(lines, _session.Guide.PassiveCap, _session.Guide.IdolCap);
-            if (counters is not null || _mapReadsLeft == 0) WriteMapDiagnostics(lines, counters);
+            if (counters is not null || _mapReadsLeft == 0)
+            {
+                WriteMapDiagnostics(lines, counters);
+                ActivityLog.Write(counters is { } seen ? $"map: {seen.Passive} passives, {seen.Idol} idol slots" : "map: counters not found");
+            }
             if (counters is not { } found) return;
             _mapReadsLeft = 0;
             _session.SetMapCounters(found.Passive, found.Idol);
@@ -724,6 +792,7 @@ public partial class MainWindow : Window
             : key == KeyboardWatcher.VirtualKey(Settings.GameKeySkills) ? TreeDef.SkillKind : null;
         if (kind is null) return;
 
+        ActivityLog.Write($"key for {kind} (tree wanted={_treeWanted}, pinned={_treePinned}, seen on screen={trustScreen})");
         _expectedPanel = kind == TreeDef.PassiveKind ? GamePanel.Passives : GamePanel.Skills;
         _gameView = null;
         _gameTab = null;
@@ -1224,6 +1293,9 @@ public partial class MainWindow : Window
         var settings = new MenuItem { Header = "Settings..." };
         settings.Click += (_, _) => OpenSettings();
         menu.Items.Add(settings);
+        var report = new MenuItem { Header = "Report a bug..." };
+        report.Click += (_, _) => ReportBug();
+        menu.Items.Add(report);
         var quit = new MenuItem { Header = "Quit" };
         quit.Click += (_, _) => Close();
         menu.Items.Add(quit);

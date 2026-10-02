@@ -72,6 +72,8 @@ public sealed class Settings
     /// <summary>The game's map key: the map shows the true quest-reward counters, which are read from it.</summary>
     public string GameKeyMap { get; set; } = "M";
     public bool ReadCountersFromMap { get; set; } = true;
+    /// <summary>Size of errors.log when the overlay last looked, to notice errors logged since.</summary>
+    public long ErrorLogBytes { get; set; }
     // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings
     // file that fails to save loses everything else in it too.)
     public double? TreeLeft { get; set; }

@@ -5,17 +5,6 @@ namespace LastEpochHelper.Core;
 /// <summary>A reward-bearing side quest line in a step the player has already left without ticking it.</summary>
 public sealed record PendingReward(string Key, GuideTask Task, string Zone);
 
-/// <param name="Expected">Points the level and quest rewards should give.</param>
-/// <param name="Spent">Points seen in the game's passive tree; null when it has not been read.</param>
-public sealed record PassiveCheck(int Level, int Quest, int Expected, int? Spent, int? Unspent)
-{
-    public bool Known => Spent is not null;
-    public int InGame => (Spent ?? 0) + (Unspent ?? 0);
-    /// <summary>The level a character with these points and quest rewards would be.</summary>
-    public int ImpliedLevel => Math.Max(1, InGame - Quest + 2);
-    public bool Agrees => Known && InGame == Expected;
-}
-
 /// <summary>
 /// The overlay's state without any UI: which character is being played, where it is in its route,
 /// what it has earned, and how long it has taken. Fed with log events; raises <see cref="Changed"/>.
@@ -573,6 +562,18 @@ public sealed class Session
         return true;
     }
 
+    /// <summary>
+    /// Ends every plan preview: trees whose real points are known show those again. A preview is for
+    /// looking ahead while the tree is open - left on, the tree would silently stop mirroring the game.
+    /// </summary>
+    public void ClearPlanViews()
+    {
+        if (Profile.PlanViewTrees.Count == 0) return;
+        Profile.PlanViewTrees.Clear();
+        Save();
+        Changed?.Invoke();
+    }
+
     /// <summary>Sets how many points a tree has to place when it follows the plan (the slider in the tree view).</summary>
     public void SetTreePoints(TreeDef tree, int points)
     {
@@ -612,20 +613,6 @@ public sealed class Session
 
     /// <summary>When the points shown for the character were last read or set; null if never.</summary>
     public DateTime? ActualUpdated => Profile.Actual?.Fetched;
-
-    /// <summary>"N UNSPENT POINTS" as last read off the game's passive panel; null when not seen.</summary>
-    public int? UnspentPassives { get; set; }
-
-    /// <summary>
-    /// Compares the passive points seen in the game with what the character's level and counted quest
-    /// rewards should give. When the two disagree, something was read or counted wrong.
-    /// </summary>
-    public PassiveCheck CheckPassives()
-    {
-        int quest = Rewards().Passive;
-        int? spent = Profile.Actual is { Passives.Count: > 0 } actual ? actual.Passives.Values.Sum() : null;
-        return new PassiveCheck(Profile.Level, quest, BuildTree.PassivePoints(Profile.Level, quest), spent, spent is null ? null : UnspentPassives);
-    }
 
     /// <summary>Total points the game was last seen to have in this kind of tree.</summary>
     public int ActualPoints(TreeDef tree) => Profile.Actual is not { } actual ? 0

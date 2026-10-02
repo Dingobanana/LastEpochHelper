@@ -47,9 +47,11 @@ public static partial class MaxrollImporter
                   ?? throw new InvalidDataException("Empty answer from Maxroll.");
         if (raw["data"]?.GetValue<string>() is not { } data)
             throw new InvalidDataException($"Planner '{id}' was not found or is not public.");
-        var game = await LoadGameDataAsync(cacheDir, http);
+        // Icons are positions in the sheet, listed in the game data: the two must be of the same age.
+        var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
+        var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
         var result = Convert(id, raw["name"]?.GetValue<string>() ?? id, JsonNode.Parse(data)!, game);
-        await DownloadAtlasAsync(cacheDir, http);
+        result.Tree.AtlasName = atlas ?? "";
         return result;
     }
 
@@ -57,19 +59,24 @@ public static partial class MaxrollImporter
     /// Fetches the icon sheet the planner itself uses. Its file name carries a build hash, so the
     /// current name is read from the planner's stylesheet. Icons are a nicety: failure is not an error.
     /// </summary>
-    private static async Task DownloadAtlasAsync(string cacheDir, HttpClient http)
+    /// <returns>The sheet's file name in the cache folder (null if it could not be had), and whether it was new.</returns>
+    private static async Task<(string? Name, bool IsNew)> DownloadAtlasAsync(string cacheDir, HttpClient http)
     {
-        string target = Path.Combine(cacheDir, BuildTree.AtlasFile);
         try
         {
-            if (File.Exists(target) && DateTime.UtcNow - File.GetLastWriteTimeUtc(target) < TimeSpan.FromHours(24)) return;
             var match = AtlasPath().Match(await http.GetStringAsync(PlannerCssUrl));
-            if (!match.Success) return;
+            if (!match.Success) return (null, false);
+            // Kept under its own (hashed) name: a build imported earlier goes on using the sheet it was made with.
+            string name = "maxroll_" + Path.GetFileName(match.Value);
+            string target = Path.Combine(cacheDir, name);
+            if (File.Exists(target)) return (name, false);
             await File.WriteAllBytesAsync(target, await http.GetByteArrayAsync(AssetHost + match.Value));
+            return (name, true);
         }
         catch (HttpRequestException) { }
         catch (IOException) { }
         catch (TaskCanceledException) { }
+        return (null, false);
     }
 
     private static async Task<string> ResolveIdAsync(string input, HttpClient http)
@@ -101,10 +108,10 @@ public static partial class MaxrollImporter
         catch (System.Text.Json.JsonException) { return null; }
     }
 
-    private static async Task<JsonNode> LoadGameDataAsync(string cacheDir, HttpClient http)
+    private static async Task<JsonNode> LoadGameDataAsync(string cacheDir, HttpClient http, bool refresh = false)
     {
         string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
-        if (!File.Exists(cache) || DateTime.UtcNow - File.GetLastWriteTimeUtc(cache) > TimeSpan.FromHours(24))
+        if (refresh || !File.Exists(cache) || DateTime.UtcNow - File.GetLastWriteTimeUtc(cache) > TimeSpan.FromHours(24))
             await File.WriteAllBytesAsync(cache, await http.GetByteArrayAsync(GameDataUrl));
         await using var stream = File.OpenRead(cache);
         return await JsonNode.ParseAsync(stream) ?? throw new InvalidDataException("Maxroll game data is empty.");

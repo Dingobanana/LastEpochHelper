@@ -2,6 +2,14 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.3 - Bug reports, steadier mirroring
+
+- New: Report a bug (the ☰ menu). Describe what went wrong and the overlay saves one zip file to your desktop with your description, its error and activity logs, what it last read off the screen and its settings. Nothing is sent automatically; pass the file on to whoever shared the overlay with you. Account and character names are removed.
+- Fixed: opening the tree of a skill your imported build does not use made the build tree close after a few seconds and stay closed. The overlay now recognises any open skill tree and stays up.
+- Fixed: after moving the points slider, a tree kept showing the plan instead of your real points. The slider is now a preview that lasts while the tree is open; points spent in the game always show.
+- Icons: each imported build now keeps the icon sheet it was imported with, so a later import can no longer shift another build's icons. Re-import a build whose icons look wrong.
+- The line under the passive tree no longer judges the points read off the screen (that read can miss nodes, which made the warning wrong). It now just states your total: points from your level plus quest rewards from the map.
+
 ## 0.7.2 - Counters from the map, skill trees read properly
 
 - The "x/15 passives" and "x/8 idol slots" counters are now taken from the game's own map: open the map (M) and the overlay reads "Passive points rewards (6/15)" and "Idol slot rewards (1/8)" from its bottom left corner. Side-quest rewards listed as unclaimed are ticked off when the numbers show you have them. The map key can be changed, or the reading turned off, in Settings.
