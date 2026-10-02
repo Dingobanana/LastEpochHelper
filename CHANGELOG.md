@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.12 - No more jumping between skills
+
+- Fixed: on the game's Skills & Specializations overview the build tree could jump from one skill's tab to another every second or two. The overview lists every skill at the same size, and the overlay took whichever name happened to be read slightly bigger for an open skill tree. A skill is now only followed when the game really has that skill's tree open.
+
 ## 0.7.11 - An import that takes what it is given
 
 - More ways to bring a build in: a shared planner link ending in "#2" now opens on that version; a guide page opens on the version the guide is written around; the text Maxroll's planner copies with its Export button can be pasted straight into the link box; and "Import from file" takes a build file a friend sent you (the name.tree.json the overlay saves, with or without its name.txt) or a planner saved as JSON.

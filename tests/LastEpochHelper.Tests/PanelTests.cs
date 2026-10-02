@@ -29,7 +29,7 @@ public class PanelDetectorTests
     [Fact]
     public void SkillPanel_GivesTheOpenSkill_OrJustThePanelWhenSeveralAreListed()
     {
-        var tree = new[] { new ScreenLine("GATHERING STORM", 34, 2000, 140, 380), new ScreenLine("Level 6", 18) };
+        var tree = new[] { new ScreenLine("GATHERING STORM", 34, 2000, 140, 380), new ScreenLine("Level 6", 18), new ScreenLine("Minimum Specialized Level: 4", 19, 2000, 240, 300) };
         var reading = PanelDetector.Detect(tree, Tabs, Skills);
         Assert.Equal((GamePanel.Skills, "Gathering Storm"), (reading.Panel, reading.Skill));
 
@@ -164,6 +164,38 @@ public class SkillTreeWithUnspentPointsTests
         Assert.Equal("Beastmaster", PanelDetector.Detect(Panel("BEASTMASTER"), tabs, skills).Tab);
         Assert.Null(PanelDetector.Detect(Panel("~~~"), tabs, skills).Tab);
         Assert.Equal(GamePanel.Passives, PanelDetector.Detect(Panel("~~~"), tabs, skills).Panel);
+    }
+
+    [Fact]
+    public void OnTheSkillOverview_NoSkillIsNamed_HoweverBigOneNameIsRead()
+    {
+        var tabs = new[] { "Mage", "Sorcerer", "Spellblade", "Runemaster" };
+        var skills = new[] { "Flame Reave", "Enchant Weapon", "Surge", "Firebrand" };
+        // The overview lists every skill at one size; the reader makes one of them look bigger now and then.
+        foreach (double wobble in new[] { 19.0, 24, 30 })
+        {
+            var overview = new[]
+            {
+                new ScreenLine("S & SPECIALIZATIONS", 32, 1539, 82, 400), // the heading, read with its first word cut
+                new ScreenLine("Flame Reave", wobble, 1801, 562, 140), new ScreenLine("Enchant Weapon", 19, 2011, 562, 160),
+                new ScreenLine("Surge", 18, 1662, 789, 60), new ScreenLine("Firebrand", 19, 2194, 789, 110),
+            };
+            var reading = PanelDetector.Detect(overview, tabs, skills, GamePanel.Skills);
+            Assert.Equal(GamePanel.Skills, reading.Panel);
+            Assert.Null(reading.Skill);
+        }
+
+        // A quick look at one name alone (where the last look anchored) names nothing either.
+        Assert.Null(PanelDetector.Detect(new[] { new ScreenLine("Flame Reave", 26, 1801, 562, 140) }, tabs, skills, GamePanel.Skills).Skill);
+
+        // An open tree is watched heading and marker together, so the quick looks keep seeing the marker.
+        var open = PanelDetector.Detect(new[]
+        {
+            new ScreenLine("FLAME REAVE", 21, 1435, 156, 200), new ScreenLine("LEVEL 12", 16, 1436, 208, 80),
+            new ScreenLine("Minimum Specialized Level: 5", 19, 1434, 259, 300),
+        }, tabs, skills);
+        Assert.Equal("Flame Reave", open.Skill);
+        Assert.True(open.Anchor!.Y + open.Anchor.Height * 3 >= 259 + 19);
     }
 
     [Fact]

@@ -71,7 +71,9 @@ public static class PanelDetector
 
         // Skill panel: an open tree has the skill's name as a heading; the overview lists them all.
         PanelReading? skillPanel = null;
-        // One skill name standing out in bigger letters is an open tree, with or without the overview's heading.
+        // A skill is only named when the screen shows an open tree (its marker is there). On the
+        // overview every skill's name is listed at about one size, and the reader's idea of that size
+        // wobbles from look to look: taking "the biggest name" there made the tree jump between skills.
         (string Skill, ScreenLine Line)? openTree = null;
         if (passiveHeading is null && treeMarker is not null && specialized)
         {
@@ -83,11 +85,11 @@ public static class PanelDetector
             // A heading read with a letter or two wrong ("SUMM0N TH0RN TOTEM") is still that skill.
             openTree = SkillTitleMatcher.PickLine(above, skills) ?? SkillTitleMatcher.PickClosest(above, skills);
         }
-        if (openTree is null && passiveHeading is null && (skillTree || !strict))
-        {
-            openTree = SkillTitleMatcher.PickLine(lines, skills);
-            if (openTree is null && skillTree) openTree = SkillTitleMatcher.PickClosest(lines, skills);
-        }
+        if (openTree is null && passiveHeading is null && skillTree)
+            openTree = SkillTitleMatcher.PickLine(lines, skills) ?? SkillTitleMatcher.PickClosest(lines, skills);
+        // Keep an eye on heading and marker together: a quick look at the heading alone could not tell an open tree from the overview.
+        if (openTree is { } open && specialized && treeMarker!.Y > open.Line.Y)
+            openTree = (open.Skill, open.Line with { Height = Math.Max(open.Line.Height, (treeMarker.Y + treeMarker.Height - open.Line.Y) / 3 + 4) });
         if (openTree is { } heading) skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line);
         else if (skillTree) skillPanel = new PanelReading(GamePanel.Skills, Anchor: treeMarker);
         else if (skillsHeading is not null) skillPanel = new PanelReading(GamePanel.Skills, Anchor: skillsHeading);
