@@ -1,6 +1,7 @@
 <Window x:Class="LastEpochHelper.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:LastEpochHelper"
         Title="Last Epoch Helper"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" Focusable="False"
@@ -19,13 +20,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="b" Property="Background" Value="#33FFFFFF"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="b" Property="Background" Value="#33C9A85C"/>
+                                <Setter Property="Foreground" Value="#F2E3B8"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -33,22 +34,22 @@
             </Setter>
         </Style>
         <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8F8A7A"/>
+            <Setter Property="Foreground" Value="#9C8F6C"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,1"/>
         </Style>
         <Style x:Key="Section" TargetType="Border">
-            <Setter Property="BorderBrush" Value="#33FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{x:Static local:Theme.Rule}"/>
             <Setter Property="BorderThickness" Value="0,1,0,0"/>
-            <Setter Property="Margin" Value="0,6,0,0"/>
-            <Setter Property="Padding" Value="0,5,0,0"/>
+            <Setter Property="Margin" Value="0,7,0,0"/>
+            <Setter Property="Padding" Value="0,6,0,0"/>
         </Style>
     </Window.Resources>
 
     <Grid>
         <!-- Normal layout: a box with the step list -->
-        <Border x:Name="Panel" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="6" Padding="10,6,10,8">
+        <Border x:Name="Panel" Background="{x:Static local:Theme.PlateBrush}" BorderBrush="{x:Static local:Theme.Border}" BorderThickness="1.5" CornerRadius="9" Padding="12,7,12,9">
             <StackPanel>
                 <!-- Header: drag handle + controls (controls hide while locked) -->
                 <DockPanel x:Name="Header" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown" Cursor="SizeAll">
@@ -61,24 +62,24 @@
                         <Button Style="{StaticResource HeaderButton}" Content="🔒" ToolTip="Lock (click-through)" Click="Lock_Click"/>
                         <Button Style="{StaticResource HeaderButton}" Content="✕" ToolTip="Hide (tray icon or hotkey brings it back)" Click="Hide_Click"/>
                     </StackPanel>
-                    <TextBlock x:Name="ChapterText" Foreground="#C9A85C" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="ChapterText" Foreground="#C9A85C" FontFamily="{x:Static local:Theme.TitleFont}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 </DockPanel>
 
                 <TextBlock x:Name="UpdateText" Visibility="Collapsed" Foreground="#7BE06A" FontWeight="SemiBold" Cursor="Hand"
                            TextWrapping="Wrap" Margin="0,2,0,0" MouseLeftButtonUp="UpdateText_Click"/>
 
                 <!-- Short-lived messages: a death, the result of an item check -->
-                <Border x:Name="AlertSection" Visibility="Collapsed" Background="#2A7BE06A" BorderBrush="#7BE06A" BorderThickness="1" CornerRadius="4" Padding="7,3,7,4" Margin="0,3,0,0">
+                <Border x:Name="AlertSection" Visibility="Collapsed" Background="#2A7BE06A" BorderBrush="#997BE06A" BorderThickness="1" CornerRadius="6" Padding="8,4,8,5" Margin="0,4,0,0">
                     <TextBlock x:Name="AlertText" TextWrapping="Wrap" Foreground="#E8E4D8"/>
                 </Border>
 
                 <DockPanel x:Name="ZoneRow" Margin="0,2,0,4">
                     <TextBlock x:Name="WaypointText" DockPanel.Dock="Right" Foreground="#5FC9B8" VerticalAlignment="Bottom" Margin="8,0,0,3" Text="⚑ Waypoint"/>
-                    <TextBlock x:Name="ZoneText" FontSize="19" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="ZoneText" FontSize="19" FontFamily="{x:Static local:Theme.TitleFont}" FontWeight="Bold" Foreground="#F6F1E4" TextWrapping="Wrap"/>
                 </DockPanel>
 
                 <!-- Boss card: stays visible in compact mode -->
-                <Border x:Name="BossSection" Background="#26FF7A6B" BorderBrush="#FF7A6B" BorderThickness="1" CornerRadius="4" Padding="7,4,7,5" Margin="0,0,0,4">
+                <Border x:Name="BossSection" Background="#22FF7A6B" BorderBrush="#99FF7A6B" BorderThickness="1" CornerRadius="6" Padding="8,5,8,6" Margin="0,0,0,4">
                     <StackPanel x:Name="BossList"/>
                 </Border>
 
@@ -119,7 +120,7 @@
         </Border>
 
         <!-- Bar layout: one line across the top of the screen, for streaming or small screens -->
-        <Border x:Name="Bar" Visibility="Collapsed" Background="#0E0F14" BorderBrush="#5A4B2A" BorderThickness="1" CornerRadius="5" Padding="10,4,8,5"
+        <Border x:Name="Bar" Visibility="Collapsed" Background="{x:Static local:Theme.PlateBrush}" BorderBrush="{x:Static local:Theme.Border}" BorderThickness="1.5" CornerRadius="8" Padding="12,4,9,5"
                 MouseLeftButtonDown="Header_MouseLeftButtonDown">
             <StackPanel>
                 <DockPanel LastChildFill="True">
@@ -129,7 +130,7 @@
                         <Button Style="{StaticResource HeaderButton}" Content="▣" ToolTip="Back to the box layout" Click="Layout_Click"/>
                     </StackPanel>
                     <TextBlock x:Name="BarRight" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="#A9A493" Margin="14,0,6,0"/>
-                    <TextBlock x:Name="BarZone" DockPanel.Dock="Left" VerticalAlignment="Center" FontWeight="Bold" Foreground="White" Margin="0,0,12,0"/>
+                    <TextBlock x:Name="BarZone" DockPanel.Dock="Left" VerticalAlignment="Center" FontFamily="{x:Static local:Theme.TitleFont}" FontWeight="Bold" Foreground="#F6F1E4" Margin="0,0,12,0"/>
                     <TextBlock x:Name="BarText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 </DockPanel>
                 <!-- Boss tactics and alerts get their own full-width rows so they are never cut off -->

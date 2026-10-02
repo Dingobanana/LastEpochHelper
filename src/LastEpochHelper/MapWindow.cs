@@ -23,8 +23,8 @@ internal sealed class MapWindow : Window
         Opacity = 0.92;
         Content = new Border
         {
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x5A, 0x4B, 0x2A)),
-            BorderThickness = new Thickness(1),
+            BorderBrush = Theme.Border,
+            BorderThickness = Theme.Edge,
             Child = _image,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: true);

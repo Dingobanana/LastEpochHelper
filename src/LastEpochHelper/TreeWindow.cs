@@ -90,6 +90,7 @@ internal sealed class TreeWindow : Window
         ResizeMode = ResizeMode.NoResize;
         SizeToContent = SizeToContent.WidthAndHeight;
         FontFamily = new FontFamily("Segoe UI");
+        Theme.Controls(this);
         FontSize = 13;
 
         var close = HeaderButton("✕", () => CloseRequested?.Invoke());
@@ -155,7 +156,7 @@ internal sealed class TreeWindow : Window
 
         var body = new StackPanel();
         body.Children.Add(header);
-        _canvasFrame = new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) };
+        _canvasFrame = new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#12FFFFFF"), CornerRadius = new CornerRadius(7) };
         body.Children.Add(_canvasFrame);
         body.Children.Add(_next);
         body.Children.Add(_check);
@@ -163,11 +164,11 @@ internal sealed class TreeWindow : Window
 
         Content = _root = new Border
         {
-            Background = Frozen("#F00E0F14"),
-            BorderBrush = Frozen("#5A4B2A"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(12, 6, 12, 12),
+            Background = Theme.PlateBrush,
+            BorderBrush = Theme.Border,
+            BorderThickness = Theme.Edge,
+            CornerRadius = Theme.Corners,
+            Padding = new Thickness(12, 7, 12, 12),
             Child = body,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: false);
@@ -206,7 +207,7 @@ internal sealed class TreeWindow : Window
             Child = label,
             Padding = new Thickness(8, 2, 8, 2),
             Margin = new Thickness(0, 0, 3, 0),
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(5),
             Background = selected ? Frozen("#33C9A85C") : Brushes.Transparent,
             Cursor = Cursors.Hand,
         };

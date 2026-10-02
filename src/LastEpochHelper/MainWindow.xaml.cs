@@ -1152,11 +1152,11 @@ public partial class MainWindow : Window
         Width = Settings.BarLayout ? Math.Clamp(Settings.BarWidth, 500, 3000) : Math.Clamp(Settings.Width, 260, 900);
         Panel.Visibility = Settings.BarLayout ? Visibility.Collapsed : Visibility.Visible;
         Bar.Visibility = Settings.BarLayout ? Visibility.Visible : Visibility.Collapsed;
-        Bar.Background = new SolidColorBrush(Color.FromArgb((byte)Math.Clamp(Settings.Opacity * 255, 40, 255), 0x0E, 0x0F, 0x14));
+        Bar.Background = Theme.Plate((byte)Math.Clamp(Settings.Opacity * 255, 40, 255));
         FontSize = Math.Clamp(Settings.FontSize, 9, 28);
         ZoneText.FontSize = FontSize + 5;
         byte alpha = (byte)Math.Clamp(Settings.Opacity * 255, 40, 255);
-        Panel.Background = new SolidColorBrush(Color.FromArgb(alpha, 0x0E, 0x0F, 0x14));
+        Panel.Background = Theme.Plate(alpha);
     }
 
     private void Render()
@@ -1526,7 +1526,7 @@ public partial class MainWindow : Window
 
     private void Menu_Click(object sender, RoutedEventArgs e)
     {
-        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
+        var menu = Theme.Styled(new ContextMenu { PlacementTarget = (UIElement)sender });
         var route = _session.Route;
 
         for (int i = 0; i < route.Chapters.Count; i++)

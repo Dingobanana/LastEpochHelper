@@ -2,6 +2,14 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.18 - A new coat
+
+- The overlay has a new look, closer to Last Epoch's own panels: rounder corners, a bronze edge that catches the light at the top, a slightly lit dark plate instead of flat black, and lines between sections that fade out towards the sides.
+- Zone and chapter names are set in a serif face.
+- The ☰ menu and the blessing menu in the planner are dark like the rest, not Windows' white menus.
+- The slider in the build tree and the scroll bar in the planner match too.
+- Nothing has moved and nothing is bigger: same places, same sizes, same text.
+
 ## 0.7.17 - A new setting
 
 - There is a new option under Settings → Version.

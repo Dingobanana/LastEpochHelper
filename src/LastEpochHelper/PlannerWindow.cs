@@ -53,6 +53,7 @@ internal sealed class PlannerWindow : Window
         ResizeMode = ResizeMode.NoResize;
         SizeToContent = SizeToContent.WidthAndHeight;
         FontFamily = new FontFamily("Segoe UI");
+        Theme.Controls(this);
         FontSize = 13;
         Foreground = Text;
 
@@ -77,8 +78,8 @@ internal sealed class PlannerWindow : Window
         });
         Content = new Border
         {
-            Background = Frozen("#F00E0F14"), BorderBrush = Frozen("#5A4B2A"), BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 6, 10, 10), Child = layout,
+            Background = Theme.PlateBrush, BorderBrush = Theme.Border, BorderThickness = Theme.Edge,
+            CornerRadius = Theme.Corners, Padding = new Thickness(12, 7, 12, 11), Child = layout,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: false);
     }
@@ -97,7 +98,7 @@ internal sealed class PlannerWindow : Window
         var button = new Border
         {
             Child = new TextBlock { Text = text, Foreground = color ?? (selected ? Brushes.White : Muted), FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal },
-            Padding = new Thickness(8, 2, 8, 2), Margin = new Thickness(0, 0, 3, 0), CornerRadius = new CornerRadius(3),
+            Padding = new Thickness(9, 2, 9, 3), Margin = new Thickness(0, 0, 3, 0), CornerRadius = new CornerRadius(5),
             Background = selected ? Frozen("#33C9A85C") : Frozen("#14FFFFFF"), Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Center,
         };
         button.MouseLeftButtonDown += (_, e) => { onClick(); e.Handled = true; };
@@ -540,7 +541,7 @@ internal sealed class PlannerWindow : Window
 
     private void BlessingMenu(UIElement target, Timeline timeline)
     {
-        var menu = new ContextMenu { PlacementTarget = target };
+        var menu = Theme.Styled(new ContextMenu { PlacementTarget = target });
         var none = new MenuItem { Header = "(none)" };
         none.Click += (_, _) => _session.UpdateTimeline(timeline.Name, p => p.Blessing = "");
         menu.Items.Add(none);
