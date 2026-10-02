@@ -43,6 +43,10 @@ internal sealed class SettingsWindow : Window
     private readonly CheckBox _buildLines = new() { Content = "List the build's per-level steps as text in the overlay box" };
     private readonly TextBox _keyPassives = new();
     private readonly TextBox _keySkills = new();
+    private readonly TextBox _keyMap = new();
+    private readonly CheckBox _hideGuide = new() { Content = "Hide the campaign guide for this character (endgame) - also in the ☰ menu" };
+    /// <summary>The "show this part of the overlay" boxes: what each one reads and writes.</summary>
+    private readonly List<(CheckBox Box, Func<Settings, bool> Get, Action<Settings, bool> Set)> _parts = new();
     private readonly ComboBox _mapMode = new() { ItemsSource = new[] { "Off", "Inside the overlay", "Large, centred on screen" } };
     private readonly Dictionary<string, TextBox> _hotkeys = new();
     private readonly TextBlock _message = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) };
@@ -56,41 +60,94 @@ internal sealed class SettingsWindow : Window
         _session = session;
         _overlay = overlay;
         Title = "Last Epoch Helper - Settings";
-        Width = 470;
+        Width = 520;
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Topmost = true;
 
-        var root = new StackPanel { Margin = new Thickness(14) };
-
-        root.Children.Add(Heading("Character"));
-        root.Children.Add(Row("Profile", _profile));
-        root.Children.Add(Row("Name", _name));
-        root.Children.Add(Row("Route", _route));
-        root.Children.Add(Indented(_routeInfo));
-        root.Children.Add(Row("Build plan", _plan));
-        root.Children.Add(Row("Maxroll link", _importLink));
-
-        _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
-        root.Children.Add(Indented(Buttons(
-            ("Import from Maxroll", Import), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)),
-            ("New profile", NewProfile), ("Delete profile", DeleteProfile))));
-
-        root.Children.Add(Heading("Overlay"));
-        root.Children.Add(Row("Opacity", _opacity));
-        root.Children.Add(Row("Text size", _fontSize));
-        root.Children.Add(Row("Width", _width));
-        root.Children.Add(Row("Zone map", _mapMode));
-        foreach (var box in new[] { _autoHide, _showTimer, _showBuild, _autoTick, _autoLearn, _buildLines, _followKeys, _followSkill, _readPoints, _readMap, _orderPassives, _amountPassives, _orderSkills, _amountSkills })
+        // One tab per subject; Apply at the bottom saves all of them at once.
+        var tabs = new TabControl();
+        StackPanel Tab(string title)
         {
-            box.Margin = new Thickness(0, 4, 0, 0);
-            root.Children.Add(box);
+            var page = new StackPanel { Margin = new Thickness(12, 6, 12, 12) };
+            tabs.Items.Add(new TabItem { Header = title, Content = page, Padding = new Thickness(10, 4, 10, 4) });
+            return page;
         }
-        root.Children.Add(Row("Game key: passives", _keyPassives));
-        root.Children.Add(Row("Game key: skills", _keySkills));
+        static void Boxes(StackPanel page, params CheckBox[] boxes)
+        {
+            foreach (var box in boxes)
+            {
+                box.Margin = new Thickness(0, 4, 0, 0);
+                page.Children.Add(box);
+            }
+        }
+        CheckBox Part(string label, Func<Settings, bool> get, Action<Settings, bool> set)
+        {
+            var box = new CheckBox { Content = label };
+            _parts.Add((box, get, set));
+            return box;
+        }
 
-        root.Children.Add(Heading("Hotkeys"));
+        // ---- Character
+        var character = Tab("Character");
+        character.Children.Add(Heading("Character"));
+        character.Children.Add(Row("Profile", _profile));
+        character.Children.Add(Row("Name", _name));
+        character.Children.Add(Row("Route", _route));
+        character.Children.Add(Indented(_routeInfo));
+        character.Children.Add(Indented(Buttons(("New profile", NewProfile), ("Delete profile", DeleteProfile))));
+        character.Children.Add(Heading("Build"));
+        character.Children.Add(Row("Build plan", _plan));
+        character.Children.Add(Row("Maxroll link", _importLink));
+        _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
+        character.Children.Add(Indented(Buttons(
+            ("Import from Maxroll", Import), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
+
+        // ---- Overlay: looks, and which parts it shows
+        var overlayTab = Tab("Overlay");
+        overlayTab.Children.Add(Heading("Appearance"));
+        overlayTab.Children.Add(Row("Opacity", _opacity));
+        overlayTab.Children.Add(Row("Text size", _fontSize));
+        overlayTab.Children.Add(Row("Width", _width));
+        Boxes(overlayTab, _autoHide);
+        overlayTab.Children.Add(Heading("Show in the overlay"));
+        Boxes(overlayTab,
+            Part("Zone name and the zone's steps", s => s.ShowZone, (s, on) => s.ShowZone = on),
+            Part("Boss notes", s => s.ShowBoss, (s, on) => s.ShowBoss = on),
+            Part("Unclaimed quest rewards", s => s.ShowPending, (s, on) => s.ShowPending = on),
+            Part("Next zone", s => s.ShowNext, (s, on) => s.ShowNext = on),
+            _showBuild, _buildLines,
+            Part("Passive point and idol slot counters", s => s.ShowCounters, (s, on) => s.ShowCounters = on),
+            Part("Your level (and the zone's)", s => s.ShowLevel, (s, on) => s.ShowLevel = on),
+            _showTimer);
+        overlayTab.Children.Add(Row("Zone map", _mapMode));
+        overlayTab.Children.Add(Heading("Endgame"));
+        Boxes(overlayTab, _hideGuide);
+        overlayTab.Children.Add(Indented(new TextBlock
+        {
+            Text = "Puts zone, steps, boss notes, unclaimed rewards and map away for this one character, whatever is ticked above; the rest stays.",
+            TextWrapping = TextWrapping.Wrap, Opacity = 0.7,
+        }));
+
+        // ---- Game: what the overlay picks up from the game by itself
+        var gameTab = Tab("Following the game");
+        gameTab.Children.Add(Heading("Campaign"));
+        Boxes(gameTab, _autoTick, _autoLearn, _readMap);
+        gameTab.Children.Add(Heading("Build tree"));
+        Boxes(gameTab, _followKeys, _followSkill, _readPoints, _orderPassives, _amountPassives, _orderSkills, _amountSkills);
+        gameTab.Children.Add(Heading("The game's own keys"));
+        gameTab.Children.Add(Row("Passives", _keyPassives));
+        gameTab.Children.Add(Row("Skills", _keySkills));
+        gameTab.Children.Add(Row("Map", _keyMap));
+        gameTab.Children.Add(Indented(new TextBlock
+        {
+            Text = "Set these to the keys you use in Last Epoch, if you changed them there. The overlay only listens for them; it never presses keys.",
+            TextWrapping = TextWrapping.Wrap, Opacity = 0.7,
+        }));
+
+        // ---- Hotkeys
+        var hotkeyTab = Tab("Hotkeys");
         foreach (var (label, key) in new[]
                  {
                      ("Next step", nameof(Settings.HotkeyNext)), ("Previous step", nameof(Settings.HotkeyPrev)),
@@ -104,9 +161,9 @@ internal sealed class SettingsWindow : Window
         {
             var box = new TextBox();
             _hotkeys[key] = box;
-            root.Children.Add(Row(label, box));
+            hotkeyTab.Children.Add(Row(label, box));
         }
-        root.Children.Add(Indented(new TextBlock
+        hotkeyTab.Children.Add(Indented(new TextBlock
         {
             Text = "Format: Ctrl+Shift+Right, Alt+F9 ... Leave empty to disable. " +
                    "Capture: open the in-game map, press the hotkey, and the picture is shown whenever you are in that zone.",
@@ -114,20 +171,26 @@ internal sealed class SettingsWindow : Window
             Opacity = 0.7,
         }));
 
-        root.Children.Add(Heading("Version"));
+        // ---- Version
+        var versionTab = Tab("Version");
+        versionTab.Children.Add(Heading("Version"));
         _updateInfo.Text = $"Installed: {Updater.Display(Updater.Current)}";
-        root.Children.Add(_updateInfo);
+        versionTab.Children.Add(_updateInfo);
         var updateButtons = Buttons(("Look for update", LookForUpdate), ("What's new", _overlay.ShowChangelog), ("Releases on GitHub", () => Open(Updater.ReleasesPage)));
         _install.Click += (_, _) => InstallUpdate();
         updateButtons.Children.Insert(1, _install);
-        root.Children.Add(updateButtons);
-        root.Children.Add(_autoUpdate);
+        versionTab.Children.Add(updateButtons);
+        versionTab.Children.Add(_autoUpdate);
+        versionTab.Children.Add(Indented(Buttons(("Open data folder", () => Open(_session.DataDir)))));
         ShowUpdateState();
 
+        tabs.SelectedIndex = 0;
+        var root = new StackPanel { Margin = new Thickness(12) };
+        root.Children.Add(tabs);
         root.Children.Add(_message);
-        var footer = Buttons(("Apply", Apply), ("Open data folder", () => Open(_session.DataDir)), ("Close", Close));
+        var footer = Buttons(("Apply", Apply), ("Close", Close));
         footer.HorizontalAlignment = HorizontalAlignment.Right;
-        footer.Margin = new Thickness(0, 12, 0, 0);
+        footer.Margin = new Thickness(0, 10, 0, 0);
         root.Children.Add(footer);
 
         Content = root;
@@ -263,6 +326,9 @@ internal sealed class SettingsWindow : Window
         _buildLines.IsChecked = settings.ShowBuildLines;
         _keyPassives.Text = settings.GameKeyPassives;
         _keySkills.Text = settings.GameKeySkills;
+        _keyMap.Text = settings.GameKeyMap;
+        _hideGuide.IsChecked = profile.HideGuide;
+        foreach (var (box, get, _) in _parts) box.IsChecked = get(settings);
         foreach (var (key, box) in _hotkeys)
             box.Text = (string)typeof(Settings).GetProperty(key)!.GetValue(settings)!;
         _loading = false;
@@ -309,6 +375,9 @@ internal sealed class SettingsWindow : Window
         settings.ShowBuildLines = _buildLines.IsChecked == true;
         if (KeyboardWatcher.VirtualKey(_keyPassives.Text) != 0) settings.GameKeyPassives = _keyPassives.Text.Trim();
         if (KeyboardWatcher.VirtualKey(_keySkills.Text) != 0) settings.GameKeySkills = _keySkills.Text.Trim();
+        if (KeyboardWatcher.VirtualKey(_keyMap.Text) != 0) settings.GameKeyMap = _keyMap.Text.Trim();
+        profile.HideGuide = _hideGuide.IsChecked == true;
+        foreach (var (box, _, set) in _parts) set(settings, box.IsChecked == true);
         foreach (var (key, box) in _hotkeys)
             typeof(Settings).GetProperty(key)!.SetValue(settings, box.Text.Trim());
 

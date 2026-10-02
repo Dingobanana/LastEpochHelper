@@ -1071,7 +1071,10 @@ public partial class MainWindow : Window
         bool guide = !_session.Profile.HideGuide;
         ChapterText.Text = guide ? $"{chapter.Title} · {chapter.Era}  ({tracker.IndexInChapter + 1}/{chapter.Steps.Count})"
             : "Endgame" + (_session.Plan is { } followed ? $"  ·  {followed.Name}" : "");
-        ZoneRow.Visibility = TaskList.Visibility = NextText.Visibility = guide ? Visibility.Visible : Visibility.Collapsed;
+        ZoneRow.Visibility = TaskList.Visibility = guide && Settings.ShowZone ? Visibility.Visible : Visibility.Collapsed;
+        NextText.Visibility = guide && Settings.ShowNext ? Visibility.Visible : Visibility.Collapsed;
+        RewardText.Visibility = Settings.ShowCounters ? Visibility.Visible : Visibility.Collapsed;
+        LevelText.Visibility = Settings.ShowLevel ? Visibility.Visible : Visibility.Collapsed;
         if (guide && _session.ShouldOfferHidingGuide())
             // Not from inside this method: showing an alert draws the overlay again.
             Dispatcher.BeginInvoke(() => _session.ShowAlert("In the Monolith now? Menu (☰) → Hide the campaign guide puts the zone steps away and keeps your build reminders.", 40));
@@ -1102,7 +1105,7 @@ public partial class MainWindow : Window
             string key = Session.Key(tracker.Index, i);
             TaskList.Children.Add(BuildTaskRow(task, _session.IsDone(key), () => _session.ToggleDone(key)));
         }
-        BossSection.Visibility = guide && BossList.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BossSection.Visibility = guide && Settings.ShowBoss && BossList.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var (passive, idol, pending) = _session.Rewards();
         PendingList.Children.Clear();
@@ -1114,7 +1117,7 @@ public partial class MainWindow : Window
             row.MouseRightButtonUp += (_, e) => { _session.SkipReward(reward.Key); e.Handled = true; };
             PendingList.Children.Add(row);
         }
-        PendingSection.Visibility = guide && pending.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PendingSection.Visibility = guide && Settings.ShowPending && pending.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         RenderBuild(level);
         RenderMap(step);
@@ -1149,7 +1152,7 @@ public partial class MainWindow : Window
     private void RenderBar(GuideStep step, int passive, int idol, int? level)
     {
         var tracker = _session.Tracker;
-        bool guide = !_session.Profile.HideGuide;
+        bool guide = !_session.Profile.HideGuide && Settings.ShowZone;
         BarZone.Text = guide ? $"{tracker.Chapter.Id}.{tracker.IndexInChapter + 1}  {step.Zone}" : "Endgame";
         BarText.Inlines.Clear();
         bool first = true;
@@ -1172,21 +1175,24 @@ public partial class MainWindow : Window
             if (task.Passive > 0) BarText.Inlines.Add(new Run($" +{task.Passive}P") { Foreground = PassiveBrush, FontWeight = FontWeights.Bold });
             if (task.Idol > 0) BarText.Inlines.Add(new Run(" +Idol") { Foreground = IdolBrush, FontWeight = FontWeights.Bold });
         }
-        if (guide && tracker.NextStep is { } next)
+        if (guide && Settings.ShowNext && tracker.NextStep is { } next)
             BarText.Inlines.Add(new Run($"{(first ? "" : "    ")}▸ next: {next.Zone}") { Foreground = DimBrush });
 
         BarRight.Inlines.Clear();
-        BarRight.Inlines.Add(new Run($"{passive}/{_session.Guide.PassiveCap}") { Foreground = PassiveBrush });
-        BarRight.Inlines.Add(new Run("  "));
-        BarRight.Inlines.Add(new Run($"{idol}/{_session.Guide.IdolCap}") { Foreground = IdolBrush });
-        if (level is { } lvl)
+        if (Settings.ShowCounters)
+        {
+            BarRight.Inlines.Add(new Run($"{passive}/{_session.Guide.PassiveCap}") { Foreground = PassiveBrush });
+            BarRight.Inlines.Add(new Run("  "));
+            BarRight.Inlines.Add(new Run($"{idol}/{_session.Guide.IdolCap}") { Foreground = IdolBrush });
+        }
+        if (Settings.ShowLevel && level is { } lvl)
             BarRight.Inlines.Add(new Run($"   lvl {lvl}{(guide && step.Level > 0 ? $" / zone {step.Level}" : "")}")
                 { Foreground = guide && step.Level > 0 && lvl < step.Level - 2 ? UnderLevelBrush : BarRight.Foreground });
         if (Settings.ShowTimer) BarRight.Inlines.Add(new Run($"   ⏱ {Clock(_session.Profile.PlaySeconds)}"));
         BarButtons.Visibility = Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
 
         BarBoss.Children.Clear();
-        foreach (var boss in step.Tasks.Where(t => guide && t.Type == "boss"))
+        foreach (var boss in step.Tasks.Where(t => !_session.Profile.HideGuide && Settings.ShowBoss && t.Type == "boss"))
             BarBoss.Children.Add(BuildBossLine(boss.Text));
         BarBoss.Visibility = BarBoss.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         BarAlert.Text = _session.Alert ?? "";

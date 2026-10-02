@@ -109,6 +109,34 @@ public sealed class TreeRenderTests : IDisposable
                     using var file = File.Create(Path.Combine(output, $"planner-{tab.Replace(' ', '_').Replace(';', '_')}.png"));
                     encoder.Save(file);
                 }
+
+                // The settings window: every tab has to build and lay out. (It only needs the overlay
+                // window for its buttons, so an empty stand-in will do.)
+                var overlay = (MainWindow)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(MainWindow));
+                var settings = new SettingsWindow(session, overlay);
+                var tabs = (System.Windows.Controls.TabControl)((System.Windows.Controls.Panel)settings.Content).Children[0];
+                for (int i = 0; i < tabs.Items.Count; i++)
+                {
+                    // A tab control only shows the selected page inside a live window; draw the page itself.
+                    var page = (FrameworkElement)((System.Windows.Controls.TabItem)tabs.Items[i]).Content;
+                    tabs.SelectedIndex = i;
+                    ((System.Windows.Controls.TabItem)tabs.Items[i]).Content = null;
+                    var frame = new System.Windows.Controls.Border { Background = Brushes.White, Child = page, Width = 500 };
+                    frame.Measure(new Size(500, double.PositiveInfinity));
+                    frame.Arrange(new Rect(frame.DesiredSize));
+                    frame.UpdateLayout();
+                    var bitmap = new RenderTargetBitmap(500, Math.Max(1, (int)Math.Ceiling(frame.ActualHeight)), 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(frame);
+                    rendered++;
+                    frame.Child = null;
+                    ((System.Windows.Controls.TabItem)tabs.Items[i]).Content = page;
+                    if (output is null) continue;
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                    using var file = File.Create(Path.Combine(output, $"settings-{i + 1}.png"));
+                    encoder.Save(file);
+                }
+                Assert.Equal(5, tabs.Items.Count);
             }
             catch (Exception e) { failure = e; }
         });

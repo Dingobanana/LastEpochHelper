@@ -30,6 +30,16 @@ public sealed class Settings
     public bool AutoHide { get; set; } = true;
     public bool ShowTimer { get; set; } = true;
     public bool ShowBuild { get; set; } = true;
+    // The parts of the overlay box, each of which can be left out.
+    /// <summary>Zone name and the zone's steps.</summary>
+    public bool ShowZone { get; set; } = true;
+    public bool ShowBoss { get; set; } = true;
+    /// <summary>The list of quest rewards passed but not ticked.</summary>
+    public bool ShowPending { get; set; } = true;
+    public bool ShowNext { get; set; } = true;
+    /// <summary>"Passives x/15 · Idol slots x/8".</summary>
+    public bool ShowCounters { get; set; } = true;
+    public bool ShowLevel { get; set; } = true;
     /// <summary>0 = off, 1 = inside the overlay, 2 = large and centred.</summary>
     public int MapMode { get; set; } = 1;
     public bool AutoLearn { get; set; } = true;

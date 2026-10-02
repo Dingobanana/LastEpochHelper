@@ -2,8 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.9 - Put the campaign guide away
+## 0.7.9 - Choose what the overlay shows
 
+- Every part of the overlay can now be switched on or off in Settings → Overlay: zone name and steps, boss notes, unclaimed rewards, next zone, reminders, the passive / idol counters, your level, the timer and the zone map.
+- Settings is split into tabs: Character, Overlay, Following the game, Hotkeys, Version. The game's map key can now be set there too.
 - New in the ☰ menu: Hide the campaign guide (endgame). For a character that is in the Monolith and no longer cares which zone comes next, the zone steps, boss notes and unclaimed rewards are put away; the build reminders, the passive / idol counters and the timer stay. It is remembered per character - tick it again to bring the guide back. The overlay mentions it once when you reach the Monolith.
 
 ## 0.7.8 - Only the stage's skills
