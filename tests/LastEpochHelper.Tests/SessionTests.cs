@@ -462,7 +462,7 @@ public class BuildPlanTests
 public class MaxrollImporterTests
 {
     // A cut-down planner and game-data table in the shapes Maxroll serves.
-    private const string Game = """
+    internal const string Game = """
     {
       "classes": [ {
         "className": "Sentinel", "treeID": "kn",
@@ -497,7 +497,7 @@ public class MaxrollImporterTests
     }
     """;
 
-    private const string Planner = """
+    internal const string Planner = """
     {
       "items": {
         "11": { "itemType": 0, "subType": 3, "affixes": [ { "id": 25, "tier": 3, "roll": 1 }, { "id": 7, "tier": 2, "roll": 1 } ] },

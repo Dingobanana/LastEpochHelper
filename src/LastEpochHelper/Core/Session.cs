@@ -518,7 +518,9 @@ public sealed class Session
         }
 
         Profile.PlanViewTrees.Remove(ViewKey(tree)); // correcting a node means looking at the real points
-        int next = Math.Clamp(points.GetValueOrDefault(node.Id) + delta, 0, Math.Max(node.Max, 1));
+        // Gear can put a node over its limit, and some builds plan for that ("5/4"): go as far as the build does.
+        int planned = Tree.Stages.Max(s => (tree.Kind == TreeDef.PassiveKind ? s.Passives : s.Skills.GetValueOrDefault(tree.Name) ?? new List<int>()).Count(n => n == node.Id));
+        int next = Math.Clamp(points.GetValueOrDefault(node.Id) + delta, 0, Math.Max(Math.Max(node.Max, 1), planned));
         if (next == 0) points.Remove(node.Id); else points[node.Id] = next;
         actual.Fetched = DateTime.Now;
         Save();

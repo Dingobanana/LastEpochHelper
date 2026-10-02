@@ -147,4 +147,92 @@ public sealed class TreeRenderTests : IDisposable
         Assert.Null(failure);
         Assert.True(rendered >= 2);
     }
+
+    /// <summary>
+    /// Draws the build tree and the planner for real planners saved from Maxroll (LEH_MAXROLL_DIR,
+    /// LEH_MAXROLL_GAME; at most LEH_RENDER_LIMIT planners, spread over the folders), at several
+    /// character levels and with each stage chosen by hand. Whatever a planner holds, the windows have to draw.
+    /// </summary>
+    [Fact]
+    public void EverySavedPlanner_Draws_WhenAskedTo()
+    {
+        string? dirs = Environment.GetEnvironmentVariable("LEH_MAXROLL_DIR"), gameFile = Environment.GetEnvironmentVariable("LEH_MAXROLL_GAME"),
+            output = Environment.GetEnvironmentVariable("LEH_MAXROLL_OUT");
+        if (dirs is null || gameFile is null || output is null || !int.TryParse(Environment.GetEnvironmentVariable("LEH_RENDER_LIMIT"), out int limit)) return;
+
+        var failures = new List<string>();
+        int drawn = 0, builds = 0;
+        var thread = new Thread(() =>
+        {
+            var game = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(gameFile))!;
+            var files = dirs.Split(';', StringSplitOptions.RemoveEmptyEntries).SelectMany(d => Directory.GetFiles(d, "*.json")).OrderBy(f => f).ToList();
+            int step = Math.Max(1, files.Count / Math.Max(1, limit));
+            var endgame = EndgameData.Load(Path.Combine(AppContext.BaseDirectory, "Data", "endgame.json"));
+            var route = TrackerTests.MakeRoute("A", "B");
+            for (int f = 0; f < files.Count; f += step)
+            {
+                string id = Path.GetFileNameWithoutExtension(files[f]);
+                try
+                {
+                    if (System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(files[f]))?["data"]?.GetValue<string>() is not { } data) continue;
+                    var results = MaxrollImporter.ConvertAll(id, id, System.Text.Json.Nodes.JsonNode.Parse(data)!, game);
+                    string home = Path.Combine(_dir, id);
+                    var storage = new Storage(home);
+                    var session = new Session(storage, new Guide { PassiveCap = 15, IdolCap = 8, Routes = { route } }, new SceneMap(), endgame, Path.Combine(home, "Filters"));
+                    var written = BuildFiles.Write(session.BuildsDir, results);
+                    var tree = new TreeWindow(session);
+                    var planner = new PlannerWindow(session);
+                    for (int b = 0; b < results.Count; b++)
+                    {
+                        builds++;
+                        session.Profile.BuildPlan = written[b];
+                        session.ReloadPlan();
+                        foreach (int level in new[] { 1, 23, 60, 100 })
+                        {
+                            session.Handle(new CharacterLevelEvent(level, 0, 0), live: false);
+                            foreach (var stage in session.Tree!.Stages.Cast<TreeStage?>().Prepend(null).Take(level == 60 ? 99 : 1))
+                            {
+                                session.SetStage(stage);
+                                foreach (var tab in session.Tree.Trees)
+                                {
+                                    session.Profile.TreeTab = tab.Name;
+                                    session.Profile.SkillPoints[tab.Name] = level / 5;
+                                    tree.Render();
+                                    Draw((FrameworkElement)tree.Content);
+                                    drawn++;
+                                }
+                            }
+                            foreach (string page in new[] { PlannerWindow.SummaryTab, "Gear", "Idols", "Targets", "Search", "Loot filter" })
+                            {
+                                session.Profile.PlannerTab = page;
+                                planner.Render();
+                                Draw((FrameworkElement)planner.Content);
+                                drawn++;
+                            }
+                        }
+                        if (results.Count > 1 && !session.SwitchVariant((b + 1) % results.Count)) failures.Add($"{id}: could not switch to version {(b + 1) % results.Count}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    failures.Add($"{id}: {e.GetType().Name}: {e.Message} @ {e.StackTrace?.Split('\n').FirstOrDefault(l => l.Contains("LastEpochHelper"))?.Trim()}");
+                }
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        File.WriteAllLines(output, new[] { $"{builds} builds, {drawn} windows drawn, {failures.Count} failures" }.Concat(failures));
+        Assert.Empty(failures);
+
+        static void Draw(FrameworkElement root)
+        {
+            root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            root.Arrange(new Rect(root.DesiredSize));
+            root.UpdateLayout();
+            int width = Math.Clamp((int)Math.Ceiling(root.ActualWidth), 1, 4000), height = Math.Clamp((int)Math.Ceiling(root.ActualHeight), 1, 4000);
+            new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32).Render(root);
+        }
+    }
 }

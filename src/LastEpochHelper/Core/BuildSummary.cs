@@ -37,7 +37,7 @@ public sealed partial record BuildSummary(IReadOnlyList<string> Headlines, IRead
     {
         // The plan is sorted by level only; the number in each key is the order the build gives.
         var entries = plan.Entries.OrderBy(e => e.Level)
-            .ThenBy(e => Sequence().Match(e.Key) is { Success: true } m ? int.Parse(m.Groups[1].Value) : 0).ToList();
+            .ThenBy(e => Sequence().Match(e.Key) is { Success: true } m && int.TryParse(m.Groups[1].Value, out int n) ? n : 0).ToList();
 
         var steps = new List<(int Order, SummaryStep Step)>();
         var phases = new List<Phase>();
@@ -58,7 +58,8 @@ public sealed partial record BuildSummary(IReadOnlyList<string> Headlines, IRead
                 foreach (Match node in NodePoints().Matches(passive.Groups["nodes"].Value))
                 {
                     string key = tree + "/" + node.Groups["node"].Value.Trim();
-                    int now = int.Parse(node.Groups["have"].Value);
+                    // (A number no node can hold is someone's typo in a hand-written plan, not points.)
+                    if (!int.TryParse(node.Groups["have"].Value, out int now) || now > 100) continue;
                     // The plan gives running totals per node; a respec can lower one, which adds nothing.
                     int before = have.GetValueOrDefault(key);
                     added += now > before ? now - before : 0;

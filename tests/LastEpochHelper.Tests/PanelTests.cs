@@ -462,7 +462,7 @@ public class TreeReaderTests
     [Fact]
     public void ToleratesLookAlikeCharacters_AndRejectsWhatIsNotANodeLabel()
     {
-        var tokens = TreeReader.Tokens(new[] { new ScreenLine("O/6", 16), new ScreenLine("2/lO", 16), new ScreenLine("310/310", 16), new ScreenLine("7/5", 16), new ScreenLine("Level", 16) });
+        var tokens = TreeReader.Tokens(new[] { new ScreenLine("O/6", 16), new ScreenLine("2/lO", 16), new ScreenLine("310/310", 16), new ScreenLine("13/5", 16), new ScreenLine("Level", 16) });
 
         Assert.Equal(new[] { (0, 6), (2, 10) }, tokens.Select(t => (t.Have, t.Max)));
     }

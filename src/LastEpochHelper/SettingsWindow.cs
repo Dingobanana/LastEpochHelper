@@ -102,9 +102,10 @@ internal sealed class SettingsWindow : Window
         character.Children.Add(Heading("Build"));
         character.Children.Add(Row("Build plan", _plan));
         character.Children.Add(Row("Maxroll link", _importLink));
-        _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
+        _importLink.ToolTip = "Any of: a Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...), a Maxroll build guide link, "
+                              + "the text the planner's Export button copies, or the path of a build file someone sent you.";
         character.Children.Add(Indented(Buttons(
-            ("Import from Maxroll", Import), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
+            ("Import from Maxroll", Import), ("Import from file...", ImportFile), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
 
         // ---- Overlay: looks, and which parts it shows
         var overlayTab = Tab("Overlay");
@@ -416,6 +417,17 @@ internal sealed class SettingsWindow : Window
         ImportFrom(_importLink.Text);
     }
 
+    /// <summary>A build someone sent as a file: this overlay's own build file, or a planner saved as JSON.</summary>
+    private void ImportFile()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import a build from a file",
+            Filter = "Build files (*.tree.json;*.json)|*.tree.json;*.json|All files (*.*)|*.*",
+        };
+        if (dialog.ShowDialog(this) == true) ImportFrom(dialog.FileName);
+    }
+
     private async void ImportFrom(string link)
     {
         _message.Text = "Importing...";
@@ -423,18 +435,15 @@ internal sealed class SettingsWindow : Window
         {
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
-            var results = await MaxrollImporter.ImportAsync(link, _session.DataDir, http);
+            // A path to a file on this computer can be pasted in the link box too.
+            string asPath = link.Trim().Trim('"');
+            var results = asPath.IndexOfAny(Path.GetInvalidPathChars()) < 0 && File.Exists(asPath)
+                ? await MaxrollImporter.ImportFileAsync(asPath, _session.DataDir, http)
+                : await MaxrollImporter.ImportAsync(link, _session.DataDir, http);
 
             // A build guide brings several versions of the build; each gets its own pair of files, and
             // each knows the others' names so the tree window can switch without downloading again.
-            var files = results.Select(r => string.Concat(r.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim() + ".txt").ToList();
-            for (int i = 0; i < results.Count; i++)
-            {
-                string path = Path.Combine(_session.BuildsDir, files[i]);
-                File.WriteAllText(path, results[i].Text);
-                if (results.Count > 1) results[i].Tree.VariantFiles = files;
-                results[i].Tree.Save(BuildTree.PathFor(path));
-            }
+            var files = BuildFiles.Write(_session.BuildsDir, results);
             var result = results[0];
             _session.Profile.BuildPlan = files[0];
             // Importing again (a newer version of the guide) must not undo what the player has set:
@@ -452,13 +461,27 @@ internal sealed class SettingsWindow : Window
             _message.Text = $"Imported '{result.Name}' ({result.Steps} points). The order is exact; the levels are estimates."
                 + (results.Count > 1
                     ? $" This guide has {results.Count} versions of the build ({string.Join(", ", result.Tree.Variants)}); switch between them at the bottom of the build tree."
-                    : result.Tree.Stages.Count > 1 ? $" It has {result.Tree.Stages.Count} stages by level; the overlay follows your level, or pick one at the bottom of the build tree." : "");
+                    : result.Tree.Stages.Count > 1 ? $" It has {result.Tree.Stages.Count} stages by level; the overlay follows your level, or pick one at the bottom of the build tree." : "")
+                // Some planners fill every node to show a tree off; a character has 113 passive points at most.
+                + (result.Tree.Stages.Any(s => s.Passives.Count > 120) ? " Note: this planner has more passive points placed than a character can have - it is a showcase, not a tree to follow point by point." : "");
         }
-        catch (Exception e) when (e is System.Net.Http.HttpRequestException or InvalidDataException or IOException
-                                      or TaskCanceledException or System.Text.Json.JsonException or InvalidOperationException
-                                      or KeyNotFoundException or NullReferenceException or ArgumentException)
+        catch (InvalidDataException e)
         {
-            _message.Text = "Import failed: " + e.Message;
+            _message.Text = e.Message; // already a sentence for the player
+        }
+        catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
+        {
+            _message.Text = "Could not reach Maxroll (" + e.Message + "). Check your connection and try again.";
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _message.Text = "Could not save the build: " + e.Message;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            // Not foreseen: say so, and leave a trace for a bug report.
+            ActivityLog.Write($"import failed unexpectedly: {e.GetType().Name}: {e.Message}");
+            _message.Text = "Import failed in a way the overlay did not expect (" + e.GetType().Name + "). Menu (☰) → Report a bug sends us the details.";
         }
     }
 

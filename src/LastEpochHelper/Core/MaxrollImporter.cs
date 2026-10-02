@@ -45,18 +45,127 @@ public static partial class MaxrollImporter
     public static (bool Sequential, List<string> Names) Shape(JsonNode data)
     {
         var profiles = data["profiles"] as JsonArray ?? new JsonArray();
-        var levels = profiles.Select(p => p?["level"]?.GetValue<int>() ?? 0).ToList();
-        var names = profiles.Select((p, i) => p?["name"]?.GetValue<string>() is { Length: > 0 } name ? name : $"Version {i + 1}").ToList();
-        bool sequential = levels.Count < 2 || levels.Zip(levels.Skip(1)).All(pair => pair.Second > pair.First);
-        return (sequential, names);
+        var levels = profiles.Select(p => p is JsonObject && p["level"] is JsonValue value && value.TryGetValue(out int level) ? level : 0).ToList();
+        var names = Names(profiles);
+        // Many players leave every profile at level 100 and let the trees tell the story: "Campaign"
+        // with 73 passive points, "Early endgame" with 111. Steadily more points is a sequence too.
+        var points = profiles.Select(p => p is JsonObject ? Points(p["passives"]) : 0).ToList();
+        // Rising levels alone do not make a sequence: a planner can hold two unrelated sets that happen to
+        // differ in level. In a sequence the trees never shrink from one stage to the next.
+        bool byLevel = levels.Zip(levels.Skip(1)).All(pair => pair.Second > pair.First) && points.Zip(points.Skip(1)).All(pair => pair.Second >= pair.First);
+        bool byGrowth = levels.Zip(levels.Skip(1)).All(pair => pair.Second >= pair.First) && points.Zip(points.Skip(1)).All(pair => pair.Second > pair.First);
+        return (levels.Count < 2 || byLevel || byGrowth, names);
+    }
+
+    /// <summary>
+    /// A name for every profile: its own, tidied (one line, not endless), a stand-in where it has none,
+    /// and numbered where two profiles carry the same name - a name is how a stage or version is chosen.
+    /// </summary>
+    private static List<string> Names(JsonArray profiles)
+    {
+        var names = new List<string>();
+        for (int i = 0; i < profiles.Count; i++)
+        {
+            string name = profiles[i] is JsonObject profile && profile["name"] is JsonValue value && value.TryGetValue(out string? given) ? given ?? "" : "";
+            name = string.Join(' ', name.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            if (name.Length > 60) name = name[..60].TrimEnd();
+            if (name.Length == 0) name = $"Version {i + 1}";
+            string unique = name;
+            for (int n = 2; names.Contains(unique, StringComparer.OrdinalIgnoreCase); n++) unique = $"{name} ({n})";
+            names.Add(unique);
+        }
+        return names;
+    }
+
+    private static int Points(JsonNode? tree) =>
+        tree is JsonObject && tree["history"] is JsonArray ? History(tree).Count : 0;
+
+    /// <summary>
+    /// The level a stage ends at. The planner's own number when the profiles are levelled; when they
+    /// are all left at 100 but hold ever more passive points, the level at which a character has that
+    /// many (points come one per level from 3, plus up to 15 from quests).
+    /// </summary>
+    private static void GiveStagesLevels(JsonArray profiles)
+    {
+        int previous = 0;
+        for (int i = 0; i < profiles.Count; i++)
+        {
+            if (profiles[i] is not JsonObject profile) continue;
+            int level = Math.Clamp(profile["level"] is JsonValue value && value.TryGetValue(out int stated) ? stated : 100, 1, 100);
+            bool last = i == profiles.Count - 1;
+            int earned = Math.Clamp(Points(profile["passives"]) - 13, 1, 100);
+            // Only where the stated level cannot be right: not above the stage before it.
+            if (level <= previous || (!last && profiles[i + 1] is JsonObject next && next["level"] is JsonValue nv && nv.TryGetValue(out int nextLevel) && nextLevel <= level))
+                level = Math.Min(100, Math.Max(Math.Min(level, earned), previous + 1));
+            profile["level"] = level;
+            previous = level;
+        }
+    }
+
+    /// <summary>Every build a planner holds: one for a leveling planner, one per version otherwise.</summary>
+    /// <param name="preferred">The version (0-based, as in the planner) to put first: the one a link or guide pointed at.</param>
+    internal static List<Result> ConvertAll(string id, string name, JsonNode data, JsonNode game, int? preferred = null)
+    {
+        // Planners can be saved without a title; the build still needs something to be called (and filed under).
+        name = string.Join(' ', (name ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (name.Length == 0) name = $"Maxroll build {id}";
+        var (sequential, names) = Shape(data);
+        var results = new List<Result>();
+        Exception? firstFailure = null;
+        foreach (int version in Enumerable.Range(0, sequential ? 1 : Math.Max(1, names.Count)))
+        {
+            // One version that cannot be read (a half-finished profile) must not cost the others.
+            try { results.Add(ConvertPlanner(id, name, data, game, version)); }
+            catch (Exception e) when (e is InvalidDataException or InvalidOperationException or KeyNotFoundException or NullReferenceException
+                                          or ArgumentException or FormatException or IndexOutOfRangeException or System.Text.Json.JsonException)
+            {
+                firstFailure ??= e;
+            }
+        }
+        if (results.Count == 0)
+            throw new InvalidDataException("This planner could not be read: " + (firstFailure is InvalidDataException known ? known.Message
+                : "it holds something the importer does not understand (" + (firstFailure?.GetType().Name ?? "no profiles") + ")."), firstFailure);
+        // Start on a version that has trees, not on a gear-only one that happens to come first.
+        // ...and on the one the link or the guide page pointed at, when it said.
+        int start = preferred is { } wanted ? results.FindIndex(r => r.Tree.Variant == wanted && r.Steps > 0) : -1;
+        if (start < 0) start = results.FindIndex(r => r.Steps > 0);
+        if (start > 0) results.Insert(0, results[start]);
+        if (start > 0) results.RemoveAt(start + 1);
+        // The list of versions each build carries is the list of builds that were actually made, in this order.
+        if (results.Count > 1)
+        {
+            var made = results.Select(r => r.Tree.Variants.Count > r.Tree.Variant ? r.Tree.Variants[r.Tree.Variant] : r.Name).ToList();
+            for (int i = 0; i < results.Count; i++)
+            {
+                results[i].Tree.Variants = made.ToList();
+                results[i].Tree.Variant = i;
+            }
+        }
+        else if (results.Count == 1) results[0].Tree.Variants = new List<string>();
+        return results;
     }
 
     /// <param name="variant">Which alternative to import when the planner holds alternatives; null = the first.</param>
     internal static Result ConvertPlanner(string id, string name, JsonNode data, JsonNode game, int? variant = null)
     {
         var (sequential, names) = Shape(data);
+        // From here on every profile carries the tidied, unique name.
+        data = data.DeepClone();
+        if (data["profiles"] is JsonArray named)
+            for (int i = 0; i < named.Count && i < names.Count; i++)
+                if (named[i] is JsonObject profile)
+                {
+                    profile["name"] = names[i];
+                    // ...and a level that is one: characters go from 1 to 100, whatever the field holds.
+                    profile["level"] = Math.Clamp(profile["level"] is JsonValue stated && stated.TryGetValue(out int level) ? level : 100, 1, 100);
+                }
         Result result;
-        if (sequential) result = Convert(id, name, data, game);
+        if (sequential)
+        {
+            var staged = data.DeepClone();
+            if (staged["profiles"] is JsonArray stages) GiveStagesLevels(stages);
+            result = Convert(id, name, staged, game);
+        }
         else
         {
             int index = Math.Clamp(variant ?? 0, 0, names.Count - 1);
@@ -77,8 +186,9 @@ public static partial class MaxrollImporter
     /// </summary>
     public static string? PickPlanner(string html)
     {
-        var ids = EmbeddedPlanner().Matches(html).Select(m => m.Groups[1].Value).ToList();
-        if (ids.Count == 0) return PlannerLink().Match(html) is { Success: true } link ? link.Groups[1].Value : null;
+        var ids = EmbeddedPlanner().Matches(html).Select(m => m.Groups[1].Value).Where(id => id.Any(char.IsDigit)).ToList();
+        if (ids.Count == 0)
+            return PlannerLink().Matches(html).Select(m => m.Groups[1].Value).FirstOrDefault(id => id.Any(char.IsDigit));
         var counted = ids.GroupBy(i => i).Select(g => (Id: g.Key, Count: g.Count())).OrderByDescending(g => g.Count).ToList();
         if (counted.Count > 1 && counted[0].Count == 1)
             throw new InvalidDataException("That page lists several builds. Open the guide of the one you want and paste that link.");
@@ -95,24 +205,145 @@ public static partial class MaxrollImporter
     /// </returns>
     public static async Task<IReadOnlyList<Result>> ImportAsync(string input, string cacheDir, HttpClient http)
     {
-        string id = await ResolveIdAsync(input.Trim(), http);
-        var raw = JsonNode.Parse(await http.GetStringAsync(ProfileUrl + id))
-                  ?? throw new InvalidDataException("Empty answer from Maxroll.");
-        if (raw["data"]?.GetValue<string>() is not { } data)
+        var pasted = Understand(input);
+        // The planner's "Export data" puts one version of a build on the clipboard as JSON; that can be pasted as it is.
+        if (pasted.Json is { } json)
+        {
+            JsonNode? document;
+            try { document = JsonNode.Parse(json); }
+            catch (System.Text.Json.JsonException) { document = null; }
+            if (document is not JsonObject found)
+                throw new InvalidDataException("That looks like data copied from a planner, but it is cut off or not complete. Copy it again with the planner's Export button.");
+            return await FromJsonAsync(found, "", "Pasted build", cacheDir, http);
+        }
+
+        var (id, variant) = await ResolveAsync(pasted, http);
+        using var answer = await http.GetAsync(ProfileUrl + id);
+        if (answer.StatusCode == System.Net.HttpStatusCode.NotFound)
+            throw new InvalidDataException($"Maxroll has no planner '{id}' - it may have been deleted, or the link is cut short.");
+        answer.EnsureSuccessStatusCode();
+        JsonNode? raw;
+        try { raw = JsonNode.Parse(await answer.Content.ReadAsStringAsync()); }
+        catch (System.Text.Json.JsonException) { raw = null; }
+        if (raw is not JsonObject profile || profile["data"] is not JsonValue)
             throw new InvalidDataException($"Planner '{id}' was not found or is not public.");
+        return await FromJsonAsync(profile, id, id, cacheDir, http, variant);
+    }
+
+    /// <summary>
+    /// Builds from planner data in any of the three shapes it travels in: Maxroll's answer for a planner
+    /// ({"name", "data": "..."}), a planner's inner data ({"profiles": [...]}), or one version as the
+    /// planner's Export button copies it ({"class", "passives", "skillTrees", "items", ...}).
+    /// </summary>
+    /// <param name="id">The planner's id when it is known ("" for pasted or file data).</param>
+    /// <param name="preferred">The version (0-based) the link or guide page pointed at.</param>
+    private static async Task<IReadOnlyList<Result>> FromJsonAsync(JsonObject found, string id, string fallbackName, string cacheDir, HttpClient http, int? preferred = null)
+    {
+        JsonNode? planner = found;
+        string title = fallbackName;
+        if (found["data"] is JsonValue inner && inner.TryGetValue(out string? data))
+        {
+            try { planner = JsonNode.Parse(data ?? ""); }
+            catch (System.Text.Json.JsonException) { planner = null; }
+            if (id.Length == 0 && found["id"] is JsonValue idValue && idValue.TryGetValue(out string? given) && !string.IsNullOrWhiteSpace(given)) id = given;
+            if (found["name"] is JsonValue nameValue && nameValue.TryGetValue(out string? named) && !string.IsNullOrWhiteSpace(named)) title = named;
+        }
+        bool exported = planner is JsonObject one && one["profiles"] is null
+                        && (one["passives"] is JsonObject || one["skillTrees"] is JsonObject || one["items"] is JsonObject);
+        if (!exported && (planner is not JsonObject || planner["profiles"] is not JsonArray))
+            throw new InvalidDataException("That is JSON, but not a build: it has neither this overlay's trees nor a Maxroll planner's profiles.");
+
         // Icons are positions in the sheet, listed in the game data: the two must be of the same age.
         var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
         var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
-        var planner = JsonNode.Parse(data)!;
-        var (sequential, names) = Shape(planner);
-        var results = new List<Result>();
-        for (int version = 0; version < (sequential ? 1 : names.Count); version++)
+        if (exported) planner = FromExport((JsonObject)planner!, title, game);
+        var results = ConvertAll(id.Length > 0 ? id : "pasted", title, planner!, game, preferred);
+        foreach (var result in results)
         {
-            var result = ConvertPlanner(id, raw["name"]?.GetValue<string>() ?? id, planner, game, version);
             result.Tree.AtlasName = atlas ?? "";
-            results.Add(result);
+            if (id.Length == 0) result.Tree.SourceId = "";
         }
         return results;
+    }
+
+    /// <summary>
+    /// Turns what the planner's Export button copies - one version, with its items written out in place
+    /// and without a name, a level or a list of its skills - into a planner with that one profile.
+    /// </summary>
+    internal static JsonObject FromExport(JsonObject export, string name, JsonNode game)
+    {
+        if (export["class"] is not JsonValue cls || !cls.TryGetValue(out int _))
+            throw new InvalidDataException("The pasted planner data has no class in it. In the planner's Export dialog, tick everything (class, passives, skills, items) and copy again.");
+
+        var profile = (JsonObject)export.DeepClone();
+        var table = new JsonObject();
+        int next = 1;
+        JsonNode? Listed(JsonNode? item)
+        {
+            if (item is not JsonObject written) return item?.DeepClone();
+            string key = (next++).ToString();
+            table[key] = written.DeepClone();
+            return JsonValue.Create(int.Parse(key));
+        }
+        if (profile["items"] is JsonObject slots)
+            profile["items"] = new JsonObject(slots.ToList().Select(kv => KeyValuePair.Create(kv.Key, Listed(kv.Value))));
+        if (profile["idols"] is JsonArray idols)
+            profile["idols"] = new JsonArray(idols.ToList().Select(Listed).ToArray());
+        profile["name"] = name;
+        if (profile["level"] is not JsonValue) profile["level"] = 100;
+
+        // The skills it specializes are the ones whose trees have points in them.
+        if (profile["specializedSkills"] is not JsonArray && profile["skillTrees"] is JsonObject trees && game["abilities"] is JsonObject abilities)
+        {
+            var used = trees.Where(kv => History(kv.Value).Count > 0).Select(kv => kv.Key).ToHashSet();
+            var skills = abilities.Where(kv => kv.Value is JsonObject ability && ability["playerAbilityID"] is JsonValue tree
+                                               && tree.TryGetValue(out string? treeId) && treeId is not null && used.Contains(treeId))
+                .Select(kv => kv.Key).ToList();
+            profile["specializedSkills"] = new JsonArray(skills.Select(s => (JsonNode?)JsonValue.Create(s)).ToArray());
+            if (profile["activeSkills"] is not JsonArray)
+                profile["activeSkills"] = new JsonArray(skills.Select(s => (JsonNode?)JsonValue.Create(s)).ToArray());
+        }
+        return new JsonObject { ["profiles"] = new JsonArray(profile), ["items"] = table };
+    }
+
+    /// <summary>
+    /// Imports a build from a file instead of a link: a build this overlay saved (someone's
+    /// "name.tree.json", with "name.txt" beside it if they sent that too), or a planner as Maxroll's
+    /// own address answers it. The first needs no network at all.
+    /// </summary>
+    public static async Task<IReadOnlyList<Result>> ImportFileAsync(string path, string cacheDir, HttpClient http)
+    {
+        var file = new FileInfo(path);
+        if (!file.Exists) throw new InvalidDataException("There is no file at that path.");
+        if (file.Length > 40_000_000) throw new InvalidDataException("That file is far too large to be a build.");
+        JsonNode? document;
+        try { document = JsonNode.Parse(await File.ReadAllTextAsync(path)); }
+        catch (System.Text.Json.JsonException) { document = null; }
+        if (document is not JsonObject found)
+            throw new InvalidDataException("That file is not a build: it has to be a build file saved by this overlay (name.tree.json) or a Maxroll planner in JSON.");
+
+        static bool Has(JsonObject o, string key) => o.Any(kv => kv.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+        // A build saved by this overlay.
+        if (Has(found, "trees") && Has(found, "stages"))
+        {
+            var tree = BuildTree.Load(path);
+            if (tree is null || tree.Trees.Count == 0 || tree.Stages.Count == 0)
+                throw new InvalidDataException("That build file is empty or damaged.");
+            string name = file.Name.EndsWith(".tree.json", StringComparison.OrdinalIgnoreCase) ? file.Name[..^".tree.json".Length] : Path.GetFileNameWithoutExtension(file.Name);
+            if (tree.Name.Trim().Length > 0) name = tree.Name.Trim();
+            string planFile = Path.Combine(file.DirectoryName ?? "", (file.Name.EndsWith(".tree.json", StringComparison.OrdinalIgnoreCase) ? file.Name[..^".tree.json".Length] : Path.GetFileNameWithoutExtension(file.Name)) + ".txt");
+            string text = File.Exists(planFile) ? await File.ReadAllTextAsync(planFile) : $"name: {name}\n# Imported from a build file without its plan text: the trees and gear are here, the per-level list is not.\n";
+            tree.Name = name;
+            // It arrives alone: the other versions of its guide are not in this file.
+            tree.Variants = new List<string>();
+            tree.VariantFiles = new List<string>();
+            tree.Variant = 0;
+            return new[] { new Result(name, text, BuildPlan.Parse(text).Entries.Count, tree) };
+        }
+
+        // A Maxroll planner, in any of the shapes it travels in.
+        return await FromJsonAsync(found, "", Path.GetFileNameWithoutExtension(file.Name), cacheDir, http);
     }
 
     /// <summary>
@@ -139,16 +370,102 @@ public static partial class MaxrollImporter
         return (null, false);
     }
 
-    private static async Task<string> ResolveIdAsync(string input, HttpClient http)
+    /// <summary>What a pasted text turned out to be.</summary>
+    /// <param name="PlannerId">Set when the text names a planner directly.</param>
+    /// <param name="PageUrl">Set when it is a Maxroll page that has to be read to find its planner.</param>
+    /// <param name="Problem">Set when it is neither: a sentence for the player saying why.</param>
+    /// <param name="Variant">The version the link points at (0-based): the "#2" on a shared planner link.</param>
+    /// <param name="Json">Set when planner data itself was pasted (the planner's Export button).</param>
+    public sealed record Pasted(string? PlannerId = null, string? PageUrl = null, string? Problem = null, int? Variant = null, string? Json = null);
+
+    [GeneratedRegex(@"last-epoch/planner/[a-z0-9]{6,12}#(\d{1,2})")]
+    private static partial Regex LinkedVariant();
+
+    [GeneratedRegex("data-le-id=\"(\\d{1,2})\"")]
+    private static partial Regex EmbedVariant();
+
+    /// <summary>
+    /// The version of the build a guide page shows: its planner embeds carry the number (1-based) of the
+    /// profile they open on, and a guide written around "Endgame" should not be imported as "Starter".
+    /// </summary>
+    public static int? PickVariant(string html, string plannerId)
     {
-        var m = PlannerLink().Match(input);
-        if (m.Success) return m.Groups[1].Value;
-        if (BareId().IsMatch(input)) return input;
-        if (input.Contains("maxroll.gg/last-epoch/", StringComparison.OrdinalIgnoreCase))
+        var shown = new List<int>();
+        foreach (Match tag in Regex.Matches(html, "<[^<>]*data-le-profile=\"" + Regex.Escape(plannerId) + "\"[^<>]*>"))
         {
-            if (PickPlanner(await http.GetStringAsync(input)) is { } found) return found;
+            // Only the embeds that show a whole version; tree and skill-bar snippets number something else.
+            if (!tag.Value.Contains("data-le-type=\"planner", StringComparison.Ordinal)) continue;
+            if (EmbedVariant().Match(tag.Value) is { Success: true } number) shown.Add(int.Parse(number.Groups[1].Value) - 1);
         }
-        throw new InvalidDataException("That does not look like a Maxroll Last Epoch planner or build guide link.");
+        return shown.Count == 0 ? null : shown.GroupBy(n => n).OrderByDescending(g => g.Count()).First().Key is >= 0 and var index ? index : null;
+    }
+
+    [GeneratedRegex(@"https?://[^\s<>""']+|(?:www\.)?maxroll\.gg/[^\s<>""']+", RegexOptions.IgnoreCase)]
+    private static partial Regex AnyLink();
+
+    /// <summary>
+    /// Makes sense of whatever was pasted into the import box: a planner link in any of its shapes
+    /// (with a #fragment, a ?query, without https, inside a sentence), a bare planner id, a Maxroll guide
+    /// page - or something that cannot be imported, in which case it says what and why. No network.
+    /// </summary>
+    public static Pasted Understand(string? input)
+    {
+        string text = (input ?? "").Trim().Trim('"', '\'', '<', '>');
+        if (text.Length == 0) return new Pasted(Problem: "Paste a Maxroll planner or build guide link first.");
+        // Planner data itself (the planner's Export button copies JSON).
+        if (text.StartsWith('{')) return new Pasted(Json: text);
+
+        // A planner link anywhere in the text. Ids always carry a digit, which keeps words that follow
+        // "planner/" in other Maxroll addresses ("community-builds") from being taken for one.
+        foreach (Match link in PlannerLink().Matches(text.ToLowerInvariant()))
+            if (link.Groups[1].Value.Any(char.IsDigit))
+            {
+                // A shared link ends in "#2" (or "#2&...") when the second version was showing.
+                int? variant = LinkedVariant().Match(text.ToLowerInvariant()) is { Success: true } hash && int.Parse(hash.Groups[1].Value) >= 1
+                    ? int.Parse(hash.Groups[1].Value) - 1 : null;
+                return new Pasted(PlannerId: link.Groups[1].Value, Variant: variant);
+            }
+        if (BareId().IsMatch(text.ToLowerInvariant()) && text.Any(char.IsDigit)) return new Pasted(PlannerId: text.ToLowerInvariant());
+
+        string lower = text.ToLowerInvariant();
+        // A path on this computer (the caller imports the file if it exists; this is for when it does not).
+        if (text.Length > 2 && (text[1] == ':' || text.StartsWith(@"\\\\", StringComparison.Ordinal)) || lower.EndsWith(".json") || lower.EndsWith(".txt"))
+            return new Pasted(Problem: "There is no file at that path. Use 'Import from file' to pick it.");
+        if (lower.Contains("lastepochtools.com"))
+            return new Pasted(Problem: "That is a Last Epoch Tools link. Its planners cannot be read by other programs, so only Maxroll builds can be imported - look for the same build on maxroll.gg, or rebuild it in Maxroll's planner and paste that link.");
+        if (lower.Contains("maxroll.gg/last-epoch/planner"))
+            return new Pasted(Problem: "That is Maxroll's planner page, not one build. Open the build you want and paste the link from the address bar (it ends in a code like 3k9hk0gr).");
+        if (lower.Contains("maxroll.gg/") && !lower.Contains("maxroll.gg/last-epoch"))
+            return new Pasted(Problem: "That Maxroll link is for another game. Paste a Last Epoch planner or build guide link.");
+        if (lower.Contains("maxroll.gg/last-epoch"))
+        {
+            string url = AnyLink().Match(text) is { Success: true } found ? found.Value : text;
+            url = url.TrimEnd('.', ',', ')', ';');
+            if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
+            return Uri.TryCreate(url, UriKind.Absolute, out var page) && page.Host.EndsWith("maxroll.gg", StringComparison.OrdinalIgnoreCase)
+                ? new Pasted(PageUrl: new UriBuilder(page) { Scheme = "https", Port = -1 }.Uri.ToString())
+                : new Pasted(Problem: "That does not look like a complete link. Copy it from the browser's address bar.");
+        }
+        if (AnyLink().IsMatch(text))
+            return new Pasted(Problem: "Only Maxroll builds can be imported. Paste a link to a Last Epoch planner or build guide on maxroll.gg.");
+        return new Pasted(Problem: "That does not look like a Maxroll Last Epoch planner or build guide link.");
+    }
+
+    private static async Task<(string Id, int? Variant)> ResolveAsync(Pasted pasted, HttpClient http)
+    {
+        if (pasted.PlannerId is { } id) return (id, pasted.Variant);
+        if (pasted.PageUrl is { } url)
+        {
+            using var answer = await http.GetAsync(url);
+            if (answer.StatusCode == System.Net.HttpStatusCode.NotFound)
+                throw new InvalidDataException("Maxroll has no page at that address - check the link.");
+            answer.EnsureSuccessStatusCode();
+            string html = await answer.Content.ReadAsStringAsync();
+            string planner = PickPlanner(html)
+                             ?? throw new InvalidDataException("That Maxroll page has no build planner on it. Open a build guide and paste its link.");
+            return (planner, PickVariant(html, planner));
+        }
+        throw new InvalidDataException(pasted.Problem ?? "That does not look like a Maxroll Last Epoch planner or build guide link.");
     }
 
     /// <summary>Maxroll's game database, if an earlier import left a copy; never downloads.</summary>
@@ -178,14 +495,19 @@ public static partial class MaxrollImporter
     private static List<int> History(JsonNode? tree)
     {
         var result = new List<int>();
-        if (tree?["history"] is not JsonArray history) return result;
-        int position = tree["position"]?.GetValue<int>() ?? 0;
+        if (tree is not JsonObject || tree["history"] is not JsonArray history) return result;
+        // "position" is how far into the history the planner's undo pointer stands. Anything that is
+        // not a plain entry is skipped rather than allowed to stop the import.
+        int position = tree["position"] is JsonValue pointer && pointer.TryGetValue(out int at) ? Math.Clamp(at, 0, history.Count) : history.Count;
         foreach (var entry in history.Take(position))
         {
             if (entry is JsonObject batch)
+            {
                 foreach (var (node, count) in batch)
-                    result.AddRange(Enumerable.Repeat(int.Parse(node), count!.GetValue<int>()));
-            else if (entry is not null) result.Add(entry.GetValue<int>());
+                    if (int.TryParse(node, out int id) && count is JsonValue times && times.TryGetValue(out int n) && n is > 0 and <= 30)
+                        result.AddRange(Enumerable.Repeat(id, n));
+            }
+            else if (entry is JsonValue single && single.TryGetValue(out int id)) result.Add(id);
         }
         return result;
     }
@@ -199,11 +521,15 @@ public static partial class MaxrollImporter
 
     internal static Result Convert(string id, string name, JsonNode data, JsonNode game)
     {
-        var profiles = data["profiles"]?.AsArray() ?? throw new InvalidDataException("The planner has no profiles.");
-        if (profiles.Count == 0) throw new InvalidDataException("The planner has no profiles.");
+        if (data["profiles"] is not JsonArray profiles || profiles.Count == 0 || profiles.Any(p => p is not JsonObject))
+            throw new InvalidDataException("The planner has no profiles.");
 
         var last = profiles[^1]!;
-        var cls = game["classes"]![last["class"]!.GetValue<int>()]!;
+        // The class decides which trees there are; without one there is nothing to import.
+        if (last["class"] is not JsonValue classValue || !classValue.TryGetValue(out int classIndex)
+            || game["classes"] is not JsonArray classes || classIndex < 0 || classIndex >= classes.Count)
+            throw new InvalidDataException("The planner does not say which class the build is for (or names one this version of the game data does not have).");
+        var cls = classes[classIndex]!;
         var passiveTree = game["skillTrees"]![cls["treeID"]!.GetValue<string>()]!;
         var masteries = cls["masteries"]!.AsArray();
         string MasteryName(int i) => masteries[i]!["name"]!.GetValue<string>();
@@ -219,8 +545,10 @@ public static partial class MaxrollImporter
             .Select(a => (Need: a!["level"]!.GetValue<int>(), Ability: a["ability"]!.GetValue<string>()))
             .OrderBy(a => a.Need).ToList()).ToList();
 
-        static List<string> Skills(JsonNode profile, string key) =>
-            (profile[key] as JsonArray)?.Select(s => s?.GetValue<string>()).Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList() ?? new();
+        static List<string> Skills(JsonNode? profile, string key) =>
+            profile is JsonObject && profile[key] is JsonArray listed
+                ? listed.Select(s => s is JsonValue value && value.TryGetValue(out string? ability) ? ability : null).Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList()
+                : new();
         var used = profiles.SelectMany(p => Skills(p!, "specializedSkills").Concat(Skills(p!, "activeSkills"))).ToHashSet();
 
         var steps = new List<Step>();
@@ -248,13 +576,14 @@ public static partial class MaxrollImporter
         for (int index = 0; index < profiles.Count; index++)
         {
             var profile = profiles[index]!;
-            int level = profile["level"]!.GetValue<int>();
+            int level = Math.Clamp(profile["level"] is JsonValue levelValue && levelValue.TryGetValue(out int stated) ? stated : 100, 1, 100);
             int lo = index > 0 ? prevLevel : 1;
-            int mastery = profile["mastery"]?.GetValue<int>() ?? 0;
+            // A mastery that is not one of the class's three counts as "none chosen yet".
+            int mastery = profile["mastery"] is JsonValue masteryValue && masteryValue.TryGetValue(out int chosen) && chosen >= 0 && chosen < masteries.Count ? chosen : 0;
             int? firstMasteryLevel = null;
 
             // ---------- passives
-            var history = History(profile["passives"]);
+            var history = History(profile["passives"]).Where(node => PassiveNode(node) is not null).ToList();
             Dictionary<int, int> running;
             List<int> added;
             if (history.Take(prevPassives.Count).SequenceEqual(prevPassives))
@@ -316,7 +645,9 @@ public static partial class MaxrollImporter
             {
                 string? treeId = game["abilities"]?[ability]?["playerAbilityID"]?.GetValue<string>();
                 var tree = treeId is null ? null : game["skillTrees"]?[treeId];
-                var points = treeId is null ? new List<int>() : History(profile["skillTrees"]?[treeId]);
+                var known = treeId is null ? null : game["skillTrees"]?[treeId]?["nodes"] as JsonObject;
+                var points = treeId is null || known is null || profile["skillTrees"] is not JsonObject
+                    ? new List<int>() : History(profile["skillTrees"]![treeId]).Where(node => known.ContainsKey(node.ToString())).ToList();
                 skillHistory[ability] = points;
                 string skill = SkillName(ability);
 
@@ -373,9 +704,18 @@ public static partial class MaxrollImporter
                     .ToDictionary(kv => SkillName(kv.Key), kv => kv.Value),
             };
             // The Weaver tree is stored like a skill tree: a click history.
-            var weaver = History(profile["weaver"]);
+            var weaverKnown = game["skillTrees"]?["weaver"]?["nodes"] as JsonObject;
+            var weaver = History(profile["weaver"]).Where(node => weaverKnown?.ContainsKey(node.ToString()) == true).ToList();
             if (weaver.Count > 0) stage.Skills[TreeDef.WeaverName] = weaver;
-            MaxrollGear.Fill(stage, profile, data, game);
+            // Gear, idols and blessings are extras: a build whose item list cannot be read still has its trees.
+            try { MaxrollGear.Fill(stage, profile, data, game); }
+            catch (Exception e) when (e is InvalidOperationException or KeyNotFoundException or NullReferenceException or ArgumentException
+                                          or FormatException or IndexOutOfRangeException or InvalidCastException)
+            {
+                stage.Gear.Clear();
+                stage.Idols.Clear();
+                stage.Blessings.Clear();
+            }
             build.Stages.Add(stage);
 
             prevLevel = level;

@@ -321,6 +321,95 @@ public class BuildSummaryTests
         Assert.False(MaxrollImporter.Shape(Planner(("Starting Gear", 100), ("Endgame Gear", 100), ("Aspirational Gear", 99), ("HC Shield Variant", 100))).Sequential);
     }
 
+    [Theory]
+    [InlineData("https://maxroll.gg/last-epoch/planner/3k9hk0gr")]
+    [InlineData("  https://maxroll.gg/last-epoch/planner/3k9hk0gr#2  ")]
+    [InlineData("https://maxroll.gg/last-epoch/planner/3k9hk0gr?utm_source=share")]
+    [InlineData("maxroll.gg/last-epoch/planner/3k9hk0gr")]
+    [InlineData("HTTPS://MAXROLL.GG/LAST-EPOCH/PLANNER/3K9HK0GR")]
+    [InlineData("check this out https://maxroll.gg/last-epoch/planner/3k9hk0gr, it is good")]
+    [InlineData("<https://maxroll.gg/last-epoch/planner/3k9hk0gr>")]
+    [InlineData("3k9hk0gr")]
+    [InlineData("\"3K9HK0GR\"")]
+    public void APlannerLink_IsUnderstood_InEveryShapeItGetsPastedIn(string pasted)
+    {
+        Assert.Equal("3k9hk0gr", MaxrollImporter.Understand(pasted).PlannerId);
+    }
+
+    [Theory]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x#2", 1)]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x#1", 0)]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x#3&abc", 2)]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x", null)]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x#0", null)]
+    [InlineData("https://maxroll.gg/last-epoch/planner/y21h9h0x#skills", null)]
+    public void TheNumberOnASharedLink_IsTheVersionItShowed(string link, int? version)
+    {
+        Assert.Equal(version, MaxrollImporter.Understand(link).Variant);
+    }
+
+    [Fact]
+    public void AGuidePage_SaysWhichVersionItIsAbout()
+    {
+        const string page = "<div data-le-profile=\"y21h9h0x\" data-le-type=\"skillbar\" data-le-id=\"4\"></div>"
+                            + "<div data-le-profile=\"y21h9h0x\" data-le-id=\"2\" data-le-type=\"plannerEquipment\"></div>"
+                            + "<div data-le-profile=\"y21h9h0x\" data-le-id=\"2\" data-le-type=\"plannerSkills\"></div>"
+                            + "<div data-le-profile=\"zz99zz99\" data-le-id=\"3\" data-le-type=\"plannerPassives\"></div>";
+        Assert.Equal(1, MaxrollImporter.PickVariant(page, "y21h9h0x")); // the second version, counted from 0
+        Assert.Equal(2, MaxrollImporter.PickVariant(page, "zz99zz99"));
+        Assert.Null(MaxrollImporter.PickVariant(page, "ab12cd34"));
+        Assert.Null(MaxrollImporter.PickVariant("<p>nothing</p>", "y21h9h0x"));
+    }
+
+    [Theory]
+    [InlineData("https://maxroll.gg/last-epoch/build-guides/shaman-leveling-guide", "https://maxroll.gg/last-epoch/build-guides/shaman-leveling-guide")]
+    [InlineData("maxroll.gg/last-epoch/build-guides/shaman-leveling-guide#skills", "https://maxroll.gg/last-epoch/build-guides/shaman-leveling-guide#skills")]
+    [InlineData("http://www.maxroll.gg/last-epoch/build-guides/x-guide.", "https://www.maxroll.gg/last-epoch/build-guides/x-guide")]
+    [InlineData("guide: https://maxroll.gg/last-epoch/build-guides/x-guide?a=1 (the starter)", "https://maxroll.gg/last-epoch/build-guides/x-guide?a=1")]
+    public void AGuideLink_BecomesAPageToRead(string pasted, string page)
+    {
+        var understood = MaxrollImporter.Understand(pasted);
+        Assert.Null(understood.PlannerId);
+        Assert.Equal(page, understood.PageUrl);
+    }
+
+    [Theory]
+    [InlineData("", "Paste a Maxroll")]
+    [InlineData("   ", "Paste a Maxroll")]
+    [InlineData("https://www.lastepochtools.com/planner/AbCdEf12", "Last Epoch Tools")]
+    [InlineData("https://maxroll.gg/last-epoch/planner", "not one build")]
+    [InlineData("https://maxroll.gg/last-epoch/planner/community-builds", "not one build")]
+    [InlineData("https://maxroll.gg/d4/planner/ab12cd34", "another game")]
+    [InlineData("https://www.youtube.com/watch?v=abc", "Only Maxroll")]
+    [InlineData("hello there", "does not look like")]
+    [InlineData("community", "does not look like")]
+    public void AnythingElse_IsRefusedWithTheReason(string pasted, string reason)
+    {
+        var understood = MaxrollImporter.Understand(pasted);
+        Assert.Null(understood.PlannerId);
+        Assert.Null(understood.PageUrl);
+        Assert.Contains(reason, understood.Problem);
+    }
+
+    [Fact]
+    public void ProfilesThatGrowInPoints_AreStagesToo_EvenWhenAllAreLeftAtLevel100()
+    {
+        static System.Text.Json.Nodes.JsonNode Planner(params (string Name, int Level, int Points)[] profiles) => System.Text.Json.Nodes.JsonNode.Parse(
+            "{\"profiles\":[" + string.Join(",", profiles.Select(p =>
+                $"{{\"name\":\"{p.Name}\",\"level\":{p.Level},\"passives\":{{\"history\":[{string.Join(",", Enumerable.Repeat("1", p.Points))}],\"position\":{p.Points}}}}}")) + "]}")!;
+
+        // "Campaign" at 60, then two profiles both left at 100 but with more points each time.
+        Assert.True(MaxrollImporter.Shape(Planner(("Campaign", 60, 73), ("Early Endgame", 100, 111), ("Endgame", 100, 113))).Sequential);
+        Assert.True(MaxrollImporter.Shape(Planner(("Early", 100, 30), ("Mid", 100, 60), ("Late", 100, 113))).Sequential);
+        // The same points in every profile: alternatives. So are profiles where an early stage has two alternatives.
+        Assert.False(MaxrollImporter.Shape(Planner(("Starter", 100, 113), ("Endgame", 100, 113))).Sequential);
+        Assert.False(MaxrollImporter.Shape(Planner(("Early", 100, 30), ("Early, low life", 100, 30), ("Mid", 100, 60))).Sequential);
+        // Two unrelated sets that differ in level: the second has fewer points, so it is no continuation.
+        Assert.False(MaxrollImporter.Shape(Planner(("Set 1", 86, 30), ("Set 2", 100, 0))).Sequential);
+        // A gear-only profile with no trees among full ones is an alternative, not a step back.
+        Assert.False(MaxrollImporter.Shape(Planner(("Leveling", 100, 113), ("Leveling uniques", 100, 0), ("Stacker", 100, 113))).Sequential);
+    }
+
     [Fact]
     public void AGuidePage_GivesItsOwnPlanner_AnOverviewPageIsRefused()
     {
@@ -360,49 +449,5 @@ public class BuildSummaryTests
         var third = reads.Confirm("tree", new Dictionary<int, int> { [1] = 7, [3] = 1 });
         Assert.Equal(new Dictionary<int, int> { [1] = 7, [3] = 1 }, third);
         Assert.Empty(reads.Confirm("other tree", new Dictionary<int, int> { [1] = 7 }));
-    }
-}
-
-public class MaxrollSurveyTests
-{
-    /// <summary>
-    /// Runs the importer over a folder of saved planner answers (LEH_MAXROLL_DIR, one JSON file each)
-    /// with saved game data (LEH_MAXROLL_GAME), writing what came out to LEH_MAXROLL_OUT. On request only.
-    /// </summary>
-    [Fact]
-    public void EverySavedPlanner_Converts_WhenAskedTo()
-    {
-        string? dir = Environment.GetEnvironmentVariable("LEH_MAXROLL_DIR"), gameFile = Environment.GetEnvironmentVariable("LEH_MAXROLL_GAME"),
-            output = Environment.GetEnvironmentVariable("LEH_MAXROLL_OUT");
-        if (dir is null || gameFile is null || output is null) return;
-
-        var game = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(gameFile))!;
-        var report = new List<string>();
-        int failures = 0;
-        foreach (string file in Directory.GetFiles(dir, "*.json").OrderBy(f => f))
-        {
-            string id = Path.GetFileNameWithoutExtension(file);
-            try
-            {
-                var raw = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file));
-                if (raw?["data"]?.GetValue<string>() is not { } data) { report.Add($"{id}: no planner data"); continue; }
-                var planner = System.Text.Json.Nodes.JsonNode.Parse(data)!;
-                var (sequential, names) = MaxrollImporter.Shape(planner);
-                for (int variant = 0; variant < (sequential ? 1 : names.Count); variant++)
-                {
-                    var result = MaxrollImporter.ConvertPlanner(id, raw["name"]?.GetValue<string>() ?? id, planner, game, variant);
-                    var summary = BuildSummary.From(BuildPlan.Parse(result.Text));
-                    report.Add($"{id}: {result.Name} | {(sequential ? "stages" : "version")} | {result.Tree.Stages.Count} stage(s), {result.Tree.Trees.Count} trees, "
-                               + $"{result.Steps} steps, respecs {summary.Steps.Count(s => s.Kind == "respec")}, nodes without icon {result.Tree.Trees.Sum(t => t.Nodes.Count(n => n.IconIndex < 0))} | {summary.Headlines.FirstOrDefault()}");
-                }
-            }
-            catch (Exception e)
-            {
-                failures++;
-                report.Add($"{id}: FAILED {e.GetType().Name}: {e.Message}");
-            }
-        }
-        File.WriteAllLines(output, report);
-        Assert.Equal(0, failures);
     }
 }

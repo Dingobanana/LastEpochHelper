@@ -2,6 +2,15 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.11 - An import that takes what it is given
+
+- More ways to bring a build in: a shared planner link ending in "#2" now opens on that version; a guide page opens on the version the guide is written around; the text Maxroll's planner copies with its Export button can be pasted straight into the link box; and "Import from file" takes a build file a friend sent you (the name.tree.json the overlay saves, with or without its name.txt) or a planner saved as JSON.
+- Planners made the way people actually make them now import sensibly: leveling builds whose stages are all left at level 100 are recognised as stages by their growing trees; a gear-only version is no longer the one you start on; versions with the same name are told apart; untitled planners get a name; builds from older patches lose only the points on nodes that no longer exist.
+- Whatever is pasted, the answer is a sentence: a Last Epoch Tools link, another game's planner, an overview page with many builds, a deleted or private planner, a link cut short, text that is no link at all - each says what it is and what to paste instead.
+- Nodes that items push over their limit ("5/4", even "10/5") are drawn, read off the game and adjustable as planned.
+- Build files with odd names (any language, characters Windows does not allow, very long names) are saved safely; a damaged or hand-edited build file no longer stops the overlay.
+- Tested against 366 real planners from Maxroll - every official guide and about 300 community builds from seasons 2 to 5, all classes - and against tens of thousands of deliberately damaged copies of them.
+
 ## 0.7.10 - Out of the way, and room on small screens
 
 - The guide box can now be shown only while the mouse rests on it (it fades to a faint outline that lets clicks through, and comes up by itself for a message), or be hidden altogether until you ask for it with the show / hide hotkey or the tray icon. Settings → Overlay → Show the box.

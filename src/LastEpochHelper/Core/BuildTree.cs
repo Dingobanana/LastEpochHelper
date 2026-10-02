@@ -132,10 +132,63 @@ public sealed class BuildTree
     {
         try
         {
-            return File.Exists(path) ? JsonSerializer.Deserialize<BuildTree>(File.ReadAllText(path), Guide.JsonOptions) : null;
+            return File.Exists(path) ? JsonSerializer.Deserialize<BuildTree>(File.ReadAllText(path), Guide.JsonOptions)?.Mended() : null;
         }
         catch (JsonException) { return null; }
         catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>
+    /// A file can say "trees": null, leave lists out, or name a tab twice (hand-edited, cut short, from
+    /// another version). The rest of the overlay expects lists that are there and tabs it can tell apart.
+    /// </summary>
+    private BuildTree Mended()
+    {
+        Name ??= "";
+        AtlasName ??= "";
+        SourceId ??= "";
+        Variants ??= new();
+        VariantFiles ??= new();
+        PassiveTabNames ??= new();
+        Trees = (Trees ?? new()).Where(t => t is not null).ToList();
+        Stages = (Stages ?? new()).Where(s => s is not null).ToList();
+        var seen = new HashSet<string>();
+        foreach (var tree in Trees)
+        {
+            tree.Name ??= "";
+            tree.Kind = tree.Kind is TreeDef.PassiveKind or TreeDef.SkillKind or TreeDef.WeaverKind ? tree.Kind : TreeDef.PassiveKind;
+            tree.TreeId ??= "";
+            tree.Nodes = (tree.Nodes ?? new()).Where(n => n is not null).ToList();
+            foreach (var node in tree.Nodes)
+            {
+                node.Name ??= "";
+                node.Description ??= "";
+                node.Requires ??= new();
+            }
+        }
+        // Two tabs with one name could not be told apart; the first one wins.
+        Trees = Trees.Where(t => seen.Add(t.Name)).ToList();
+        foreach (var stage in Stages)
+        {
+            stage.Name ??= "";
+            stage.Passives ??= new();
+            stage.Skills = (stage.Skills ?? new()).Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value);
+            stage.Gear = (stage.Gear ?? new()).Where(g => g is not null).ToList();
+            stage.Idols = (stage.Idols ?? new()).Where(g => g is not null).ToList();
+            stage.Blessings = (stage.Blessings ?? new()).Where(b => b is not null).ToList();
+            foreach (var item in stage.Gear.Concat(stage.Idols))
+            {
+                item.Slot ??= "";
+                item.Name ??= "";
+                item.Rarity ??= "";
+                item.Type ??= "";
+                item.Affixes = (item.Affixes ?? new()).Where(a => a is not null).ToList();
+                item.AffixIds ??= new();
+            }
+        }
+        if (Variant < 0 || Variant >= Math.Max(1, Variants.Count)) Variant = 0;
+        return this;
     }
 
     public void Save(string path) => File.WriteAllText(path, JsonSerializer.Serialize(this, Guide.JsonOptions));

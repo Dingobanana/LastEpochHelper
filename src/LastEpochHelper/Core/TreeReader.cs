@@ -29,7 +29,9 @@ public static partial class TreeReader
             var m = Label().Match(text);
             if (!m.Success) continue;
             int have = int.Parse(m.Groups[1].Value), max = int.Parse(m.Groups[2].Value);
-            if (max is < 1 or > 15 || have > max) continue; // "78/78" is the mana globe, not a node
+            // "78/78" is the mana globe, not a node. A node can stand well over its limit ("5/4", even
+            // "10/5"): some items add points to one node. Beyond double it is not a node label.
+            if (max is < 1 or > 15 || have > max * 2 + 2) continue;
             tokens.Add(new Token(word.X + word.Width / 2, word.Y + word.Height / 2, have, max));
         }
         return tokens;

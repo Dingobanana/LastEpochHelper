@@ -71,6 +71,10 @@ asking, and only zip files from this repository's own releases are downloaded. Y
 
 - **Import.** Paste a Maxroll planner or build guide link in Settings → Character and press *Import from Maxroll*.
   Leveling guides come in as stages by level; build guides as their versions (Starter, Endgame, Aspirational, ...).
+  A link ending in `#2` opens on that version. The text the planner's *Export* button copies can be pasted in the
+  same box, and *Import from file* takes a build file someone sent you (`name.tree.json` from their
+  `%APPDATA%\LastEpochHelper\builds` folder). Last Epoch Tools planners cannot be imported: that site does not
+  allow programs to read them.
 - **TL;DR.** Planner → TL;DR is the build in short: which mastery to choose and when, which passive trees get points in
   which order, which skills to specialize, and which stage or version you are on.
 - **Build tree.** Press the game's own keys for passives (`P`) or skills (`S`) - or open the panel with the mouse - and
@@ -130,6 +134,10 @@ Requires the .NET 8 SDK on Windows 10 (19041) or later.
 dotnet test
 dotnet run --project src/LastEpochHelper
 ```
+
+The importer can also be run over a folder of planners saved from Maxroll - conversion with every consistency check,
+random damage to the planners and to the game data, drawing every window, and live imports. These tests only run when
+asked for through environment variables; see `tests/LastEpochHelper.Tests/MaxrollSurveyTests.cs`.
 
 ### Updating the guide after a patch
 
