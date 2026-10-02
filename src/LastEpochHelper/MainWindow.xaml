@@ -104,7 +104,7 @@
                     </Border>
                 </StackPanel>
 
-                <Border Style="{StaticResource Section}">
+                <Border x:Name="Footer" Style="{StaticResource Section}">
                     <StackPanel>
                         <TextBlock x:Name="NextText" Foreground="#A9A493" TextTrimming="CharacterEllipsis"/>
                         <DockPanel Margin="0,2,0,0">

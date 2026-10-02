@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.16 - Put the box away
+
+- New in the ☰ menu: Hide this box. The guide box goes away and stays away, also after a restart; the build tree, the planner and the item check work as before. The show / hide hotkey (Ctrl+Shift+H unless you changed it) brings it back, and so does the tray icon. It is the same as Settings → Overlay → Show the box → Hidden, one click away.
+- While the box is hidden, a message - a death, the result of an item check, a warning - comes up on its own for a few seconds, as a small box with only the message.
+
 ## 0.7.15 - The trees remember where you are
 
 - Fixed: after closing and reopening the build tree, a skill or the passives could show fewer points than you had, so you had to press + a few times to get back. The points read off the game's panel are often incomplete (a tooltip in the way, small print); the tree was drawn from them anyway. Now what was read is only shown when it accounts for all the points the tree is known to have - otherwise the plan is shown at the number of points you had.

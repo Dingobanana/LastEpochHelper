@@ -1088,7 +1088,15 @@ public partial class MainWindow : Window
     {
         if (_capturing) return;
         bool focusOk = !Settings.AutoHide || !_game.Running || _game.GameFocused || _game.OwnFocused;
-        bool show = !_userHidden && focusOk;
+        // A box that is kept hidden still has things to say now and then (a death, an item check, a
+        // warning): for as long as such a message lasts it comes up, showing only the message.
+        bool messageOnly = _userHidden && Settings.BoxMode == 2 && _session.Alert is not null;
+        if (messageOnly != _messageOnly)
+        {
+            _messageOnly = messageOnly;
+            Render();
+        }
+        bool show = (!_userHidden || messageOnly) && focusOk;
         if (show && !IsVisible) { Show(); Native.BringToTop(_hwnd); }
         else if (!show && IsVisible) Hide();
         UpdateMapWindow();
@@ -1216,7 +1224,19 @@ public partial class MainWindow : Window
         if (Settings.BarLayout) RenderBar(step, passive, idol, level);
         if (_treeWanted) _treeWindow?.Render();
         if (_plannerWanted) _plannerWindow?.Render();
+
+        // Up only for a message (the box is otherwise kept hidden): nothing but the message.
+        Header.Visibility = Footer.Visibility = _messageOnly ? Visibility.Collapsed : Visibility.Visible;
+        if (_messageOnly)
+            ZoneRow.Visibility = BossSection.Visibility = Details.Visibility = UpdateText.Visibility = Visibility.Collapsed;
+        // A message that has just arrived, or run out, changes whether a hidden box is up.
+        if ((_session.Alert is not null) != _messageOnly && _userHidden && Settings.BoxMode == 2 && _hwnd != IntPtr.Zero) UpdateVisibility();
     }
+
+    private bool _messageOnly;
+
+    /// <summary>The hotkey that shows and hides the box, as the player set it ("" if they removed it).</summary>
+    private string ToggleKey => string.IsNullOrWhiteSpace(Settings.HotkeyToggle) ? "" : Settings.HotkeyToggle.Trim();
 
     /// <summary>The whole step on one line: zone, what to do, where to go, boss, counters.</summary>
     private void RenderBar(GuideStep step, int passive, int idol, int? level)
@@ -1535,6 +1555,18 @@ public partial class MainWindow : Window
         var planner = new MenuItem { Header = "Planner: gear, idols, loot filter, Monolith, dungeons" };
         planner.Click += (_, _) => ShowPlanner(true);
         menu.Items.Add(planner);
+        // Put the whole box away: the build tree, planner and item check keep working without it.
+        var hideBox = new MenuItem { Header = ToggleKey.Length > 0 ? $"Hide this box  ({ToggleKey} brings it back)" : "Hide this box  (the tray icon brings it back)" };
+        hideBox.ToolTip = "Keeps the box hidden, also the next time the overlay starts. The build tree, the planner and the item check work as before; "
+                          + "messages (a death, an item check) still come up for a few seconds. Change it back under Settings → Overlay → Show the box.";
+        hideBox.Click += (_, _) =>
+        {
+            Settings.BoxMode = 2;
+            SaveSettings();
+            ApplyAppearance();
+            _session.ShowAlert(ToggleKey.Length > 0 ? $"The box is hidden. {ToggleKey} shows it again." : "The box is hidden. The tray icon by the clock shows it again.", 6);
+        };
+        menu.Items.Add(hideBox);
         var hideGuide = new MenuItem { Header = "Hide the campaign guide (endgame)", IsChecked = _session.Profile.HideGuide };
         hideGuide.ToolTip = "Puts the zone steps, boss notes and unclaimed rewards away for this character and keeps the build reminders, counters and timer. Tick again to bring the guide back.";
         hideGuide.Click += (_, _) => _session.SetGuideHidden(!_session.Profile.HideGuide);
