@@ -97,7 +97,10 @@ public sealed partial record BuildSummary(IReadOnlyList<string> Headlines, IRead
         string? baseTree = phases.FirstOrDefault()?.Tree;
         if (mastery is not null)
         {
-            headlines.Add($"Mastery to choose: {mastery} (the build takes it around level {masteryLevel}).");
+            // The planner can have the mastery set from its first profile; the game offers it at the End of Time.
+            headlines.Add(masteryLevel < 10
+                ? $"Mastery to choose: {mastery} (as soon as the game offers the choice)."
+                : $"Mastery to choose: {mastery} (the build takes it around level {masteryLevel}).");
             // The thing that trips people up: points in another mastery's tree are not a choice of mastery.
             var others = perTree.Where(kv => kv.Value > 0 && kv.Key != mastery && kv.Key != baseTree).ToList();
             if (others.Count > 0)

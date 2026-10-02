@@ -128,6 +128,8 @@ public sealed class Profile
     public List<DeathEntry> DeathLog { get; set; } = new();
     /// <summary>Trees where the slider's plan view was chosen over the points read from the game.</summary>
     public HashSet<string> PlanViewTrees { get; set; } = new();
+    /// <summary>Name of the guide stage chosen by hand; "" = follow the character's level.</summary>
+    public string StagePin { get; set; } = "";
     /// <summary>
     /// Quest passive points / idol slots as last read from the game's map. Rewards the overlay counts
     /// from the step the player stood on then (<see cref="MapIndex"/>) onwards, beyond what it counted

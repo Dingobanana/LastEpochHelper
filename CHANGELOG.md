@@ -2,6 +2,19 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.7 - Imports that understand the guide
+
+- Most Maxroll build guides hold several versions of one build (Starter, Endgame, Aspirational, sometimes a hardcore or alternative setup). The import used to read those as steps to take one after another, which produced respecs and skill swaps that are not part of any build. Now all versions are imported side by side and one is in use - the first by default.
+- "Which part of the guide am I on?" is now answered - and changed - at the bottom of the build tree: a gold box shows the stage (leveling guides) or the version (build guides) in use. Click it to pick another; for stages, "Follow my level" is the default and moves on by itself. The same choice is on Planner → TL;DR.
+- Importing again no longer wipes your ticked reminders, the points you set on skills or the tab you were on.
+- A class overview page (many builds on one page) is refused with a clear message instead of importing whichever build came first.
+
+## 0.7.6 - Steadier following
+
+- The build tree no longer jumps to another skill or tab and back when one look at the screen comes out wrong: after the first look, a change of panel, skill or passive tab has to be seen twice in a row. This matters most where the screen is hard to read, for example with HDR on.
+- The passive tab is followed from its title only; the node labels no longer get a say once the title has been read (the two could disagree and take turns).
+- Bug reports now include the imported build and whether the icon sheet could be opened, to track down missing icons.
+
 ## 0.7.5 - The build in short, a tour, no more blinking
 
 - New: Planner → TL;DR. The imported build boiled down to what to do in which order: the mastery to choose and when, which passive trees get points (also when a leveling build spends points in one mastery's tree but ends in another), and which skills to specialize. Works for builds you already imported.

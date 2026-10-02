@@ -157,6 +157,9 @@ public class SkillTreeWithUnspentPointsTests
             new ScreenLine("SHAMAN", 19, 1859, 536, 100), new ScreenLine("1 UNSPENT POINTS", 21, 2757, 231, 280),
         };
         Assert.Equal("Primalist", PanelDetector.Detect(Panel("PRIMAL 1ST"), tabs, skills).Tab);
+        // The spot to keep an eye on covers the heading and the title beside it.
+        var anchor = PanelDetector.Detect(Panel("PRIMAL 1ST"), tabs, skills).Anchor!;
+        Assert.Equal((2117, 973), (anchor.X, anchor.Width));
         Assert.Equal("Shaman", PanelDetector.Detect(Panel("SHAMAN"), tabs, skills).Tab);
         Assert.Equal("Beastmaster", PanelDetector.Detect(Panel("BEASTMASTER"), tabs, skills).Tab);
         Assert.Null(PanelDetector.Detect(Panel("~~~"), tabs, skills).Tab);
@@ -336,6 +339,28 @@ public sealed class HandSetPointsTests : IDisposable
         Assert.False(session.TreeState(passives).FromGame);
         session.ClearPlanViews();
         Assert.True(session.TreeState(passives).FromGame);
+    }
+
+    [Fact]
+    public void AStageChosenByHand_IsUsed_UntilLevelIsFollowedAgain()
+    {
+        var session = Make();
+        var build = session.Tree!;
+        build.Stages.Add(new TreeStage { Name = "Later", Level = 90, Passives = { 7, 7, 7, 1 }, Skills = { [build.Trees[1].Name] = new() { 5, 5, 5 } } });
+        var passives = build.Trees[0];
+        var first = build.Stages[0];
+
+        Assert.Null(session.PinnedStage);
+        Assert.Equal(first, session.Stage); // by level
+
+        session.SetStage(build.Stages[1]);
+        Assert.Equal("Later", session.Stage!.Name);
+        Assert.Equal("Later", session.TreeState(passives).Stage);
+        Assert.Equal("Later", session.TreeState(build.Trees[1]).Stage);
+
+        session.SetStage(null);
+        Assert.Equal(first, session.Stage);
+        Assert.Equal(first.Name, session.TreeState(passives).Stage);
     }
 
     [Fact]

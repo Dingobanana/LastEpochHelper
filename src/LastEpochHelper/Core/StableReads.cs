@@ -7,6 +7,22 @@ namespace LastEpochHelper.Core;
 /// </summary>
 public sealed class StableReads
 {
+    private readonly Dictionary<string, (string Value, int Times)> _seen = new();
+
+    /// <summary>
+    /// True once the same answer to a question ("which skill is open?") has come twice in a row.
+    /// One look that disagrees - a misread heading - starts a new count instead of being acted on.
+    /// </summary>
+    public bool Twice(string question, string answer)
+    {
+        int times = _seen.TryGetValue(question, out var last) && last.Value == answer ? last.Times + 1 : 1;
+        _seen[question] = (answer, times);
+        return times >= 2;
+    }
+
+    /// <summary>Forget the answers so far, e.g. when the panel was closed: the next answer counts afresh.</summary>
+    public void ForgetAnswers() => _seen.Clear();
+
     private readonly Dictionary<string, Dictionary<int, int>> _previous = new();
 
     /// <param name="key">What was read (one tree).</param>

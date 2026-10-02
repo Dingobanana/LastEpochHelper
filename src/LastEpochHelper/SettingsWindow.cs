@@ -23,6 +23,7 @@ internal sealed class SettingsWindow : Window
     private readonly TextBlock _routeInfo = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.7, Margin = new Thickness(0, 2, 0, 0) };
     private readonly ComboBox _plan = new();
     private readonly TextBox _importLink = new();
+
     private readonly Slider _opacity = new() { Minimum = 0.3, Maximum = 1, TickFrequency = 0.05, IsSnapToTickEnabled = true };
     private readonly Slider _fontSize = new() { Minimum = 10, Maximum = 22, TickFrequency = 1, IsSnapToTickEnabled = true };
     private readonly Slider _width = new() { Minimum = 280, Maximum = 700, TickFrequency = 10, IsSnapToTickEnabled = true };
@@ -70,6 +71,7 @@ internal sealed class SettingsWindow : Window
         root.Children.Add(Indented(_routeInfo));
         root.Children.Add(Row("Build plan", _plan));
         root.Children.Add(Row("Maxroll link", _importLink));
+
         _importLink.ToolTip = "A Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...) or build guide link";
         root.Children.Add(Indented(Buttons(
             ("Import from Maxroll", Import), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)),
@@ -231,6 +233,7 @@ internal sealed class SettingsWindow : Window
         _profile.ItemsSource = _session.Store.Profiles.Select(p => new ProfileItem(p)).ToList();
         _profile.SelectedIndex = _session.Store.Profiles.IndexOf(profile);
         _name.Text = profile.Name;
+
         _route.ItemsSource = _session.Guide.Routes;
         _route.SelectedItem = _session.Route;
 
@@ -321,34 +324,53 @@ internal sealed class SettingsWindow : Window
         _message.Text = "Saved.";
     }
 
-    private async void Import()
+    private void Import()
     {
         if (string.IsNullOrWhiteSpace(_importLink.Text))
         {
             _message.Text = "Paste a Maxroll planner or build guide link first.";
             return;
         }
+        ImportFrom(_importLink.Text);
+    }
+
+    private async void ImportFrom(string link)
+    {
         _message.Text = "Importing...";
         try
         {
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
-            var result = await MaxrollImporter.ImportAsync(_importLink.Text, _session.DataDir, http);
+            var results = await MaxrollImporter.ImportAsync(link, _session.DataDir, http);
 
-            string file = string.Concat(result.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim() + ".txt";
-            string path = Path.Combine(_session.BuildsDir, file);
-            File.WriteAllText(path, result.Text);
-            result.Tree.Save(BuildTree.PathFor(path));
-            _session.Profile.BuildPlan = file;
-            _session.Profile.PlanDone.Clear();
-            _session.Profile.SkillPoints.Clear();
-            _session.Profile.PassiveOffset = 0;
-            _session.Profile.TreeTab = "";
+            // A build guide brings several versions of the build; each gets its own pair of files, and
+            // each knows the others' names so the tree window can switch without downloading again.
+            var files = results.Select(r => string.Concat(r.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim() + ".txt").ToList();
+            for (int i = 0; i < results.Count; i++)
+            {
+                string path = Path.Combine(_session.BuildsDir, files[i]);
+                File.WriteAllText(path, results[i].Text);
+                if (results.Count > 1) results[i].Tree.VariantFiles = files;
+                results[i].Tree.Save(BuildTree.PathFor(path));
+            }
+            var result = results[0];
+            _session.Profile.BuildPlan = files[0];
+            // Importing again (a newer version of the guide) must not undo what the player has set:
+            // only the ticks on the old plan's own lines mean nothing now.
+            _session.Profile.PlanDone.RemoveWhere(key => key.StartsWith("plan:", StringComparison.Ordinal));
+            var trees = result.Tree.Trees.Select(t => t.Name).ToHashSet();
+            foreach (string gone in _session.Profile.SkillPoints.Keys.Where(k => !trees.Contains(k)).ToList())
+                _session.Profile.SkillPoints.Remove(gone);
+            if (!trees.Contains(_session.Profile.TreeTab)) _session.Profile.TreeTab = "";
+            _session.Profile.StagePin = "";
             _session.ReloadPlan();
             _session.Save();
             LoadFromSession();
             Applied?.Invoke();
-            _message.Text = $"Imported '{result.Name}' ({result.Steps} points). The order is exact; the levels are estimates.";
+            _message.Text = $"Imported '{result.Name}' ({result.Steps} points). The order is exact; the levels are estimates."
+                + (results.Count > 1
+                    ? $" This guide has {results.Count} versions of the build ({string.Join(", ", result.Tree.Variants)}); switch between them at the bottom of the build tree."
+                    : result.Tree.Stages.Count > 1 ? $" It has {result.Tree.Stages.Count} stages by level; the overlay follows your level, or pick one at the bottom of the build tree." : "");
         }
         catch (Exception e) when (e is System.Net.Http.HttpRequestException or InvalidDataException or IOException
                                       or TaskCanceledException or System.Text.Json.JsonException or InvalidOperationException

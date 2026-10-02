@@ -56,8 +56,12 @@ public static class PanelDetector
             // (the list of all tabs is further left and lower). Often read a letter off: "PRIMAL 1ST".
             var beside = lines.Where(l => l != passiveHeading && l.X > passiveHeading.X
                                           && Math.Abs(l.Y - passiveHeading.Y) < passiveHeading.Height * 1.5).ToList();
-            string? tab = (SkillTitleMatcher.PickLine(beside, passiveTabs) ?? SkillTitleMatcher.PickClosest(beside, passiveTabs))?.Skill;
-            passives = new PanelReading(GamePanel.Passives, Anchor: passiveHeading, Tab: tab);
+            var title = SkillTitleMatcher.PickLine(beside, passiveTabs) ?? SkillTitleMatcher.PickClosest(beside, passiveTabs);
+            // Watch heading and title together, so a change of tab is seen by the quick looks too.
+            var anchor = title is { } found && found.Line.X + found.Line.Width > passiveHeading.X
+                ? passiveHeading with { Width = found.Line.X + found.Line.Width - passiveHeading.X }
+                : passiveHeading;
+            passives = new PanelReading(GamePanel.Passives, Anchor: anchor, Tab: title?.Skill);
         }
         else if (skillsHeading is null && !skillTree && !strict)
         {

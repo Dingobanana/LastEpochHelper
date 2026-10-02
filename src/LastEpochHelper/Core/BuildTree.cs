@@ -105,6 +105,16 @@ public sealed class BuildTree
     /// the sheet whenever its contents move; "" = an import from before sheets were kept by name.
     /// </summary>
     public string AtlasName { get; set; } = "";
+    /// <summary>The Maxroll planner this was imported from, so another version of it can be fetched.</summary>
+    public string SourceId { get; set; } = "";
+    /// <summary>
+    /// Names of the planner's versions when they are alternatives ("Starter", "Endgame", "Aspirational")
+    /// rather than steps by level; empty for a leveling planner. <see cref="Variant"/> is the one imported.
+    /// </summary>
+    public List<string> Variants { get; set; } = new();
+    public int Variant { get; set; }
+    /// <summary>Plan file of each version (same order as <see cref="Variants"/>): switching is just opening another file.</summary>
+    public List<string> VariantFiles { get; set; } = new();
     public List<TreeDef> Trees { get; set; } = new();
     public List<TreeStage> Stages { get; set; } = new();
     /// <summary>The class and all its masteries, as the game names the tabs of its passive panel.</summary>
@@ -139,7 +149,8 @@ public sealed class BuildTree
     /// The tree after <paramref name="points"/> points. Passive points are shared by all passive tabs,
     /// so the count is over the whole passive history; a skill has its own history.
     /// </summary>
-    public TreeState State(TreeDef tree, int points, int level, int nextCount = 3)
+    /// <param name="pin">A stage chosen by hand, instead of the one the points and level point to.</param>
+    public TreeState State(TreeDef tree, int points, int level, int nextCount = 3, TreeStage? pin = null)
     {
         if (Stages.Count == 0) return new TreeState(new Dictionary<int, int>(), new Dictionary<int, int>(), Array.Empty<NextRun>(), 0, 0, "");
         points = Math.Max(0, points);
@@ -149,11 +160,11 @@ public sealed class BuildTree
         // Passives: the stage is the first one long enough to hold the points the character has.
         // Skills: skill points do not follow character level closely, so go by the level bracket,
         // but move on once the pointer has run past the end of that stage's order.
-        TreeStage stage = passive
+        TreeStage stage = pin ?? (passive
             ? Stages.FirstOrDefault(s => s.Passives.Count > points) ?? Stages[^1]
             : Stages.FirstOrDefault(s => s.Level >= level && History(s).Count > points)
               ?? Stages.FirstOrDefault(s => History(s).Count > points)
-              ?? Stages.LastOrDefault(s => History(s).Count > 0) ?? Stages[^1];
+              ?? Stages.LastOrDefault(s => History(s).Count > 0) ?? Stages[^1]);
 
         var history = History(stage);
         int taken = Math.Min(points, history.Count);
@@ -177,7 +188,7 @@ public sealed class BuildTree
     /// "next" is the first planned points not yet covered - so points taken out of order are fine.
     /// Returns null when the profile has nothing for this tree.
     /// </summary>
-    public TreeState? State(TreeDef tree, ActualTrees actual, int level, int nextCount = 3)
+    public TreeState? State(TreeDef tree, ActualTrees actual, int level, int nextCount = 3, TreeStage? pin = null)
     {
         if (Stages.Count == 0) return null;
         bool passive = tree.Kind == TreeDef.PassiveKind;
@@ -186,7 +197,7 @@ public sealed class BuildTree
         int total = have.Values.Sum();
         List<int> History(TreeStage s) => passive ? s.Passives : s.Skills.GetValueOrDefault(tree.Name) ?? new List<int>();
 
-        TreeStage stage = Stages.FirstOrDefault(s => (passive || s.Level >= level) && History(s).Count > total)
+        TreeStage stage = pin ?? Stages.FirstOrDefault(s => (passive || s.Level >= level) && History(s).Count > total)
                           ?? Stages.FirstOrDefault(s => History(s).Count > total)
                           ?? Stages.LastOrDefault(s => History(s).Count > 0) ?? Stages[^1];
         var history = History(stage);

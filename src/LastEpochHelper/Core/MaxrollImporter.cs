@@ -36,11 +36,64 @@ public static partial class MaxrollImporter
     /// <param name="Tree">Tree layouts and point order, for the tree view.</param>
     public sealed record Result(string Name, string Text, int Steps, BuildTree Tree);
 
+    /// <summary>
+    /// How a planner's profiles relate. Maxroll uses them in two ways: leveling planners have one per
+    /// level range ("lvl 1 - 9", "lvl 10 - 34", ...), each continuing the one before; build guides have
+    /// alternatives at the same level ("Starter", "Endgame", "Aspirational", "HC Shield Variant").
+    /// Only the first kind is a sequence - of the second, one is followed at a time.
+    /// </summary>
+    public static (bool Sequential, List<string> Names) Shape(JsonNode data)
+    {
+        var profiles = data["profiles"] as JsonArray ?? new JsonArray();
+        var levels = profiles.Select(p => p?["level"]?.GetValue<int>() ?? 0).ToList();
+        var names = profiles.Select((p, i) => p?["name"]?.GetValue<string>() is { Length: > 0 } name ? name : $"Version {i + 1}").ToList();
+        bool sequential = levels.Count < 2 || levels.Zip(levels.Skip(1)).All(pair => pair.Second > pair.First);
+        return (sequential, names);
+    }
+
+    /// <param name="variant">Which alternative to import when the planner holds alternatives; null = the first.</param>
+    internal static Result ConvertPlanner(string id, string name, JsonNode data, JsonNode game, int? variant = null)
+    {
+        var (sequential, names) = Shape(data);
+        Result result;
+        if (sequential) result = Convert(id, name, data, game);
+        else
+        {
+            int index = Math.Clamp(variant ?? 0, 0, names.Count - 1);
+            // The alternatives share one item list; everything else about the others is left out.
+            var one = data.DeepClone();
+            one["profiles"] = new JsonArray(data["profiles"]![index]!.DeepClone());
+            result = Convert(id, $"{name} - {names[index]}", one, game);
+            result.Tree.Variants = names;
+            result.Tree.Variant = index;
+        }
+        result.Tree.SourceId = id;
+        return result;
+    }
+
+    /// <summary>
+    /// The planner a guide page is about. Its own planner is embedded several times (skill bar, trees,
+    /// gear); a class overview page instead embeds many builds once each, and is not a guide to import.
+    /// </summary>
+    public static string? PickPlanner(string html)
+    {
+        var ids = EmbeddedPlanner().Matches(html).Select(m => m.Groups[1].Value).ToList();
+        if (ids.Count == 0) return PlannerLink().Match(html) is { Success: true } link ? link.Groups[1].Value : null;
+        var counted = ids.GroupBy(i => i).Select(g => (Id: g.Key, Count: g.Count())).OrderByDescending(g => g.Count).ToList();
+        if (counted.Count > 1 && counted[0].Count == 1)
+            throw new InvalidDataException("That page lists several builds. Open the guide of the one you want and paste that link.");
+        return counted[0].Id;
+    }
+
     private sealed record Step(int Level, string Kind, string Text, bool Exact, int Seq, string? Group = null, string? Item = null);
 
     /// <param name="input">Planner URL, bare planner id, or a Maxroll build-guide URL.</param>
     /// <param name="cacheDir">Where the (large) id-to-name table is kept between imports.</param>
-    public static async Task<Result> ImportAsync(string input, string cacheDir, HttpClient http)
+    /// <returns>
+    /// One result for a leveling planner; for a build guide one per version (Starter, Endgame, ...),
+    /// so that switching between them later needs no download.
+    /// </returns>
+    public static async Task<IReadOnlyList<Result>> ImportAsync(string input, string cacheDir, HttpClient http)
     {
         string id = await ResolveIdAsync(input.Trim(), http);
         var raw = JsonNode.Parse(await http.GetStringAsync(ProfileUrl + id))
@@ -50,9 +103,16 @@ public static partial class MaxrollImporter
         // Icons are positions in the sheet, listed in the game data: the two must be of the same age.
         var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
         var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
-        var result = Convert(id, raw["name"]?.GetValue<string>() ?? id, JsonNode.Parse(data)!, game);
-        result.Tree.AtlasName = atlas ?? "";
-        return result;
+        var planner = JsonNode.Parse(data)!;
+        var (sequential, names) = Shape(planner);
+        var results = new List<Result>();
+        for (int version = 0; version < (sequential ? 1 : names.Count); version++)
+        {
+            var result = ConvertPlanner(id, raw["name"]?.GetValue<string>() ?? id, planner, game, version);
+            result.Tree.AtlasName = atlas ?? "";
+            results.Add(result);
+        }
+        return results;
     }
 
     /// <summary>
@@ -86,10 +146,7 @@ public static partial class MaxrollImporter
         if (BareId().IsMatch(input)) return input;
         if (input.Contains("maxroll.gg/last-epoch/", StringComparison.OrdinalIgnoreCase))
         {
-            string html = await http.GetStringAsync(input);
-            m = EmbeddedPlanner().Match(html);
-            if (!m.Success) m = PlannerLink().Match(html);
-            if (m.Success) return m.Groups[1].Value;
+            if (PickPlanner(await http.GetStringAsync(input)) is { } found) return found;
         }
         throw new InvalidDataException("That does not look like a Maxroll Last Epoch planner or build guide link.");
     }
@@ -355,7 +412,7 @@ public static partial class MaxrollImporter
                 Name = skill,
                 Kind = TreeDef.SkillKind,
                 TreeId = skillTreeIds.GetValueOrDefault(skill, ""),
-                Nodes = tree["nodes"]!.AsObject().Select(kv => ToNode(kv.Key, kv.Value!, atlas, kv.Key == "0" ? skillIcon : null)).ToList(),
+                Nodes = tree["nodes"]!.AsObject().Select(kv => ToNode(kv.Key, kv.Value!, atlas, kv.Key == "0" ? skillIcon : null, skillIcon)).ToList(),
             });
         }
 
@@ -371,9 +428,10 @@ public static partial class MaxrollImporter
         return new Result(name, Render(id, name, steps), steps.Count, build);
     }
 
-    private static TreeNode ToNode(string id, JsonNode node, Dictionary<string, int> atlas, string? iconOverride = null)
+    /// <param name="fallbackIcon">For a node the data gives no picture (a few trees' root nodes): the skill's own.</param>
+    private static TreeNode ToNode(string id, JsonNode node, Dictionary<string, int> atlas, string? iconOverride = null, string? fallbackIcon = null)
     {
-        string icon = iconOverride ?? node["icon"]?.GetValue<string>() ?? "";
+        string icon = iconOverride ?? node["icon"]?.GetValue<string>() ?? fallbackIcon ?? "";
         string description = node["altText"]?.GetValue<string>() ?? "";
         if (description.Length == 0) description = node["description"]?.GetValue<string>() ?? "";
         var stats = (node["stats"] as JsonArray)?.Select(s => $"{s?["value"]?.GetValue<string>()} {s?["statName"]?.GetValue<string>()}".Trim())

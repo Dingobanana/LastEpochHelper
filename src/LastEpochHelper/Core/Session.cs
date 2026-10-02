@@ -652,15 +652,47 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    /// <summary>The stage of the guide chosen by hand, if any (and if the build still has it).</summary>
+    public TreeStage? PinnedStage => Profile.StagePin.Length == 0 ? null : Tree?.Stages.FirstOrDefault(s => s.Name == Profile.StagePin);
+
+    /// <summary>The stage of the guide in use: the one chosen by hand, else the one for the character's level.</summary>
+    public TreeStage? Stage => PinnedStage ?? Tree?.StageFor(Profile.Level);
+
+    /// <summary>Chooses a stage of the guide by hand; null goes back to following the character's level.</summary>
+    public void SetStage(TreeStage? stage)
+    {
+        Profile.StagePin = stage?.Name ?? "";
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Switches to another version of the build (Starter / Endgame / ...), imported alongside this one.</summary>
+    /// <returns>False if that version's files are not there (an import from before versions were kept).</returns>
+    public bool SwitchVariant(int index)
+    {
+        if (Tree is not { } build || index < 0 || index >= build.VariantFiles.Count) return false;
+        string file = build.VariantFiles[index];
+        if (!File.Exists(Path.Combine(BuildsDir, file))) return false;
+        Profile.BuildPlan = file;
+        // Ticks on the other version's plan lines mean nothing here; everything else carries over.
+        Profile.PlanDone.RemoveWhere(key => key.StartsWith("plan:", StringComparison.Ordinal));
+        Profile.StagePin = "";
+        ReloadPlan();
+        if (Tree is { } now && now.Trees.All(t => t.Name != Profile.TreeTab)) Profile.TreeTab = "";
+        Save();
+        Changed?.Invoke();
+        return true;
+    }
+
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
-        if (ShowsActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level) is { } real) return real;
+        if (ShowsActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
 
         int points = tree.Kind == TreeDef.PassiveKind
             ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset
             : Profile.SkillPoints.GetValueOrDefault(tree.Name);
-        return Tree!.State(tree, points, Profile.Level);
+        return Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
     }
 
     public void AdjustTreePoints(TreeDef tree, int delta)

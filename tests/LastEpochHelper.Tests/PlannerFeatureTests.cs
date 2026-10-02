@@ -306,6 +306,50 @@ public class BuildSummaryTests
     }
 
     [Fact]
+    public void ProfilesByLevel_AreASequence_ProfilesAtOneLevel_AreAlternatives()
+    {
+        static System.Text.Json.Nodes.JsonNode Planner(params (string Name, int Level)[] profiles) => System.Text.Json.Nodes.JsonNode.Parse(
+            "{\"profiles\":[" + string.Join(",", profiles.Select(p => $"{{\"name\":\"{p.Name}\",\"level\":{p.Level}}}")) + "]}")!;
+
+        Assert.True(MaxrollImporter.Shape(Planner(("Starting Setup (lvl 1 - 9)", 9), ("Early Setup (lvl 10 - 34)", 34), ("Final Setup", 79))).Sequential);
+        Assert.True(MaxrollImporter.Shape(Planner(("Only", 100))).Sequential);
+
+        var guide = MaxrollImporter.Shape(Planner(("Starter", 100), ("Endgame", 100), ("Aspirational", 100)));
+        Assert.False(guide.Sequential);
+        Assert.Equal(new[] { "Starter", "Endgame", "Aspirational" }, guide.Names);
+        // A level or two apart is still the same build in another dress, not a later step.
+        Assert.False(MaxrollImporter.Shape(Planner(("Starting Gear", 100), ("Endgame Gear", 100), ("Aspirational Gear", 99), ("HC Shield Variant", 100))).Sequential);
+    }
+
+    [Fact]
+    public void AGuidePage_GivesItsOwnPlanner_AnOverviewPageIsRefused()
+    {
+        static string Embed(string id) => $"<div data-le-profile=\"{id}\" data-le-id=\"2\"></div>";
+
+        // The guide's planner is embedded many times; one tree is borrowed from another planner.
+        Assert.Equal("kg56tr03", MaxrollImporter.PickPlanner(Embed("kg56tr03") + Embed("kg56tr03") + Embed("20tfn0go") + Embed("kg56tr03")));
+        Assert.Equal("abc12345", MaxrollImporter.PickPlanner(Embed("abc12345")));
+        Assert.Equal("zz99zz99", MaxrollImporter.PickPlanner("<a href=\"https://maxroll.gg/last-epoch/planner/zz99zz99\">planner</a>"));
+        Assert.Null(MaxrollImporter.PickPlanner("<p>nothing here</p>"));
+        var refused = Assert.Throws<InvalidDataException>(() => MaxrollImporter.PickPlanner(Embed("aaaaaa11") + Embed("bbbbbb22") + Embed("cccccc33")));
+        Assert.Contains("several builds", refused.Message);
+    }
+
+    [Fact]
+    public void AnAnswerCounts_OnceItHasComeTwiceInARow()
+    {
+        var reads = new StableReads();
+        Assert.False(reads.Twice("skill", "Flame Ward"));
+        Assert.False(reads.Twice("skill", "Mana Strike"));  // one odd look
+        Assert.False(reads.Twice("skill", "Flame Ward"));
+        Assert.True(reads.Twice("skill", "Flame Ward"));
+        Assert.True(reads.Twice("skill", "Flame Ward"));
+        Assert.False(reads.Twice("tab", "Flame Ward"));     // another question has its own count
+        reads.ForgetAnswers();
+        Assert.False(reads.Twice("skill", "Flame Ward"));
+    }
+
+    [Fact]
     public void AValueIsOnlyPassedOn_WhenTwoLooksInARowAgree()
     {
         var reads = new StableReads();
@@ -316,5 +360,49 @@ public class BuildSummaryTests
         var third = reads.Confirm("tree", new Dictionary<int, int> { [1] = 7, [3] = 1 });
         Assert.Equal(new Dictionary<int, int> { [1] = 7, [3] = 1 }, third);
         Assert.Empty(reads.Confirm("other tree", new Dictionary<int, int> { [1] = 7 }));
+    }
+}
+
+public class MaxrollSurveyTests
+{
+    /// <summary>
+    /// Runs the importer over a folder of saved planner answers (LEH_MAXROLL_DIR, one JSON file each)
+    /// with saved game data (LEH_MAXROLL_GAME), writing what came out to LEH_MAXROLL_OUT. On request only.
+    /// </summary>
+    [Fact]
+    public void EverySavedPlanner_Converts_WhenAskedTo()
+    {
+        string? dir = Environment.GetEnvironmentVariable("LEH_MAXROLL_DIR"), gameFile = Environment.GetEnvironmentVariable("LEH_MAXROLL_GAME"),
+            output = Environment.GetEnvironmentVariable("LEH_MAXROLL_OUT");
+        if (dir is null || gameFile is null || output is null) return;
+
+        var game = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(gameFile))!;
+        var report = new List<string>();
+        int failures = 0;
+        foreach (string file in Directory.GetFiles(dir, "*.json").OrderBy(f => f))
+        {
+            string id = Path.GetFileNameWithoutExtension(file);
+            try
+            {
+                var raw = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file));
+                if (raw?["data"]?.GetValue<string>() is not { } data) { report.Add($"{id}: no planner data"); continue; }
+                var planner = System.Text.Json.Nodes.JsonNode.Parse(data)!;
+                var (sequential, names) = MaxrollImporter.Shape(planner);
+                for (int variant = 0; variant < (sequential ? 1 : names.Count); variant++)
+                {
+                    var result = MaxrollImporter.ConvertPlanner(id, raw["name"]?.GetValue<string>() ?? id, planner, game, variant);
+                    var summary = BuildSummary.From(BuildPlan.Parse(result.Text));
+                    report.Add($"{id}: {result.Name} | {(sequential ? "stages" : "version")} | {result.Tree.Stages.Count} stage(s), {result.Tree.Trees.Count} trees, "
+                               + $"{result.Steps} steps, respecs {summary.Steps.Count(s => s.Kind == "respec")}, nodes without icon {result.Tree.Trees.Sum(t => t.Nodes.Count(n => n.IconIndex < 0))} | {summary.Headlines.FirstOrDefault()}");
+                }
+            }
+            catch (Exception e)
+            {
+                failures++;
+                report.Add($"{id}: FAILED {e.GetType().Name}: {e.Message}");
+            }
+        }
+        File.WriteAllLines(output, report);
+        Assert.Equal(0, failures);
     }
 }

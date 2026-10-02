@@ -156,6 +156,48 @@ internal sealed class PlannerWindow : Window
         }
     }
 
+    /// <summary>
+    /// A guide's "tabs": either steps by level, of which the overlay follows the one for the
+    /// character's level, or alternative versions of the build, of which one was imported.
+    /// </summary>
+    private void RenderStages()
+    {
+        if (_session.Tree is not { } build) return;
+        if (build.Variants.Count > 1)
+        {
+            Heading("Versions in this guide");
+            for (int i = 0; i < build.Variants.Count; i++)
+            {
+                int index = i;
+                _body.Children.Add(Choice($"{(i == build.Variant ? "▶" : "   ")}  {build.Variants[i]}{(i == build.Variant ? "  -  in use" : "")}",
+                    i == build.Variant, () => _session.SwitchVariant(index)));
+            }
+            Note("These are alternatives, not steps: gear, idols and sometimes skills differ. Click one to use it (also at the bottom of the build tree).");
+            return;
+        }
+        if (build.Stages.Count < 2) return;
+        Heading("Stages in this guide");
+        var now = _session.Stage;
+        bool pinned = _session.PinnedStage is not null;
+        _body.Children.Add(Choice($"{(pinned ? "   " : "▶")}  Follow my level{(pinned ? "" : $"  -  now: {now?.Name}")}", !pinned, () => _session.SetStage(null)));
+        foreach (var stage in build.Stages)
+        {
+            var chosen = stage;
+            bool current = pinned && stage == now;
+            _body.Children.Add(Choice($"{(current ? "▶" : "   ")}  {stage.Name}{(current ? "  -  chosen by hand" : "")}", current, () => _session.SetStage(chosen)));
+        }
+        Note("By default the overlay moves to the next stage by itself as you level - gear, idols and trees follow. Click a stage to stay on it (also at the bottom of the build tree).");
+    }
+
+    /// <summary>A line that can be clicked to choose it; the one in use is green.</summary>
+    private static TextBlock Choice(string text, bool selected, Action choose)
+    {
+        var line = Line(text, selected ? Green : Text, top: 3, weight: selected ? FontWeights.SemiBold : FontWeights.Normal);
+        line.Cursor = Cursors.Hand;
+        line.MouseLeftButtonDown += (_, e) => { choose(); e.Handled = true; };
+        return line;
+    }
+
     /// <summary>The imported build boiled down: mastery, the order of the passive trees, the skills.</summary>
     private void RenderSummary()
     {
@@ -167,6 +209,7 @@ internal sealed class PlannerWindow : Window
         var summary = BuildSummary.From(plan);
         Heading($"{plan.Name}  ·  the short version");
         foreach (string headline in summary.Headlines) _body.Children.Add(Line(headline, Text, top: 5));
+        RenderStages();
         if (summary.Steps.Count == 0) return;
 
         Heading("What to do, in order");
@@ -188,7 +231,7 @@ internal sealed class PlannerWindow : Window
 
     private TreeStage? Stage()
     {
-        if (_session.Tree?.StageFor(_session.Profile.Level) is { } stage) return stage;
+        if (_session.Stage is { } stage) return stage;
         Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll planner or build guide link and press 'Import from Maxroll'.");
         return null;
     }

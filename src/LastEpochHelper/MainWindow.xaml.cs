@@ -71,6 +71,7 @@ public partial class MainWindow : Window
     private bool _dismissed;
     /// <summary>What the game was last seen showing (panel and skill; passive tab), to notice when it changes.</summary>
     private string? _gameKind, _gameSkill, _gameTab;
+    private bool _tabTitleRead;
     private ScreenReader? _labelReader;
     private bool _readingLabels;
     private DateTime _lastLabelRead = DateTime.MinValue;
@@ -209,6 +210,26 @@ public partial class MainWindow : Window
 
     private BugReportWindow? _reportWindow;
 
+    /// <summary>For a bug report: which icon sheet the build wants, and whether this machine can open it.</summary>
+    private string IconSheetFacts()
+    {
+        if (_session.Tree is not { } build) return "no build";
+        string name = build.AtlasName.Length > 0 ? build.AtlasName : BuildTree.AtlasFile;
+        string path = Path.Combine(_session.DataDir, name);
+        string facts = $"{name}, build expects {build.AtlasCells} cells";
+        if (!File.Exists(path)) return facts + ", FILE MISSING";
+        try
+        {
+            var frame = System.Windows.Media.Imaging.BitmapDecoder.Create(new Uri(path), System.Windows.Media.Imaging.BitmapCreateOptions.None,
+                System.Windows.Media.Imaging.BitmapCacheOption.OnLoad).Frames[0];
+            return facts + $", file {new FileInfo(path).Length} bytes, opens as {frame.PixelWidth}x{frame.PixelHeight}";
+        }
+        catch (Exception e) when (e is NotSupportedException or IOException or System.Runtime.InteropServices.COMException or FileFormatException)
+        {
+            return facts + $", file {new FileInfo(path).Length} bytes, CANNOT BE OPENED ({e.GetType().Name}: {e.Message})";
+        }
+    }
+
     /// <summary>Opens "Report a bug". The picture of the game is taken first, before the window covers it.</summary>
     private void ReportBug()
     {
@@ -243,7 +264,8 @@ public partial class MainWindow : Window
                 $"Text recognition available: {(_screenReader ?? new ScreenReader()).Available}",
                 $"Character: class {profile.ClassId}, mastery {profile.Mastery}, level {profile.Level}, route {profile.RouteId}, step {profile.Index}",
                 $"Build: {profile.BuildPlan}; trees: {string.Join(", ", _session.Tree?.Trees.Select(t => t.Name) ?? Enumerable.Empty<string>())}",
-                $"Icon sheet: {_session.Tree?.AtlasName} ({_session.Tree?.AtlasCells} cells)",
+                $"Icon sheet: {IconSheetFacts()}",
+                "Nodes without an icon: " + string.Join(", ", _session.Tree?.Trees.Select(t => $"{t.Name} {t.Nodes.Count(n => n.IconIndex < 0)}/{t.Nodes.Count}") ?? Enumerable.Empty<string>()),
                 $"Tree window: wanted={_treeWanted} pinned={_treePinned} tab={profile.TreeTab}",
             };
             var names = _session.Store.Profiles.Select(p => p.Name)
@@ -252,7 +274,14 @@ public partial class MainWindow : Window
                 .Append(Settings.AccountName).Append(Environment.UserName).ToList();
             string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
             ActivityLog.Write("bug report created");
-            return BugReport.Create(new BugReportInput(_session.DataDir, description, facts, logPath, includeShot ? shot : null, names), folder);
+            var buildFiles = new List<string>();
+            if (profile.BuildPlan.Length > 0)
+            {
+                string planFile = Path.Combine(_session.BuildsDir, profile.BuildPlan);
+                buildFiles.Add(planFile);
+                buildFiles.Add(BuildTree.PathFor(planFile));
+            }
+            return BugReport.Create(new BugReportInput(_session.DataDir, description, facts, logPath, includeShot ? shot : null, names, buildFiles), folder);
         }, send, haveShot, version);
         _reportWindow.Closed += (_, _) => _reportWindow = null;
         _reportWindow.Show();
@@ -415,7 +444,7 @@ public partial class MainWindow : Window
         if (_reading) return;
         _game.Refresh();
         if (!_game.GameFocused) { _session.ShowAlert("Item check: hover an item in Last Epoch first."); return; }
-        if (_session.Tree?.StageFor(_session.Profile.Level) is not { } stage)
+        if (_session.Stage is not { } stage)
         {
             _session.ShowAlert("Item check needs an imported build (settings: Import from Maxroll).");
             return;
@@ -491,6 +520,8 @@ public partial class MainWindow : Window
         if (!show)
         {
             _panelRegion = null; _panelMisses = 0; _gameKind = _gameSkill = _gameTab = null;
+            _tabTitleRead = false;
+            _stableReads.ForgetAnswers();
             // A plan preview (the slider) lasts while the tree is open; next time it mirrors the game again.
             _session.ClearPlanViews();
         }
@@ -574,20 +605,35 @@ public partial class MainWindow : Window
                 // Follow the game when it changes what it shows - not on every look, or a tab the
                 // player picked here by hand would be taken away again a moment later.
                 // (A quick look sees the heading only, so "no skill / no tab named" there is not a change.)
-                bool kindChanged = kind != _gameKind;
-                _gameKind = kind;
+                // The first look after a panel opens is acted on at once. After that a change has to be
+                // seen twice in a row: text recognition is not steady enough (less so with HDR on) for
+                // one odd look to be allowed to flip the tree to another skill or tab and back.
+                bool first = _gameKind is null;
+                bool kindChanged = kind != _gameKind && (first || _stableReads.Twice("kind", kind));
+                if (kind == _gameKind) _stableReads.Twice("kind", kind);
+                if (kindChanged) _gameKind = kind;
                 if (!_treeWanted) ShowTree(true, kind);                       // the game opened a panel we missed
-                else if (kindChanged && _treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
-                if (reading.Skill is { } skillShown && (kindChanged || skillShown != _gameSkill))
+                else if (kindChanged && _treeWindow!.CurrentKind != kind)
                 {
+                    ActivityLog.Write($"following: {kind} panel");
+                    _treeWindow.SelectKind(kind);
+                }
+                if (kind == _gameKind && reading.Skill is { } skillShown && (_stableReads.Twice("skill", skillShown) || _gameSkill is null) && skillShown != _gameSkill)
+                {
+                    ActivityLog.Write($"following: skill {_gameSkill ?? "(none yet)"} -> {skillShown}");
                     _gameSkill = skillShown;
                     _treeWindow?.SelectSkill(skillShown);
                 }
-                if (reading.Tab is { } tabShown && (kindChanged || tabShown != _gameTab))
+                if (kind == _gameKind && reading.Tab is { } tabShown)
                 {
-                    _gameTab = tabShown;
-                    if (_session.Tree.Trees.FirstOrDefault(t => t.Kind == TreeDef.PassiveKind && t.Name == tabShown) is { } tabTree)
-                        _treeWindow?.SelectTab(tabTree);
+                    _tabTitleRead = true;
+                    if ((_stableReads.Twice("tab", tabShown) || _gameTab is null) && tabShown != _gameTab)
+                    {
+                        ActivityLog.Write($"following: passive tab {_gameTab ?? "(none yet)"} -> {tabShown}");
+                        _gameTab = tabShown;
+                        if (_session.Tree.Trees.FirstOrDefault(t => t.Kind == TreeDef.PassiveKind && t.Name == tabShown) is { } tabTree)
+                            _treeWindow?.SelectTab(tabTree);
+                    }
                 }
                 if (!quick) ReadNodePoints(words, reading);
             }
@@ -682,9 +728,12 @@ public partial class MainWindow : Window
                 // there is nothing drawn yet that could flicker.
                 var agreed = _stableReads.Confirm("passive:" + fit.Tree.Name, fit.Points);
                 _session.SetReadPoints(fit.Tree, _session.HasActual(fit.Tree) ? agreed : fit.Points);
-                // Title not readable: show the tab the labels fit, when that changes.
-                if (reading.Tab is null && fit.Tree.Name != _gameTab)
+                // Only while the tab's title has not been readable at all: show the tab the labels fit.
+                // (Once the title has been read it is the one authority - two sources that can
+                // disagree would take turns moving the tree.)
+                if (!_tabTitleRead && fit.Tree.Name != _gameTab && (_stableReads.Twice("tab-fit", fit.Tree.Name) || _gameTab is null))
                 {
+                    ActivityLog.Write($"following: passive tab {_gameTab ?? "(none yet)"} -> {fit.Tree.Name} (from the node labels)");
                     _gameTab = fit.Tree.Name;
                     _treeWindow?.SelectTab(fit.Tree);
                 }
@@ -907,6 +956,8 @@ public partial class MainWindow : Window
         ActivityLog.Write($"key for {kind} (tree wanted={_treeWanted}, pinned={_treePinned}, seen on screen={trustScreen})");
         _expectedPanel = kind == TreeDef.PassiveKind ? GamePanel.Passives : GamePanel.Skills;
         _gameKind = _gameSkill = _gameTab = null;
+        _tabTitleRead = false;
+        _stableReads.ForgetAnswers();
         _lastPanelKey = DateTime.UtcNow;
         _verifyUntil = DateTime.UtcNow.AddSeconds(2.5);
         _forceFullRead = true;

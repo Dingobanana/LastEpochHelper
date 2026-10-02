@@ -10,8 +10,9 @@ namespace LastEpochHelper.Core;
 /// <param name="PlayerLog">The game's log; only its last lines are taken.</param>
 /// <param name="Screenshot">A picture of the game to include, if the player agreed.</param>
 /// <param name="Private">Names to blank out wherever they occur (account, Windows user, characters).</param>
+/// <param name="Extra">Further files worth having, e.g. the imported build; stored under "build/".</param>
 public sealed record BugReportInput(string DataDir, string Description, IReadOnlyList<string> Facts,
-    string? PlayerLog, string? Screenshot, IReadOnlyList<string> Private);
+    string? PlayerLog, string? Screenshot, IReadOnlyList<string> Private, IReadOnlyList<string>? Extra = null);
 
 /// <summary>
 /// Packs what is needed to understand a problem into one zip file: the player's description, the
@@ -48,6 +49,8 @@ public static partial class BugReport
             foreach (string file in Directory.GetFiles(input.DataDir, "panel-ocr-*.txt"))
                 AddFile(zip, file, "screen/" + Path.GetFileName(file), input.Private);
 
+        foreach (string file in input.Extra ?? Array.Empty<string>())
+            AddFile(zip, file, "build/" + Path.GetFileName(file), input.Private);
         AddJson(zip, Path.Combine(input.DataDir, "settings.json"), "settings.json", input.Private, HideSettings);
         AddJson(zip, Path.Combine(input.DataDir, "profiles.json"), "profiles.json", input.Private, HideCharacterNames);
 

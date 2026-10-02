@@ -47,6 +47,7 @@ internal sealed class TreeWindow : Window
     private Border _markers = null!;
     private Border _amounts = null!;
     private Border _reset = null!;
+    private Border _stage = null!;
     private Border _minus = null!, _plus = null!;
     private readonly Slider _slider = new() { Minimum = 0, Maximum = 20, Width = 260, IsSnapToTickEnabled = true, TickFrequency = 1, Focusable = false, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _sliderLabel = new() { Foreground = Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
@@ -107,7 +108,10 @@ internal sealed class TreeWindow : Window
         _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
         // Only there when the game's own points are known for this tree: switches between them and the plan.
         _reset = HeaderButton("game", () => { if (Current() is { } tree) _session.SetPlanView(tree, _session.ShowsActual(tree)); });
+        // Which part of the guide the tree follows: a stage by level, or a version of the build.
+        _stage = HeaderButton("stage", ChooseStage);
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
+        adjust.Children.Add(_stage);
         adjust.Children.Add(_reset);
         adjust.Children.Add(_markers);
         adjust.Children.Add(_amounts);
@@ -115,7 +119,7 @@ internal sealed class TreeWindow : Window
         // The slider is always there. It shows how many points the tree is drawn with; moving it asks
         // for the plan at that many points (hover any control for an explanation).
         _sliderRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        foreach (var chip in new[] { _reset, _markers, _amounts })
+        foreach (var chip in new[] { _stage, _reset, _markers, _amounts })
         {
             chip.BorderThickness = new Thickness(1);
             chip.CornerRadius = new CornerRadius(10);
@@ -346,7 +350,8 @@ internal sealed class TreeWindow : Window
             string.Join(",", state.Target.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
             string.Join(",", state.Next.Select(n => $"{n.Node}+{n.Count}")), string.Join(",", state.OffPlan.OrderBy(n => n)),
             MarkersOn(tree), AmountsOn(tree), _session.HasActual(tree), _session.ActualPoints(tree),
-            _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null);
+            _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null,
+            _session.Profile.StagePin, build.Variant, _session.Stage?.Name);
         bool iconRetryDue = _atlas is null && _atlasTried && DateTime.UtcNow >= _atlasRetryAt;
         if (signature == _signature && !iconRetryDue) return;
         _signature = signature;
@@ -368,6 +373,7 @@ internal sealed class TreeWindow : Window
         DrawTree(build, tree, state);
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
+        ShowStageChip(build);
         Chip(_markers, MarkersOn(tree), OrderBlue, OrderTint);
         Chip(_amounts, AmountsOn(tree), AmountOrange, AmountTint);
         // The same colours as the markers on the nodes: blue for the order, orange for the points.
@@ -413,6 +419,57 @@ internal sealed class TreeWindow : Window
         _reset.ToolTip = state.FromGame
             ? "Showing the points your character has in the game" + (state.OffPlan.Count > 0 ? $" ({state.OffPlan.Count} node(s) outside the build, ringed red)" : "") + ".\nClick to see the build's plan instead."
             : $"Showing the build's plan at {state.Points} points. Click to go back to the points read from the game ({_session.ActualPoints(tree)}).";
+    }
+
+    private void ShowStageChip(BuildTree build)
+    {
+        bool versions = build.Variants.Count > 1, stages = !versions && build.Stages.Count > 1;
+        _stage.Visibility = versions || stages ? Visibility.Visible : Visibility.Collapsed;
+        if (!versions && !stages) return;
+        bool pinned = _session.PinnedStage is not null;
+        string name = versions ? build.Variants[Math.Clamp(build.Variant, 0, build.Variants.Count - 1)] : _session.Stage?.Name ?? "";
+        ((TextBlock)_stage.Child).Text = (versions ? "" : pinned ? "📌 " : "Auto · ") + name + "  ▾";
+        Chip(_stage, true, Gold, Frozen("#33C9A85C"));
+        _stage.ToolTip = versions
+            ? "This guide has several versions of the build. Click to use another one."
+            : pinned ? "You chose this stage of the guide by hand. Click to choose another, or to follow your level again."
+            : "The stage of the guide for your level - the overlay moves on by itself as you level. Click to choose one by hand.";
+    }
+
+    /// <summary>The list of the guide's stages (or versions) to choose from, opened from the chip at the bottom.</summary>
+    private void ChooseStage()
+    {
+        if (_session.Tree is not { } build) return;
+        var menu = new ContextMenu { PlacementTarget = _stage, Placement = System.Windows.Controls.Primitives.PlacementMode.Top };
+        if (build.Variants.Count > 1)
+        {
+            for (int i = 0; i < build.Variants.Count; i++)
+            {
+                int index = i;
+                var item = new MenuItem { Header = build.Variants[i], IsChecked = i == build.Variant };
+                item.Click += (_, _) =>
+                {
+                    if (index != build.Variant && !_session.SwitchVariant(index))
+                        _session.ShowAlert("That version was not saved with this build. Import the guide again (Settings) to get all of them.");
+                };
+                menu.Items.Add(item);
+            }
+        }
+        else
+        {
+            var auto = new MenuItem { Header = $"Follow my level (level {_session.Profile.Level})", IsChecked = _session.PinnedStage is null };
+            auto.Click += (_, _) => _session.SetStage(null);
+            menu.Items.Add(auto);
+            menu.Items.Add(new Separator());
+            foreach (var stage in build.Stages)
+            {
+                var chosen = stage;
+                var item = new MenuItem { Header = stage.Name, IsChecked = _session.PinnedStage == stage };
+                item.Click += (_, _) => _session.SetStage(chosen);
+                menu.Items.Add(item);
+            }
+        }
+        menu.IsOpen = true;
     }
 
     private static void Chip(Border chip, bool on, Brush colour, Brush tint)
