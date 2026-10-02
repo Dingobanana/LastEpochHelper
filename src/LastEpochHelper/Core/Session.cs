@@ -98,6 +98,10 @@ public sealed class Session
 
         Profile = profile;
         Store.ActiveId = profile.Id;
+        // An empty record says "this skill has no points", which no reading should have concluded.
+        if (profile.Actual is { } stored)
+            foreach (string empty in stored.Skills.Where(kv => kv.Value.Count == 0).Select(kv => kv.Key).ToList())
+                stored.Skills.Remove(empty);
         Route = Guide.Route(profile.RouteId);
         Tracker = new Tracker(Route, _scenes, profile.Index)
         {
@@ -535,6 +539,15 @@ public sealed class Session
         else if (!actual.Skills.TryGetValue(BuildTree.SkillKey(tree), out points!))
             actual.Skills[BuildTree.SkillKey(tree)] = points = new Dictionary<int, int>();
 
+        // A skill that has points according to the player, read as having none at all, is far more
+        // likely a misread than a respec; a respec is one click on a node away.
+        if (tree.Kind != TreeDef.PassiveKind && points.Count == 0 && read.Values.All(v => v == 0)
+            && Profile.SkillPoints.GetValueOrDefault(tree.Name) > 0)
+        {
+            actual.Skills.Remove(BuildTree.SkillKey(tree));
+            return false;
+        }
+
         bool changed = false;
         foreach (var (node, have) in read)
         {
@@ -585,6 +598,9 @@ public sealed class Session
         Save();
         Changed?.Invoke();
     }
+
+    /// <summary>When the points shown for the character were last read or set; null if never.</summary>
+    public DateTime? ActualUpdated => Profile.Actual?.Fetched;
 
     /// <summary>Total points the game was last seen to have in this kind of tree.</summary>
     public int ActualPoints(TreeDef tree) => Profile.Actual is not { } actual ? 0

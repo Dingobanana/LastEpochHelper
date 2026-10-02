@@ -87,8 +87,10 @@ public static partial class TreeReader
                 }
             }
         }
-        // Most labels must fall on a node; a handful of coincidences is not a tree.
-        return best is not null && best.Count >= MinMatches && best.Count * 10 >= tokens.Count * 6 ? new Match(best) : null;
+        // Most labels must fall on a node, and a fair share of the tree must be accounted for:
+        // a handful of coincidences is not a tree, and a wrong fit would report its points as zero.
+        return best is not null && best.Count >= MinMatches && best.Count * 10 >= tokens.Count * 6 && best.Count * 5 >= nodes.Count * 2
+            ? new Match(best) : null;
     }
 
     private static Dictionary<int, int> Assign(IReadOnlyList<Token> tokens, List<TreeNode> nodes, double scale, double shiftX, double shiftY)

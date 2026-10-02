@@ -488,9 +488,34 @@ public partial class MainWindow : Window
                 _treeWindow?.SelectTab(fit.Tree);
             }
         }
-        else if (reading.Skill is not null && build.Trees.FirstOrDefault(t => t.Kind == TreeDef.SkillKind && t.Name == reading.Skill) is { } skill
-                 && TreeReader.Read(tokens, skill) is { } points)
-            _session.SetReadPoints(skill, points);
+        else if (reading.Skill is not null && build.Trees.FirstOrDefault(t => t.Kind == TreeDef.SkillKind && t.Name == reading.Skill) is { } skill)
+        {
+            var points = TreeReader.Read(tokens, skill);
+            if (points is not null) _session.SetReadPoints(skill, points);
+            WriteSkillTreeDiagnostics(words, tokens, skill, points);
+        }
+    }
+
+    /// <summary>
+    /// What was read from an open skill tree, and once a picture of it, in the data folder - local
+    /// only. Skill trees were added without a real example to test against; this is that example.
+    /// </summary>
+    private void WriteSkillTreeDiagnostics(List<ScreenLine> words, List<TreeReader.Token> tokens, TreeDef skill, Dictionary<int, int>? points)
+    {
+        try
+        {
+            var text = new List<string>
+            {
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  skill={skill.Name}  labels={tokens.Count}  nodes={skill.Nodes.Count(n => n.Max >= 1)}  matched={points?.Count.ToString() ?? "no fit"}",
+                "labels: " + string.Join("  ", tokens.Select(t => $"{t.Have}/{t.Max}@{t.X:0},{t.Y:0}")),
+                "points: " + (points is null ? "-" : string.Join(", ", points.Where(kv => kv.Value > 0).Select(kv => $"{skill.Nodes.First(n => n.Id == kv.Key).Name}={kv.Value}"))),
+            };
+            text.AddRange(words.Take(250).Select(w => $"{w.Height,4:0} @{w.X,5:0},{w.Y,5:0}  {w.Text}"));
+            File.WriteAllLines(Path.Combine(_session.DataDir, "panel-ocr-skilltree.txt"), text);
+            string picture = Path.Combine(_session.DataDir, "panel-skilltree.png");
+            if (!File.Exists(picture)) ScreenCapture.Save(_game.GameBounds, picture, maxWidth: int.MaxValue);
+        }
+        catch (IOException) { }
     }
 
     /// <summary>Has the game's panel for this kind of tree ever been recognised here?</summary>

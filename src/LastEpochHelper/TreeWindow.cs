@@ -354,7 +354,9 @@ internal sealed class TreeWindow : Window
         // "game" = drawn from the points read off the game's panel; click to flip to the plan view and back.
         bool known = _session.HasActual(tree);
         _reset.Visibility = known ? Visibility.Visible : Visibility.Collapsed;
-        ((TextBlock)_reset.Child).Text = state.FromGame ? "● game" : "○ plan";
+        ((TextBlock)_reset.Child).Text = state.FromGame
+            ? "● game" + (_session.ActualUpdated is { } when ? $" · {Age(when)}" : "")
+            : "○ plan";
         ((TextBlock)_reset.Child).Foreground = state.FromGame ? Green : Muted;
         _reset.ToolTip = state.FromGame
             ? "Showing the points your character has in the game" + (state.OffPlan.Count > 0 ? $" ({state.OffPlan.Count} node(s) outside the build, ringed red)" : "") + ".\nClick to see the build's plan instead."

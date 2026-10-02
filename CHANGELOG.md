@@ -2,6 +2,12 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.1 - Steadier sync with the game
+
+- A skill tree that could not be read reliably is no longer shown as having zero points; the overlay keeps the plan view for it instead.
+- The "● game" switch in the build tree now says how long ago your points were read from the game.
+- Reading a tree needs most of its nodes to be visible; move the mouse off the tree if a tooltip is covering it.
+
 ## 0.7.0 - Filters from your build, real tree points, item check
 
 - Loot filter from your build: the planner's Loot filter page writes a leveling filter for the imported build straight into the game's folder.

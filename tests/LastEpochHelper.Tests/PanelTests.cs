@@ -176,6 +176,23 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void ASkillReadAsEmpty_WhileThePlayerSaysItHasPoints_IsNotBelieved()
+    {
+        var session = Make();
+        var rive = session.Tree!.Trees[1];
+        session.SetTreePoints(rive, 2);
+        session.SetPlanView(rive, false);
+
+        Assert.False(session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 0, [5] = 0 }));
+        Assert.False(session.HasActual(rive));
+        Assert.Equal(2, session.TreeState(rive).Points); // still the plan at 2 points
+
+        // A reading with points in it is taken.
+        Assert.True(session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 1, [5] = 0 }));
+        Assert.Equal(1, session.TreeState(rive).Allocated[4]);
+    }
+
+    [Fact]
     public void SkillTrees_AreSetIndependently_AndCanGoBackToThePlan()
     {
         var session = Make();
@@ -262,5 +279,10 @@ public class TreeReaderTests
         Assert.Equal("Primalist", TreeReader.ReadBest(tokens, new[] { other, shown })!.Value.Tree.Name);
         Assert.Null(TreeReader.Read(tokens, other));
         Assert.Null(TreeReader.Read(TreeReader.Tokens(new[] { Label("0/6", 10, 10), Label("0/5", 300, 40) }), shown));
+
+        // Four labels that happen to line up are not enough when the tree has many more nodes.
+        var few = TreeReader.Tokens(Screen(shown, new Dictionary<int, int>(), hidden: new[] { 5, 6, 7, 8, 9, 10, 11 }));
+        Assert.Equal(4, few.Count);
+        Assert.Null(TreeReader.Read(few, shown));
     }
 }
