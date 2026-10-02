@@ -250,3 +250,71 @@ public class EndgameDataTests
         Assert.Equal(new[] { "Morditas", "Prophecies" }, endgame.Reference.Select(p => p.Title));
     }
 }
+
+public class BuildSummaryTests
+{
+    private const string Plan = """
+        name: Leveling
+        2: Gathering Storm unlocks
+        2: Passives [Primalist]: Natural Attunement (2/8)
+        4: Specialize Gathering Storm
+        5: Passives [Primalist]: Natural Attunement (8/8)
+        8: Specialize Summon Thorn Totem
+        9: Gathering Storm: Thunderous Strikes (4/4)
+        10: Respec passives (same nodes, new order)
+        10: Passives [Primalist]: Hunter's Restoration (3/5), Natural Attunement (8/8)
+        14: Passives [Druid]: Chitinous Plating (1/7)
+        17: Passives [Druid]: Chitinous Plating (5/7)
+        18: Choose mastery: Shaman
+        18: Passives [Shaman]: Shamanic Infusion (1/8)
+        20: Specialize Summon Storm Totem (replaces Gathering Storm)
+        """;
+
+    [Fact]
+    public void SaysWhichMasteryToChoose_AndThatPointsInAnotherTreeAreOnPurpose()
+    {
+        var summary = BuildSummary.From(BuildPlan.Parse(Plan));
+
+        Assert.Contains(summary.Headlines, h => h.Contains("Mastery to choose: Shaman") && h.Contains("level 18"));
+        Assert.Contains(summary.Headlines, h => h.Contains("5 points into the Druid tree") && h.Contains("does not make you a Druid"));
+        Assert.Contains(summary.Headlines, h => h.Contains("Summon Thorn Totem, Summon Storm Totem") && !h.Contains("Gathering Storm"));
+    }
+
+    [Fact]
+    public void ListsTheStepsInOrder_WithPassivePointsGroupedByTree()
+    {
+        var steps = BuildSummary.From(BuildPlan.Parse(Plan)).Steps;
+
+        Assert.Equal(new[] { "passive", "specialize", "specialize", "respec", "passive", "mastery", "passive", "specialize" }, steps.Select(s => s.Kind));
+        // The plan's numbers are running totals per node: 8 in one node, then 3 in another.
+        Assert.Equal((2, 10), (steps[0].Level, steps[0].ToLevel));
+        Assert.Contains("Primalist tree: 11 points", steps[0].Text);
+        Assert.Contains("Druid tree: 5 points", steps[4].Text);
+        Assert.Equal((14, 17), (steps[4].Level, steps[4].ToLevel));
+        Assert.Contains("Choose your mastery: Shaman", steps[5].Text);
+        Assert.Contains("takes the slot of Gathering Storm", steps[7].Text);
+        // Skill points and unlocks are detail, not steps.
+        Assert.DoesNotContain(steps, s => s.Text.Contains("Thunderous") || s.Text.Contains("unlocks"));
+    }
+
+    [Fact]
+    public void APlanWithoutBuildLines_SaysSo()
+    {
+        var summary = BuildSummary.From(BuildPlan.Parse("name: Mine\n5: Buy potions\n"));
+        Assert.Empty(summary.Steps);
+        Assert.Contains(summary.Headlines, h => h.Contains("Nothing to summarise"));
+    }
+
+    [Fact]
+    public void AValueIsOnlyPassedOn_WhenTwoLooksInARowAgree()
+    {
+        var reads = new StableReads();
+        Assert.Empty(reads.Confirm("tree", new Dictionary<int, int> { [1] = 2, [2] = 0 }));
+        // Node 1 wobbles, node 2 holds, node 3 is new.
+        var second = reads.Confirm("tree", new Dictionary<int, int> { [1] = 7, [2] = 0, [3] = 1 });
+        Assert.Equal(new Dictionary<int, int> { [2] = 0 }, second);
+        var third = reads.Confirm("tree", new Dictionary<int, int> { [1] = 7, [3] = 1 });
+        Assert.Equal(new Dictionary<int, int> { [1] = 7, [3] = 1 }, third);
+        Assert.Empty(reads.Confirm("other tree", new Dictionary<int, int> { [1] = 7 }));
+    }
+}

@@ -88,6 +88,7 @@ public sealed class Session
 
     public void Activate(Profile profile)
     {
+        ActivityLog.Write($"profile: class {profile.ClassId}, mastery {profile.Mastery}, level {profile.Level}, step {profile.Index}, {profile.PlanDone.Count} reminders ticked");
         if (Tracker is not null)
         {
             Tracker.Changed -= OnTrackerChanged;
@@ -557,9 +558,21 @@ public sealed class Session
         }
         if (!changed) return false;
         actual.Fetched = DateTime.Now;
+        TickSpecializationReminders(actual);
         Save();
         Changed?.Invoke();
         return true;
+    }
+
+    /// <summary>
+    /// "Nth specialization slot unlocked" is the one kind of reminder the overlay can check: once it
+    /// has seen N skills with points in the game, the first N of those reminders are evidently done.
+    /// </summary>
+    private void TickSpecializationReminders(ActualTrees actual)
+    {
+        int specialized = actual.Skills.Count(kv => kv.Value.Values.Sum() > 0);
+        foreach (int level in new[] { 4, 8, 20, 35, 50 }.Take(specialized))
+            Profile.PlanDone.Add($"milestone:{level}");
     }
 
     /// <summary>

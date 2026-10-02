@@ -65,6 +65,7 @@ public partial class MainWindow : Window
     /// <summary>Opened by hand (hotkey or menu), so it stays until closed by hand.</summary>
     private bool _treePinned;
     private TreeDef? _pendingSkillRead;
+    private readonly StableReads _stableReads = new();
     private DateTime _lastIdleLook = DateTime.MinValue;
     /// <summary>The tree was closed by hand while the game's panel was open; do not reopen it for that panel.</summary>
     private bool _dismissed;
@@ -161,6 +162,37 @@ public partial class MainWindow : Window
         Render();
         ShowWhatsNew();
         MentionNewErrors();
+        if (!Settings.TourOffered)
+        {
+            Settings.TourOffered = true;
+            SaveSettings();
+            TakeTour();
+        }
+    }
+
+    private TourWindow? _tourWindow;
+    private bool _tourOpenedTree, _tourOpenedPlanner;
+
+    /// <summary>Opens the tour; its steps bring up the windows they talk about and put them away again.</summary>
+    private void TakeTour()
+    {
+        if (_tourWindow is not null) { _tourWindow.Activate(); return; }
+        _tourWindow = new TourWindow(what =>
+        {
+            bool wantTree = what == "tree", wantPlanner = what is "planner" or "summary";
+            if (wantTree && !_treeWanted) { _tourOpenedTree = true; _treePinned = true; ShowTree(true); }
+            else if (!wantTree && _tourOpenedTree) { _tourOpenedTree = false; _treePinned = false; ShowTree(false); }
+
+            if (wantPlanner)
+            {
+                if (!_plannerWanted) _tourOpenedPlanner = true;
+                _session.Profile.PlannerTab = what == "summary" ? PlannerWindow.SummaryTab : "Gear";
+                ShowPlanner(true);
+            }
+            else if (_tourOpenedPlanner) { _tourOpenedPlanner = false; ShowPlanner(false); }
+        });
+        _tourWindow.Closed += (_, _) => _tourWindow = null;
+        _tourWindow.Show();
     }
 
     /// <summary>If something was written to the error log since the last look, point at the bug report.</summary>
@@ -646,7 +678,10 @@ public partial class MainWindow : Window
                 : $"passive labels: {tokens.Count} read, no fit{(reading.Tab is null ? "" : " for " + reading.Tab)}");
             if (fitted is { } fit)
             {
-                _session.SetReadPoints(fit.Tree, fit.Points);
+                // Two looks have to agree before a node changes - except the very first time, when
+                // there is nothing drawn yet that could flicker.
+                var agreed = _stableReads.Confirm("passive:" + fit.Tree.Name, fit.Points);
+                _session.SetReadPoints(fit.Tree, _session.HasActual(fit.Tree) ? agreed : fit.Points);
                 // Title not readable: show the tab the labels fit, when that changes.
                 if (reading.Tab is null && fit.Tree.Name != _gameTab)
                 {
@@ -693,7 +728,11 @@ public partial class MainWindow : Window
             if (_pendingSkillRead is { } now && now != skill) return;
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
             var points = TreeReader.Read(tokens, skill);
-            if (points is not null) _session.SetReadPoints(skill, points);
+            if (points is not null)
+            {
+                var agreed = _stableReads.Confirm("skill:" + skill.Name, points);
+                _session.SetReadPoints(skill, _session.HasActual(skill) ? agreed : points);
+            }
             ActivityLog.Change("skill-read:" + skill.Name, points is null
                 ? $"skill labels ({skill.Name}): {tokens.Count} read, no fit"
                 : $"skill labels ({skill.Name}): {tokens.Count} read, {points.Count} of {skill.Nodes.Count(n => n.Max >= 1)} nodes, {points.Values.Sum()} points");
@@ -1365,6 +1404,9 @@ public partial class MainWindow : Window
         var settings = new MenuItem { Header = "Settings..." };
         settings.Click += (_, _) => OpenSettings();
         menu.Items.Add(settings);
+        var tour = new MenuItem { Header = "Take a tour" };
+        tour.Click += (_, _) => TakeTour();
+        menu.Items.Add(tour);
         var report = new MenuItem { Header = "Report a bug..." };
         report.Click += (_, _) => ReportBug();
         menu.Items.Add(report);

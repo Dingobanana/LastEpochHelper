@@ -106,7 +106,10 @@ internal sealed class GameWatcher
 /// </summary>
 internal sealed class KeyboardWatcher : IDisposable
 {
-    private const int WH_KEYBOARD_LL = 13, WM_KEYDOWN = 0x0100;
+    private const int WH_KEYBOARD_LL = 13, WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101, WM_SYSKEYUP = 0x0105;
+    private const long RepeatGapMs = 700;
+    /// <summary>Keys that are down, and when each last reported itself: Windows repeats a held key.</summary>
+    private readonly Dictionary<int, long> _held = new();
     private const int VK_SHIFT = 0x10, VK_CONTROL = 0x11, VK_MENU = 0x12;
 
     private delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
@@ -140,8 +143,20 @@ internal sealed class KeyboardWatcher : IDisposable
 
     private IntPtr Callback(int code, IntPtr wParam, IntPtr lParam)
     {
-        if (code >= 0 && wParam == WM_KEYDOWN && !Held(VK_CONTROL) && !Held(VK_MENU) && !Held(VK_SHIFT))
-            KeyDown?.Invoke(Marshal.ReadInt32(lParam));
+        if (code >= 0)
+        {
+            int key = Marshal.ReadInt32(lParam);
+            if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) _held.Remove(key);
+            else if (wParam == WM_KEYDOWN)
+            {
+                // A key held a moment too long repeats, and a panel key counted twice opens and
+                // closes the tree. (The time limit covers a key-up that never arrived.)
+                long now = Environment.TickCount64;
+                bool repeat = _held.TryGetValue(key, out long last) && now - last < RepeatGapMs;
+                _held[key] = now;
+                if (!repeat && !Held(VK_CONTROL) && !Held(VK_MENU) && !Held(VK_SHIFT)) KeyDown?.Invoke(key);
+            }
+        }
         return CallNextHookEx(_hook, code, wParam, lParam);
     }
 

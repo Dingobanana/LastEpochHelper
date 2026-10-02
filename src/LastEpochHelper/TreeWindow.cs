@@ -62,6 +62,7 @@ internal sealed class TreeWindow : Window
     private BitmapSource? _atlas;
     private bool _atlasTried;
     private string _atlasName = "";
+    private string? _signature;
     private DateTime _atlasRetryAt = DateTime.MaxValue;
     private readonly Dictionary<int, ImageBrush> _icons = new();
 
@@ -233,6 +234,7 @@ internal sealed class TreeWindow : Window
     {
         _atlas = null;
         _atlasTried = false;
+        _signature = null;
         _icons.Clear();
     }
 
@@ -318,12 +320,13 @@ internal sealed class TreeWindow : Window
 
     public void Render()
     {
-        _tabs.Children.Clear();
-        _canvas.Children.Clear();
         var build = _session.Tree;
         var tree = Current();
         if (build is null || tree is null)
         {
+            _signature = null;
+            _tabs.Children.Clear();
+            _canvas.Children.Clear();
             _tabs.Children.Add(new TextBlock { Text = "Build tree", Foreground = Gold, FontWeight = FontWeights.SemiBold });
             Canvas.SetLeft(_empty, (CanvasWidth - _empty.Width) / 2);
             Canvas.SetTop(_empty, CanvasHeight / 2 - 40);
@@ -333,6 +336,22 @@ internal sealed class TreeWindow : Window
             _sliderRow.Visibility = Visibility.Collapsed;
             return;
         }
+
+        // Rebuilding the picture makes it blink, and this is called for every change anywhere in the
+        // overlay - so first see whether anything this window shows is different from last time.
+        var state = _session.TreeState(tree);
+        string signature = string.Join("|", build.Name, tree.Name, string.Join(",", build.Trees.Select(t => t.Name)),
+            state.Points, state.StagePoints, state.Stage, state.FromGame,
+            string.Join(",", state.Allocated.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
+            string.Join(",", state.Target.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
+            string.Join(",", state.Next.Select(n => $"{n.Node}+{n.Count}")), string.Join(",", state.OffPlan.OrderBy(n => n)),
+            MarkersOn(tree), AmountsOn(tree), _session.HasActual(tree), _session.ActualPoints(tree),
+            _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null);
+        bool iconRetryDue = _atlas is null && _atlasTried && DateTime.UtcNow >= _atlasRetryAt;
+        if (signature == _signature && !iconRetryDue) return;
+        _signature = signature;
+        _tabs.Children.Clear();
+        _canvas.Children.Clear();
 
         string? previousKind = null;
         foreach (var tab in build.Trees)
@@ -346,7 +365,6 @@ internal sealed class TreeWindow : Window
         }
 
         _sliderRow.Visibility = Visibility.Visible;
-        var state = _session.TreeState(tree);
         DrawTree(build, tree, state);
 
         bool passive = tree.Kind == TreeDef.PassiveKind;

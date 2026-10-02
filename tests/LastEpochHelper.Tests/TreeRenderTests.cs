@@ -53,7 +53,10 @@ public sealed class TreeRenderTests : IDisposable
                     Stages = { new TreeStage { Name = "Early", Level = 10, Passives = { 1, 1, 2 }, Skills = { ["Rive"] = new() { 4, 4 } } } },
                 };
                 string plan = Path.Combine(session.BuildsDir, "sample.txt");
-                File.WriteAllText(plan, "name: Sample\n");
+                // With a real sample, its plan text (next to the tree file) feeds the summary page.
+                string? samplePlan = sample?.Replace(".tree.json", ".txt");
+                File.WriteAllText(plan, samplePlan is not null && File.Exists(samplePlan) ? File.ReadAllText(samplePlan)
+                    : "name: Sample\n4: Specialize Rive\n5: Passives [Base]: A (2/8)\n9: Choose mastery: Paladin\n");
                 build.Save(BuildTree.PathFor(plan));
                 session.Profile.BuildPlan = "sample.txt";
                 session.ReloadPlan();
@@ -89,7 +92,7 @@ public sealed class TreeRenderTests : IDisposable
                 session.Handle(new PlayerDiedEvent(), live: true);
                 session.SetDeathCause(session.Profile.DeathLog[0], "Boss mechanic");
                 session.Handle(new PlayerDiedEvent(), live: true);
-                foreach (string tab in new[] { "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" })
+                foreach (string tab in new[] { PlannerWindow.SummaryTab, "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" })
                 {
                     session.Profile.PlannerTab = tab;
                     planner.Render();
@@ -103,7 +106,7 @@ public sealed class TreeRenderTests : IDisposable
                     if (output is null) continue;
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                    using var file = File.Create(Path.Combine(output, $"planner-{tab.Replace(' ', '_')}.png"));
+                    using var file = File.Create(Path.Combine(output, $"planner-{tab.Replace(' ', '_').Replace(';', '_')}.png"));
                     encoder.Save(file);
                 }
             }

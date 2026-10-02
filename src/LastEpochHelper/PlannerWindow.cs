@@ -17,7 +17,8 @@ namespace LastEpochHelper;
 /// </summary>
 internal sealed class PlannerWindow : Window
 {
-    private static readonly string[] Tabs = { "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" };
+    public const string SummaryTab = "TL;DR";
+    private static readonly string[] Tabs = { SummaryTab, "Gear", "Idols", "Targets", "Search", "Loot filter", "Monolith", "Morditas", "Prophecies", "Dungeons", "Deaths" };
 
     private static readonly Brush Gold = Frozen("#C9A85C");
     private static readonly Brush Green = Frozen("#7BE06A");
@@ -142,6 +143,7 @@ internal sealed class PlannerWindow : Window
         _body.Children.Clear();
         switch (current)
         {
+            case SummaryTab: RenderSummary(); break;
             case "Gear": RenderGear(); break;
             case "Idols": RenderIdols(); break;
             case "Targets": RenderTargets(); break;
@@ -152,6 +154,36 @@ internal sealed class PlannerWindow : Window
             case "Dungeons": RenderDungeons(); break;
             case "Deaths": RenderDeaths(); break;
         }
+    }
+
+    /// <summary>The imported build boiled down: mastery, the order of the passive trees, the skills.</summary>
+    private void RenderSummary()
+    {
+        if (_session.Plan is not { } plan)
+        {
+            Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll planner or build guide link and press 'Import from Maxroll'.");
+            return;
+        }
+        var summary = BuildSummary.From(plan);
+        Heading($"{plan.Name}  ·  the short version");
+        foreach (string headline in summary.Headlines) _body.Children.Add(Line(headline, Text, top: 5));
+        if (summary.Steps.Count == 0) return;
+
+        Heading("What to do, in order");
+        int level = _session.Profile.Level;
+        bool nextMarked = false;
+        foreach (var step in summary.Steps)
+        {
+            bool past = step.ToLevel < level, current = !past && step.Level <= level;
+            string mark = past ? "✓" : current ? "▶" : !nextMarked ? "→" : " ";
+            if (!past && !current) nextMarked = true;
+            string when = step.ToLevel > step.Level ? $"Lvl {step.Level}-{step.ToLevel}" : $"Lvl {step.Level}";
+            var brush = past ? Muted : step.Kind == "mastery" ? Gold : current ? Green : Text;
+            _body.Children.Add(Line($"{mark}  {when}:  {step.Text}", brush, top: 4,
+                weight: step.Kind == "mastery" || current ? FontWeights.SemiBold : FontWeights.Normal));
+        }
+        Note($"✓ behind you  ·  ▶ where a level {level} character is  ·  → next. Levels are the build's estimates - the order is what counts. "
+             + "The node-by-node order is in the build tree (P or S in the game).");
     }
 
     private TreeStage? Stage()

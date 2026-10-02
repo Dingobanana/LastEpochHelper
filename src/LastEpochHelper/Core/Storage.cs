@@ -74,6 +74,8 @@ public sealed class Settings
     public bool ReadCountersFromMap { get; set; } = true;
     /// <summary>Size of errors.log when the overlay last looked, to notice errors logged since.</summary>
     public long ErrorLogBytes { get; set; }
+    /// <summary>The tour has been offered once; after that it is only in the menu.</summary>
+    public bool TourOffered { get; set; }
     // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings
     // file that fails to save loses everything else in it too.)
     public double? TreeLeft { get; set; }

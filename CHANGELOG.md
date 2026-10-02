@@ -2,6 +2,13 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.5 - The build in short, a tour, no more blinking
+
+- New: Planner → TL;DR. The imported build boiled down to what to do in which order: the mastery to choose and when, which passive trees get points (also when a leveling build spends points in one mastery's tree but ends in another), and which skills to specialize. Works for builds you already imported.
+- New: Take a tour (the ☰ menu, and offered once after this update). A few cards that walk through the overlay and open the windows they talk about. Skip it whenever you like.
+- Fixed: the build tree blinking while a skill or passive panel is open. A point value read off the game is now only taken when two looks in a row agree, the tree is only redrawn when something in it changed, and holding P or S a moment too long no longer opens and closes it.
+- The "specialization slot unlocked" reminders tick themselves once the overlay has seen that many skills with points in the game. The other green reminders are plain reminders: the overlay cannot see whether you did them.
+
 ## 0.7.4 - Panels opened by mouse, reports that send themselves
 
 - The build tree now also opens when the game's passive or skill panel is opened with the mouse (for example the "+" for unspent points), not only with the P / S keys. It checks every couple of seconds; if you close the tree yourself it stays closed until the game's panel is closed.

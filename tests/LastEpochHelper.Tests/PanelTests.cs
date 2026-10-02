@@ -339,6 +339,18 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void SkillsSeenWithPointsInTheGame_TickTheSpecializationReminders()
+    {
+        var session = Make();
+        var rive = session.Tree!.Trees[1];
+        Assert.DoesNotContain("milestone:4", session.Profile.PlanDone);
+
+        session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 1 });
+        Assert.Contains("milestone:4", session.Profile.PlanDone);   // one skill specialized: the first slot is used
+        Assert.DoesNotContain("milestone:8", session.Profile.PlanDone);
+    }
+
+    [Fact]
     public void ASkillReadAsEmpty_WhileThePlayerSaysItHasPoints_IsNotBelieved()
     {
         var session = Make();
