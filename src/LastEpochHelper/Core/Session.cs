@@ -587,6 +587,8 @@ public sealed class Session
         int next = Math.Clamp(points.GetValueOrDefault(node.Id) + delta, 0, Math.Max(Math.Max(node.Max, 1), planned));
         if (next == 0) points.Remove(node.Id); else points[node.Id] = next;
         actual.Fetched = DateTime.Now;
+        // A correction by hand is the truth about the whole tree, also about how many points it has.
+        Remember(tree, ActualPoints(tree));
         Save();
         Changed?.Invoke();
     }
@@ -624,6 +626,8 @@ public sealed class Session
         }
         if (!changed) return false;
         actual.Fetched = DateTime.Now;
+        // More points seen in the game than the tree was thought to have: remember that.
+        if (ActualPoints(tree) > RememberedPoints(tree)) Remember(tree, ActualPoints(tree));
         TickSpecializationReminders(actual);
         Save();
         Changed?.Invoke();
@@ -685,6 +689,12 @@ public sealed class Session
     public void SetPlanView(TreeDef tree, bool planView)
     {
         bool changed = planView ? Profile.PlanViewTrees.Add(ViewKey(tree)) : Profile.PlanViewTrees.Remove(ViewKey(tree));
+        // Asking for the game's points by hand is saying "that is what I have": it becomes the number remembered.
+        if (!planView && HasActual(tree) && ActualPoints(tree) != RememberedPoints(tree))
+        {
+            Remember(tree, ActualPoints(tree));
+            changed = true;
+        }
         if (!changed) return;
         Save();
         Changed?.Invoke();
@@ -774,12 +784,38 @@ public sealed class Session
     /// <summary>How a tab of the tree view should look for this character right now.</summary>
     public TreeState TreeState(TreeDef tree)
     {
-        if (ShowsActual(tree) && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
-
-        int points = tree.Kind == TreeDef.PassiveKind
-            ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset
-            : Profile.SkillPoints.GetValueOrDefault(tree.Name);
+        int points = RememberedPoints(tree);
+        // What was read off the game's panel is only shown when it accounts for at least as many points
+        // as the tree is known to have. Reading misses nodes (a tooltip in the way, small print), and a
+        // tree drawn from half of its points would look as if the character had gone backwards.
+        if (ShowsActual(tree) && ActualPoints(tree) >= points && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
         return Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
+    }
+
+    /// <summary>
+    /// How many points the tree is known to have: for a skill its level as last set or read off the
+    /// game, for the passives what level and quest rewards give plus the player's own correction.
+    /// </summary>
+    private int RememberedPoints(TreeDef tree) => tree.Kind == TreeDef.PassiveKind
+        ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset
+        : Profile.SkillPoints.GetValueOrDefault(tree.Name);
+
+    private void Remember(TreeDef tree, int points)
+    {
+        if (tree.Kind == TreeDef.PassiveKind) Profile.PassiveOffset = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+        else Profile.SkillPoints[tree.Name] = points;
+    }
+
+    /// <summary>
+    /// Takes a skill's level as the game prints it under the open tree's heading ("LEVEL 7"): that is
+    /// how many points the skill has, read from large print, and it is remembered for next time.
+    /// </summary>
+    public void SetSkillLevel(TreeDef tree, int level)
+    {
+        if (tree.Kind == TreeDef.PassiveKind || level is < 1 or > 40 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == level) return;
+        Profile.SkillPoints[tree.Name] = level;
+        Save();
+        Changed?.Invoke();
     }
 
     public void AdjustTreePoints(TreeDef tree, int delta)

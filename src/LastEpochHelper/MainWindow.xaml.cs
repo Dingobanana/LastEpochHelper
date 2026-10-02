@@ -656,6 +656,11 @@ public partial class MainWindow : Window
                     _gameSkill = skillShown;
                     _treeWindow?.SelectSkill(skillShown);
                 }
+                // The skill's level is printed under its heading: that many points it has. Seen twice, it is taken.
+                if (kind == _gameKind && reading.Skill is { } leveled && reading.Level is { } skillLevel
+                    && _stableReads.Twice("level:" + leveled, skillLevel.ToString())
+                    && _session.Tree.Trees.FirstOrDefault(t => t.Kind == TreeDef.SkillKind && t.Name == leveled) is { } leveledTree)
+                    _session.SetSkillLevel(leveledTree, skillLevel);
                 if (kind == _gameKind && reading.Tab is { } tabShown)
                 {
                     _tabTitleRead = true;

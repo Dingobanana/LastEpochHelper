@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.15 - The trees remember where you are
+
+- Fixed: after closing and reopening the build tree, a skill or the passives could show fewer points than you had, so you had to press + a few times to get back. The points read off the game's panel are often incomplete (a tooltip in the way, small print); the tree was drawn from them anyway. Now what was read is only shown when it accounts for all the points the tree is known to have - otherwise the plan is shown at the number of points you had.
+- A skill's level is now read from the game ("LEVEL 7" under the open tree's heading) and used as its points, so you rarely need the slider for skills at all.
+
 ## 0.7.14 - The Weaver tree
 
 - New: a Weaver tab in the build tree. The Weaver tree is the same for every class and is not part of a build guide, so the overlay fetches Maxroll's ready-made Weaver trees (Starter, General Endgame, Experience and Favor, Nemesis, Rift Beast, Omen Window, Boss Farming, Weaver's Will, Exiled Mage) and shows the one you choose, with the order of its points, beside your build's own trees. Choose it in the gold box at the bottom of the Weaver tab; set how many Weaver points you have with the slider. They are fetched along with a build import, or with Settings → Character → Get the Weaver trees from Maxroll.

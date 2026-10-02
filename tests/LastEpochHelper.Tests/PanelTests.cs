@@ -420,11 +420,68 @@ public sealed class HandSetPointsTests : IDisposable
         session.AdjustNode(passives, passives.Nodes[0], +1);
         Assert.True(session.TreeState(passives).FromGame);
 
-        // A preview lasts while the tree is open: closing it goes back to mirroring the game.
-        session.SetTreePoints(passives, 4);
+        // Closing the tree ends the plan view - and the game's points show again where they cover what the tree has.
+        int inGame = session.ActualPoints(passives);
+        session.SetTreePoints(passives, inGame);
         Assert.False(session.TreeState(passives).FromGame);
         session.ClearPlanViews();
         Assert.True(session.TreeState(passives).FromGame);
+
+        // A number set above what was read is kept: the reading is taken to be incomplete, not the player wrong.
+        session.SetTreePoints(passives, inGame + 2);
+        session.ClearPlanViews();
+        Assert.False(session.TreeState(passives).FromGame);
+    }
+
+    [Fact]
+    public void AnIncompleteReadOfTheGame_DoesNotTakePointsAway()
+    {
+        var session = Make();
+        var rive = session.Tree!.Trees[1];
+        session.SetSkillLevel(rive, 2);                     // the game says the skill is level 2
+        Assert.Equal(2, session.TreeState(rive).Points);
+
+        // Only one of its two points could be read off the panel: the tree still stands at 2.
+        session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 1 });
+        var partial = session.TreeState(rive);
+        Assert.Equal(2, partial.Points);
+        Assert.False(partial.FromGame);
+
+        // Closing the tree (which ends slider previews) changes nothing about that.
+        session.ClearPlanViews();
+        Assert.Equal(2, session.TreeState(rive).Points);
+
+        // Once everything is read, the game's own points are shown.
+        session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 2 });
+        Assert.True(session.TreeState(rive).FromGame);
+        Assert.Equal(2, session.TreeState(rive).Points);
+
+        // More points in the game than remembered: the game is ahead, and that is remembered too.
+        session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 2, [5] = 1 });
+        Assert.Equal(3, session.TreeState(rive).Points);
+        Assert.Equal(3, session.Profile.SkillPoints[rive.Name]);
+
+        // A level outside what a skill can have is not taken.
+        session.SetSkillLevel(rive, 0);
+        session.SetSkillLevel(rive, 99);
+        Assert.Equal(3, session.Profile.SkillPoints[rive.Name]);
+    }
+
+    [Fact]
+    public void TheSkillsLevel_IsReadFromUnderItsHeading()
+    {
+        var tabs = new[] { "Primalist", "Beastmaster", "Shaman", "Druid" };
+        var skills = new[] { "Gathering Storm", "Spriggan Form" };
+        ScreenLine[] Tree(string level) => new[]
+        {
+            new ScreenLine("SPRIGGAN FORM", 21, 1435, 156, 200), new ScreenLine(level, 16, 1436, 208, 80),
+            new ScreenLine("Minimum Specialized Level: 5", 19, 1434, 259, 300), new ScreenLine("AREA LEVEL: 24", 14, 4696, 57, 120),
+        };
+        Assert.Equal(7, PanelDetector.Detect(Tree("LEVEL 7"), tabs, skills).Level);
+        Assert.Equal(12, PanelDetector.Detect(Tree("LEVEL l2"), tabs, skills).Level);
+        Assert.Equal(20, PanelDetector.Detect(Tree("Level 2O"), tabs, skills).Level);
+        Assert.Null(PanelDetector.Detect(Tree("LEVEL"), tabs, skills).Level);
+        Assert.Equal("Spriggan Form", PanelDetector.Detect(Tree("LEVEL"), tabs, skills).Skill);
     }
 
     [Fact]
@@ -473,8 +530,12 @@ public sealed class HandSetPointsTests : IDisposable
         Assert.False(session.HasActual(rive));
         Assert.Equal(2, session.TreeState(rive).Points); // still the plan at 2 points
 
-        // A reading with points in it is taken.
+        // A reading with points in it is taken - and shown once it covers the two points the skill has.
         Assert.True(session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 1, [5] = 0 }));
+        Assert.True(session.HasActual(rive));
+        Assert.Equal(2, session.TreeState(rive).Points);
+        Assert.True(session.SetReadPoints(rive, new Dictionary<int, int> { [4] = 1, [5] = 1 }));
+        Assert.True(session.TreeState(rive).FromGame);
         Assert.Equal(1, session.TreeState(rive).Allocated[4]);
     }
 

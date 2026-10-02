@@ -5,7 +5,8 @@ public enum GamePanel { None, Passives, Skills }
 /// <param name="Skill">The skill whose tree is open, when one is.</param>
 /// <param name="Anchor">A line that proves the panel is there; watching just that spot is cheap.</param>
 /// <param name="Tab">The passive tab (class or mastery) that is showing, when its title could be read.</param>
-public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null);
+/// <param name="Level">The level printed under an open skill tree's heading ("LEVEL 7"): the points that skill has.</param>
+public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null, int? Level = null);
 
 /// <summary>
 /// Works out from the text on screen whether the game is showing its passive tree or its skill
@@ -121,7 +122,21 @@ public static class PanelDetector
         // Keep an eye on heading and marker together: a quick look at the heading alone could not tell an open tree from the overview.
         if (openTree is { } open && specialized && treeMarker!.Y > open.Line.Y)
             openTree = (open.Skill, open.Line with { Height = Math.Max(open.Line.Height, (treeMarker.Y + treeMarker.Height - open.Line.Y) / 3 + 4) });
-        if (openTree is { } heading) skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line);
+        if (openTree is { } heading)
+        {
+            // "LEVEL 7" under the heading, left edges aligned.
+            int? level = null;
+            foreach (var line in lines)
+            {
+                var printed = System.Text.RegularExpressions.Regex.Match(line.Text, @"^\s*LEVEL\s*([0-9OoIl|]{1,2})\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (!printed.Success || line.Y <= heading.Line.Y || line.Y - heading.Line.Y > Math.Max(heading.Line.Height, 20) * 5
+                    || Math.Abs(line.X - heading.Line.X) > Math.Max(line.Height, 16) * 4) continue;
+                string digits = printed.Groups[1].Value.Replace('O', '0').Replace('o', '0').Replace('I', '1').Replace('l', '1').Replace('|', '1');
+                if (int.TryParse(digits, out int value) && value >= 1) level = value;
+                break;
+            }
+            skillPanel = new PanelReading(GamePanel.Skills, heading.Skill, heading.Line, Level: level);
+        }
         else if (skillTree) skillPanel = new PanelReading(GamePanel.Skills, Anchor: treeMarker);
         else if (skillsHeading is not null) skillPanel = new PanelReading(GamePanel.Skills, Anchor: skillsHeading);
         else if (passiveHeading is null && !strict)
