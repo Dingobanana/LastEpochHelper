@@ -18,6 +18,9 @@ namespace LastEpochHelper;
 internal sealed class TreeWindow : Window
 {
     private const double CanvasWidth = 860, CanvasHeight = 440, Inset = 50, NodeSize = 40, SmallNodeSize = 24;
+    /// <summary>A tree with this many nodes (the Weaver tree has 80) gets a taller picture, smaller nodes and fewer names.</summary>
+    private const int DenseNodes = 45;
+    private const double DenseCanvasHeight = 680, DenseNodeSize = 32, DenseSmallNodeSize = 18;
 
     private static readonly Brush Gold = Frozen("#C9A85C");
     private static readonly Brush GoldFill = Frozen("#4A3A14");
@@ -184,7 +187,7 @@ internal sealed class TreeWindow : Window
     private double Scale()
     {
         var area = SystemParameters.WorkArea;
-        double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (CanvasHeight + 170));
+        double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (_canvas.Height + 170));
         return Math.Clamp(Math.Min(_session.Settings.TreeScale, fit), 0.4, 1);
     }
 
@@ -286,8 +289,10 @@ internal sealed class TreeWindow : Window
     /// </summary>
     private List<TreeDef> VisibleTrees(BuildTree build, TreeDef? showing)
     {
-        if (build.Stages.Count < 2 || _session.Stage is not { } stage) return build.Trees;
-        return build.Trees.Where(t => t.Kind == TreeDef.PassiveKind || t == showing || stage.Skills.ContainsKey(t.Name)).ToList();
+        // The Weaver tree is an endgame thing: no tab for it while the character is still leveling.
+        bool Offered(TreeDef t) => t.Kind != TreeDef.WeaverKind || t == showing || _session.InEndgame;
+        if (build.Stages.Count < 2 || _session.Stage is not { } stage) return build.Trees.Where(Offered).ToList();
+        return build.Trees.Where(t => Offered(t) && (t.Kind == TreeDef.PassiveKind || t == showing || stage.Skills.ContainsKey(t.Name))).ToList();
     }
 
     /// <summary>Shows the first passive tab, or the last-used (else first) skill tab.</summary>
@@ -367,6 +372,8 @@ internal sealed class TreeWindow : Window
 
     public void Render()
     {
+        // The picture is as tall as the tree on show needs (set before the size is worked out).
+        _canvas.Height = Current() is { Nodes.Count: > DenseNodes } ? DenseCanvasHeight : CanvasHeight;
         double scale = Scale();
         if (_root.LayoutTransform is not ScaleTransform { ScaleX: var current } || Math.Abs(current - scale) > 0.001)
             _root.LayoutTransform = scale < 0.999 ? new ScaleTransform(scale, scale) : Transform.Identity;
@@ -380,7 +387,7 @@ internal sealed class TreeWindow : Window
             _canvas.Children.Clear();
             _tabs.Children.Add(new TextBlock { Text = "Build tree", Foreground = Gold, FontWeight = FontWeights.SemiBold });
             Canvas.SetLeft(_empty, (CanvasWidth - _empty.Width) / 2);
-            Canvas.SetTop(_empty, CanvasHeight / 2 - 40);
+            Canvas.SetTop(_empty, _canvas.Height / 2 - 40);
             _canvas.Children.Add(_empty);
             _next.Text = "";
             _check.Visibility = Visibility.Collapsed;
@@ -399,7 +406,7 @@ internal sealed class TreeWindow : Window
             string.Join(",", state.Next.Select(n => $"{n.Node}+{n.Count}")), string.Join(",", state.OffPlan.OrderBy(n => n)),
             MarkersOn(tree), AmountsOn(tree), _session.HasActual(tree), _session.ActualPoints(tree),
             _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null,
-            _session.Profile.StagePin, build.Variant, _session.Stage?.Name, _session.Settings.TreeMini);
+            _session.Profile.StagePin, build.Variant, _session.Stage?.Name, _session.Settings.TreeMini, _session.WeaverChoice, _session.WeaverChoices.Count, _session.InEndgame);
         bool iconRetryDue = _atlas is null && _atlasTried && DateTime.UtcNow >= _atlasRetryAt;
         if (signature == _signature && !iconRetryDue) return;
         _signature = signature;
@@ -421,7 +428,7 @@ internal sealed class TreeWindow : Window
         DrawTree(build, tree, state);
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
-        ShowStageChip(build);
+        ShowStageChip(build, tree);
         Chip(_markers, MarkersOn(tree), OrderBlue, OrderTint);
         Chip(_amounts, AmountsOn(tree), AmountOrange, AmountTint);
         // The same colours as the markers on the nodes: blue for the order, orange for the points.
@@ -479,8 +486,17 @@ internal sealed class TreeWindow : Window
             : $"Showing the build's plan at {state.Points} points. Click to go back to the points read from the game ({_session.ActualPoints(tree)}).";
     }
 
-    private void ShowStageChip(BuildTree build)
+    private void ShowStageChip(BuildTree build, TreeDef tree)
     {
+        // On the Weaver tab the box chooses the way of filling the Weaver tree instead.
+        if (tree.Kind == TreeDef.WeaverKind && _session.WeaverChoices.Count > 0)
+        {
+            _stage.Visibility = Visibility.Visible;
+            ((TextBlock)_stage.Child).Text = _session.WeaverChoice + (_session.WeaverChoices.Count > 1 ? "  ▾" : "");
+            Chip(_stage, true, Gold, Frozen("#33C9A85C"));
+            _stage.ToolTip = "The Weaver tree is the same for every build; this is which of Maxroll's ways of filling it is shown. Click to choose another.";
+            return;
+        }
         bool versions = build.Variants.Count > 1, stages = !versions && build.Stages.Count > 1;
         _stage.Visibility = versions || stages ? Visibility.Visible : Visibility.Collapsed;
         if (!versions && !stages) return;
@@ -499,6 +515,18 @@ internal sealed class TreeWindow : Window
     {
         if (_session.Tree is not { } build) return;
         var menu = new ContextMenu { PlacementTarget = _stage, Placement = System.Windows.Controls.Primitives.PlacementMode.Top };
+        if (Current()?.Kind == TreeDef.WeaverKind && _session.WeaverChoices.Count > 0)
+        {
+            foreach (string choice in _session.WeaverChoices)
+            {
+                string chosen = choice;
+                var item = new MenuItem { Header = choice, IsChecked = choice == _session.WeaverChoice };
+                item.Click += (_, _) => _session.SetWeaverStrategy(chosen);
+                menu.Items.Add(item);
+            }
+            menu.IsOpen = true;
+            return;
+        }
         if (build.Variants.Count > 1)
         {
             for (int i = 0; i < build.Variants.Count; i++)
@@ -563,8 +591,12 @@ internal sealed class TreeWindow : Window
         if (tree.Nodes.Count == 0) return;
         double minX = tree.Nodes.Min(n => n.X), maxX = tree.Nodes.Max(n => n.X);
         double minY = tree.Nodes.Min(n => n.Y), maxY = tree.Nodes.Max(n => n.Y);
-        double scale = Math.Min((CanvasWidth - 2 * Inset) / Math.Max(1, maxX - minX), (CanvasHeight - 2 * Inset) / Math.Max(1, maxY - minY));
-        double offsetX = (CanvasWidth - (maxX - minX) * scale) / 2, offsetY = (CanvasHeight - (maxY - minY) * scale) / 2 - 10;
+        bool dense = tree.Nodes.Count > DenseNodes;
+        double canvasHeight = _canvas.Height, big = dense ? DenseNodeSize : NodeSize;
+        double scale = Math.Min((CanvasWidth - 2 * Inset) / Math.Max(1, maxX - minX), (canvasHeight - 2 * Inset) / Math.Max(1, maxY - minY));
+        double offsetX = (CanvasWidth - (maxX - minX) * scale) / 2, offsetY = (canvasHeight - (maxY - minY) * scale) / 2 - 10;
+        // In a dense tree the next steps are drawn last, so their names and markers lie on top of their neighbours.
+        var onTop = new List<(UIElement Element, double Left, double Top)>();
         Point At(TreeNode n) => new(offsetX + (n.X - minX) * scale, offsetY + (n.Y - minY) * scale);
         var byId = tree.Nodes.ToDictionary(n => n.Id);
 
@@ -593,7 +625,7 @@ internal sealed class TreeWindow : Window
             bool offPlan = state.OffPlan.Contains(node.Id);
             // A node the character has points in is drawn full size even if the build never takes it.
             bool planned = target > 0 || have > 0;
-            double size = planned ? NodeSize : SmallNodeSize;
+            double size = planned ? big : dense ? DenseSmallNodeSize : SmallNodeSize;
 
             var icon = IconBrush(node, build);
             bool lit = have > 0 || order >= 0;
@@ -623,8 +655,15 @@ internal sealed class TreeWindow : Window
                 Background = Frozen("#E60E0F14"), CornerRadius = new CornerRadius(3), Width = 30, Height = 15, IsHitTestVisible = false,
                 Child = Label($"{have}/{target}", lit ? Brushes.White : Muted, 10.5, FontWeights.SemiBold, 30),
             };
-            Place(plate, p.X - 15, p.Y + NodeSize / 2 - 9);
-            Place(Label(node.Name, lit ? Text : Muted, 10, FontWeights.Normal, 92), p.X - 46, p.Y + NodeSize / 2 + 6);
+            Place(plate, p.X - 15, p.Y + big / 2 - 9);
+            // A dense tree only names the nodes that are next (every node's name is in its tooltip).
+            if (!dense) Place(Label(node.Name, lit ? Text : Muted, 10, FontWeights.Normal, 92), p.X - 46, p.Y + big / 2 + 6);
+            else if (order >= 0)
+                onTop.Add((new Border
+                {
+                    Background = Frozen("#E60E0F14"), CornerRadius = new CornerRadius(3), Padding = new Thickness(4, 0, 4, 1), IsHitTestVisible = false,
+                    Child = new TextBlock { Text = node.Name, Foreground = Brushes.White, FontSize = 11, FontWeight = FontWeights.SemiBold },
+                }, p.X - 46, p.Y + big / 2 + 7));
 
             if (order < 0) continue;
             if (showOrder)
@@ -641,7 +680,8 @@ internal sealed class TreeWindow : Window
                 },
                 IsHitTestVisible = false,
             };
-            Place(badge, p.X - NodeSize / 2 - 7, p.Y - NodeSize / 2 - 7);
+            if (dense) onTop.Add((badge, p.X - big / 2 - 7, p.Y - big / 2 - 7));
+            else Place(badge, p.X - big / 2 - 7, p.Y - big / 2 - 7);
             }
             if (!showAmount) continue;
 
@@ -652,8 +692,10 @@ internal sealed class TreeWindow : Window
                 BorderBrush = Plate, BorderThickness = new Thickness(2),
                 Child = new TextBlock { Text = $"+{state.Next[order].Count}", FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.Black, VerticalAlignment = VerticalAlignment.Center },
             };
-            Place(add, p.X + NodeSize / 2 - 10, p.Y - NodeSize / 2 - 7);
+            if (dense) onTop.Add((add, p.X + big / 2 - 10, p.Y - big / 2 - 7));
+            else Place(add, p.X + big / 2 - 10, p.Y - big / 2 - 7);
         }
+        foreach (var (element, left, top) in onTop) Place(element, left, top);
     }
 
     private static TextBlock Label(string text, Brush brush, double size, FontWeight weight, double width) => new()

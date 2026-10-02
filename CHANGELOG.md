@@ -2,6 +2,15 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.14 - The Weaver tree
+
+- New: a Weaver tab in the build tree. The Weaver tree is the same for every class and is not part of a build guide, so the overlay fetches Maxroll's ready-made Weaver trees (Starter, General Endgame, Experience and Favor, Nemesis, Rift Beast, Omen Window, Boss Farming, Weaver's Will, Exiled Mage) and shows the one you choose, with the order of its points, beside your build's own trees. Choose it in the gold box at the bottom of the Weaver tab; set how many Weaver points you have with the slider. They are fetched along with a build import, or with Settings → Character → Get the Weaver trees from Maxroll.
+- A build that has its own Weaver points keeps them as the choice "From this build".
+- The Weaver tab only shows for a character in the endgame (level 55 and up, in the Monolith chapter, or with the campaign guide hidden) - it has no use before that.
+
+- The overlay cannot read what its own windows cover. If the guide box, the build tree or the planner lies over the top left of the game's passive / skill panel - where the headings it reads are - the build tree stops following, with nothing to show why. The overlay now tells you to move the window when that happens.
+- A build tree opened for the first time now starts on the right, below those headings, instead of on top of them.
+
 ## 0.7.13 - Following skills with HDR on
 
 - With HDR switched on, Windows gives programs a washed-out copy of the screen, and the small grey print the overlay used to recognise an open skill tree was lost in it - so the build tree stopped following the skill you opened. Two changes: the overlay now restores the contrast of such a picture before reading it, and it recognises an open skill tree by the skill's name with "LEVEL n" in white right under it, which stays readable.

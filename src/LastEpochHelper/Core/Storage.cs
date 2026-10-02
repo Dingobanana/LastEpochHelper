@@ -164,6 +164,8 @@ public sealed class Profile
     public int MapBasePassives { get; set; }
     public int MapBaseIdols { get; set; }
     public string LastSkillTab { get; set; } = "";
+    /// <summary>Which way of filling the Weaver tree this character follows; "" = the build's own if it has one, else the first.</summary>
+    public string WeaverStrategy { get; set; } = "";
     public DateTime LastPlayed { get; set; }
 
     private static readonly string[] ClassNames = { "Primalist", "Mage", "Sentinel", "Acolyte", "Rogue" };

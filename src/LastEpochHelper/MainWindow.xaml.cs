@@ -566,8 +566,9 @@ public partial class MainWindow : Window
                 };
                 _treeWindow.CloseRequested += () => { _treePinned = false; _dismissed = true; ShowTree(false); };
                 _treeWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                _treeWindow.Left = Usable(Settings.TreeLeft) ?? Math.Max(0, (SystemParameters.PrimaryScreenWidth - 900) / 2);
-                _treeWindow.Top = Usable(Settings.TreeTop) ?? 40;
+                // First time: on the right and below the game panel's headings, which the overlay has to be able to read.
+                _treeWindow.Left = Usable(Settings.TreeLeft) ?? Math.Max(0, SystemParameters.PrimaryScreenWidth - 930);
+                _treeWindow.Top = Usable(Settings.TreeTop) ?? Math.Round(SystemParameters.PrimaryScreenHeight * 0.23);
             }
             if (kind is not null) _treeWindow.SelectKind(kind);
             _treeWindow.Render();
@@ -589,6 +590,7 @@ public partial class MainWindow : Window
         // Nothing to mirror while the tree is closed, unless a panel key was just pressed.
         _screenReader ??= new ScreenReader();
         if (!_screenReader.Available) return;
+        if (shown || verifying) WarnIfCoveringHeadings();
         // Nothing to mirror while the tree is closed, unless a panel key was just pressed - but keep
         // half an eye on the game: its panels also open by mouse (the "+" for unspent points).
         if (!shown && !verifying) { IdleLook(); return; }
@@ -682,6 +684,31 @@ public partial class MainWindow : Window
             }
         }
         finally { _reading = false; }
+    }
+
+    private DateTime _lastCoverWarning = DateTime.MinValue;
+
+    /// <summary>
+    /// Says so when one of the overlay's own windows lies over the headings of the game's panel: those
+    /// windows are blacked out of what the overlay reads, so the tree could not follow - and from the
+    /// outside that just looks like the overlay not working.
+    /// </summary>
+    private void WarnIfCoveringHeadings()
+    {
+        if (DateTime.UtcNow - _lastCoverWarning < TimeSpan.FromMinutes(10)) return;
+        var game = _game.GameBounds;
+        if (game.Bottom - game.Top < 300) return;
+        var zone = PanelZone.Headings(game.Left, game.Top, game.Right, game.Bottom);
+        foreach (var (window, name) in new (Window? Window, string Name)[] { (this, "the guide box"), (_treeWindow, "the build tree"), (_plannerWindow, "the planner") })
+        {
+            if (window is not { IsVisible: true }) continue;
+            var at = ScreenRect(window);
+            if (!PanelZone.Hides(zone, at.Left, at.Top, at.Right, at.Bottom)) continue;
+            _lastCoverWarning = DateTime.UtcNow;
+            ActivityLog.Write($"{name} covers the panel headings: window {at.Left},{at.Top}-{at.Right},{at.Bottom}, headings {zone.Left},{zone.Top}-{zone.Right},{zone.Bottom}");
+            _session.ShowAlert($"Move {name} a little: it lies over the top left of the game's passive / skill panel. The overlay cannot read what its own windows cover, so the build tree may not follow the panel.", 25);
+            return;
+        }
     }
 
     /// <summary>

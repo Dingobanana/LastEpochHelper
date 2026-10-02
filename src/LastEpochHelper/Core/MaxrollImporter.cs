@@ -370,6 +370,63 @@ public static partial class MaxrollImporter
         return (null, false);
     }
 
+    public const string WeaverPage = "https://maxroll.gg/last-epoch/resources/weaver-tree-strategies";
+
+    /// <summary>
+    /// Fetches the Weaver tree and Maxroll's ready-made ways of filling it. They are not part of any
+    /// build guide: one article lists them all (starter, general endgame, Nemesis, boss farming, ...),
+    /// each as a small planner that holds nothing but a Weaver tree.
+    /// </summary>
+    public static async Task<WeaverSet> ImportWeaverAsync(string cacheDir, HttpClient http)
+    {
+        using var answer = await http.GetAsync(WeaverPage);
+        if (!answer.IsSuccessStatusCode)
+            throw new InvalidDataException($"Maxroll's Weaver tree page could not be read (it answered {(int)answer.StatusCode}).");
+        string html = await answer.Content.ReadAsStringAsync();
+        var ids = Regex.Matches(html, "<[^<>]*data-le-type=\"weavertree\"[^<>]*>|<[^<>]*data-le-profile=\"[a-z0-9]+\"[^<>]*data-le-type=\"weavertree\"[^<>]*>")
+            .Select(tag => EmbeddedPlanner().Match(tag.Value)).Where(m => m.Success).Select(m => m.Groups[1].Value)
+            .Where(id => id.Any(char.IsDigit)).Distinct().ToList();
+        if (ids.Count == 0) throw new InvalidDataException("No Weaver trees were found on Maxroll's page - it may have been moved or rebuilt.");
+
+        var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
+        var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
+        if (game["skillTrees"] is not JsonObject || game["skillTrees"]!["weaver"] is not JsonObject || game["skillTrees"]!["weaver"]!["nodes"] is not JsonObject nodes)
+            throw new InvalidDataException("Maxroll's game data has no Weaver tree in it.");
+        var icons = new Dictionary<string, int>();
+        if (game["treeAtlas"] is JsonArray cells)
+            for (int i = 0; i < cells.Count; i++)
+                if (cells[i] is JsonValue cell && cell.TryGetValue(out string? name) && name is not null) icons[name] = i;
+
+        var set = new WeaverSet { AtlasName = atlas ?? "", AtlasCells = icons.Count, Fetched = DateTime.Now };
+        set.Tree.Nodes = nodes.Where(kv => int.TryParse(kv.Key, out _) && kv.Value is JsonObject).Select(kv => ToNode(kv.Key, kv.Value!, icons)).ToList();
+
+        foreach (string id in ids)
+        {
+            try
+            {
+                using var planner = await http.GetAsync(ProfileUrl + id);
+                if (!planner.IsSuccessStatusCode) continue;
+                if (JsonNode.Parse(await planner.Content.ReadAsStringAsync()) is not JsonObject raw || raw["data"] is not JsonValue inner
+                    || !inner.TryGetValue(out string? data) || JsonNode.Parse(data ?? "") is not JsonObject document || document["profiles"] is not JsonArray profiles) continue;
+                string title = raw["name"] is JsonValue titled && titled.TryGetValue(out string? given) && !string.IsNullOrWhiteSpace(given) ? given.Trim() : id;
+                var filled = profiles.OfType<JsonObject>()
+                    .Select(p => (Name: p["name"] is JsonValue n && n.TryGetValue(out string? pn) ? pn ?? "" : "",
+                        History: History(p["weaver"]).Where(node => nodes.ContainsKey(node.ToString())).ToList()))
+                    .Where(p => p.History.Count > 0).ToList();
+                foreach (var (profileName, history) in filled)
+                {
+                    string name = filled.Count > 1 && profileName.Length > 0 ? $"{title} - {profileName}" : title;
+                    for (int n = 2; set.Strategies.Any(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase)); n++) name = $"{title} ({n})";
+                    set.Strategies.Add(new WeaverStrategy { Name = name, History = history, SourceId = id });
+                }
+            }
+            catch (System.Text.Json.JsonException) { } // one unreadable strategy does not cost the others
+            await Task.Delay(250);
+        }
+        if (set.Strategies.Count == 0) throw new InvalidDataException("Maxroll's Weaver trees could not be read - none of them had points in it.");
+        return set;
+    }
+
     /// <summary>What a pasted text turned out to be.</summary>
     /// <param name="PlannerId">Set when the text names a planner directly.</param>
     /// <param name="PageUrl">Set when it is a Maxroll page that has to be read to find its planner.</param>

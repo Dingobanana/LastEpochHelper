@@ -285,6 +285,23 @@ public class MaxrollSurveyTests
         File.WriteAllLines(output, report);
     }
 
+    /// <summary>The real Weaver trees, on request (LEH_LIVE_WEAVER = folder to save weaver.json in; a summary goes to LEH_MAXROLL_OUT).</summary>
+    [Fact]
+    public async Task LiveWeaverTrees_WhenAskedTo()
+    {
+        string? folder = Environment.GetEnvironmentVariable("LEH_LIVE_WEAVER"), output = Environment.GetEnvironmentVariable("LEH_MAXROLL_OUT");
+        if (folder is null || output is null) return;
+        Directory.CreateDirectory(folder);
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
+        var set = await MaxrollImporter.ImportWeaverAsync(folder, http);
+        set.Save(Path.Combine(folder, WeaverSet.FileName));
+        var ids = set.Tree.Nodes.Select(n => n.Id).ToHashSet();
+        File.WriteAllLines(output, new[] { $"{set.Tree.Nodes.Count} nodes ({set.Tree.Nodes.Count(n => n.IconIndex < 0)} without icon), icon sheet '{set.AtlasName}'" }
+            .Concat(set.Strategies.Select(s => $"{s.Name}: {s.History.Count} points, {s.History.Distinct().Count()} nodes, all known: {s.History.All(ids.Contains)} ({s.SourceId})")));
+        Assert.NotEmpty(set.Strategies);
+    }
+
     /// <summary>One random change somewhere in the document; returns a description of it.</summary>
     private static string Damage(JsonNode root, Random random)
     {

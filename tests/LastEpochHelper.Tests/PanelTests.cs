@@ -232,6 +232,27 @@ public class SkillTreeWithUnspentPointsTests
     }
 
     [Fact]
+    public void AWindowOverThePanelHeadings_IsNoticed()
+    {
+        // An ultrawide game window: the headings were read at x 1435-3090, y 82-280 there.
+        var wide = PanelZone.Headings(0, 0, 5120, 1440);
+        Assert.True(wide.Left <= 1435 && wide.Right >= 3090 && wide.Top <= 82 && wide.Bottom >= 280);
+        Assert.True(PanelZone.Hides(wide, 1400, 60, 1900, 400));   // a box over the skill heading
+        Assert.False(PanelZone.Hides(wide, 3825, 136, 4725, 700)); // the tree off to the right
+        Assert.False(PanelZone.Hides(wide, 1019, 63, 1380, 500));  // the box beside the panel
+        Assert.False(PanelZone.Hides(wide, 1400, 400, 2300, 900)); // below the headings
+
+        // 1920x1080: the old starting place of the build tree (top centre) hid them; the new one does not.
+        var hd = PanelZone.Headings(0, 0, 1920, 1080);
+        Assert.True(PanelZone.Hides(hd, 510, 40, 1410, 620));
+        Assert.False(PanelZone.Hides(hd, 990, 248, 1890, 828));
+        Assert.Equal(0, PanelZone.Covered(hd, 990, 248, 1890, 828));
+        // A game window that is not at the screen's corner.
+        var windowed = PanelZone.Headings(200, 100, 1800, 1000);
+        Assert.True(windowed.Left >= 200 && windowed.Top > 100 && windowed.Right <= 1800);
+    }
+
+    [Fact]
     public void LabelsFromTwoReads_AreCombinedWithoutDoubles()
     {
         var first = new[] { new TreeReader.Token(100, 100, 1, 3), new TreeReader.Token(400, 100, 0, 4) };

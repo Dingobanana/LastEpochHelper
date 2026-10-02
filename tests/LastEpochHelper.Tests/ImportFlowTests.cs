@@ -215,6 +215,78 @@ public sealed class ImportFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task TheWeaverTrees_AreFetchedFromTheirOwnPage_AndShownBesideAnyBuild()
+    {
+        var maxroll = Maxroll();
+        var game = JsonNode.Parse(MaxrollImporterTests.Game)!;
+        game["skillTrees"]!["weaver"] = JsonNode.Parse("""
+            { "nodes": { "0": { "nodeName": "Weaver Tree", "maxPoints": 0 },
+                         "1": { "nodeName": "Shifted Knowledge", "maxPoints": 1, "requirements": [ { "node": 0 } ] },
+                         "2": { "nodeName": "Woven Riches", "maxPoints": 3, "requirements": [ { "node": 1 } ] } } }
+            """);
+        maxroll.Pages[Data] = (HttpStatusCode.OK, game.ToJsonString());
+        maxroll.Pages[MaxrollImporter.WeaverPage] = (HttpStatusCode.OK,
+            "<h2>Starter</h2><div data-le-profile=\"st4rt3r0\" data-le-type=\"weavertree\" data-le-id=\"1\"></div>"
+            + "<h2>Nemesis</h2><div data-le-type=\"weavertree\" data-le-profile=\"n3m3s1s0\"></div>"
+            + "<div data-le-profile=\"ab12cd34\" data-le-type=\"plannerSkills\"></div>"
+            + "<div data-le-profile=\"br0k3n00\" data-le-type=\"weavertree\"></div>");
+        static string Planner(string name, string history) => new JsonObject
+        {
+            ["name"] = name,
+            ["data"] = "{\"profiles\":[{\"name\":\"Set 1\",\"class\":0,\"weaver\":{\"history\":" + history + ",\"position\":99}}]}",
+        }.ToJsonString();
+        maxroll.Pages[PlannerUrl + "st4rt3r0"] = (HttpStatusCode.OK, Planner("Starter Tree", "[1, 2, 2, 77]")); // 77 is not a node of the tree
+        maxroll.Pages[PlannerUrl + "n3m3s1s0"] = (HttpStatusCode.OK, Planner("Nemesis Tree", "[1, {\"2\": 3}]"));
+        maxroll.Pages[PlannerUrl + "br0k3n00"] = (HttpStatusCode.OK, "<html>maintenance</html>");
+        using var http = new HttpClient(maxroll);
+
+        var set = await MaxrollImporter.ImportWeaverAsync(_dir, http);
+        Assert.Equal(new[] { "Starter Tree", "Nemesis Tree" }, set.Strategies.Select(s => s.Name));
+        Assert.Equal(new[] { 1, 2, 2 }, set.Strategies[0].History);
+        Assert.Equal(new[] { 1, 2, 2, 2 }, set.Strategies[1].History);
+        Assert.Equal(3, set.Tree.Nodes.Count);
+        Assert.DoesNotContain(PlannerUrl + "ab12cd34", maxroll.Asked); // only the Weaver embeds are followed
+
+        // A character with a build gets a Weaver tab with the chosen strategy, in every stage.
+        var storage = new Storage(Path.Combine(_dir, "home"));
+        var session = new Session(storage, new Guide { PassiveCap = 15, IdolCap = 8, Routes = { TrackerTests.MakeRoute("A", "B") } }, new SceneMap());
+        var files = BuildFiles.Write(session.BuildsDir, await MaxrollImporter.ImportAsync("ab12cd34", _dir, http));
+        session.Profile.BuildPlan = files[0];
+        session.ReloadPlan();
+        Assert.DoesNotContain(session.Tree!.Trees, t => t.Kind == TreeDef.WeaverKind);
+        Assert.Empty(session.WeaverChoices);
+
+        session.SetWeaver(set);
+        var tab = Assert.Single(session.Tree!.Trees, t => t.Kind == TreeDef.WeaverKind);
+        Assert.Equal(new[] { "Starter Tree", "Nemesis Tree" }, session.WeaverChoices);
+        Assert.Equal("Starter Tree", session.WeaverChoice);
+        Assert.All(session.Tree.Stages, s => Assert.Equal(new[] { 1, 2, 2 }, s.Skills[TreeDef.WeaverName]));
+        session.Profile.SkillPoints[TreeDef.WeaverName] = 2;
+        var state = session.TreeState(tab);
+        Assert.Equal(1, state.Allocated[1]);
+        Assert.Equal(1, state.Allocated[2]);
+        Assert.Equal(2, state.Next[0].Node); // one more point into node 2
+
+        // The tab is for the endgame only.
+        Assert.False(session.InEndgame);
+        session.Handle(new CharacterLevelEvent(60, 0, 3), live: false);
+        Assert.True(session.InEndgame);
+
+        session.SetWeaverStrategy("Nemesis Tree");
+        Assert.Equal(4, session.TreeState(session.Tree!.Trees.Single(t => t.Kind == TreeDef.WeaverKind)).StagePoints);
+        // It is remembered, also across a restart.
+        var again = new Session(new Storage(Path.Combine(_dir, "home")), new Guide { PassiveCap = 15, IdolCap = 8, Routes = { TrackerTests.MakeRoute("A", "B") } }, new SceneMap());
+        Assert.Equal("Nemesis Tree", again.WeaverChoice);
+        Assert.Empty(BuildChecks.Problems(new MaxrollImporter.Result("x", "name: x\n", 0, again.Tree!)));
+
+        // When the page is gone or empty, it is said in words.
+        maxroll.Pages[MaxrollImporter.WeaverPage] = (HttpStatusCode.OK, "<p>moved</p>");
+        Assert.Contains("No Weaver trees", (await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportWeaverAsync(_dir, http))).Message);
+        maxroll.Pages.Remove(MaxrollImporter.WeaverPage);
+        Assert.Contains("could not be read", (await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportWeaverAsync(_dir, http))).Message);
+    }
+
+    [Fact]
     public async Task ABuildSentAsAFile_Imports_WithoutTheNetwork()
     {
         // Someone imports from Maxroll and sends the two files the overlay wrote.

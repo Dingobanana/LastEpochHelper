@@ -158,6 +158,70 @@ public sealed class Session
         string? path = string.IsNullOrEmpty(Profile.BuildPlan) ? null : Path.Combine(BuildsDir, Profile.BuildPlan);
         Plan = path is null ? null : BuildPlan.Load(path);
         Tree = path is null ? null : BuildTree.Load(BuildTree.PathFor(path));
+        ApplyWeaver();
+    }
+
+    /// <summary>
+    /// Has this character reached the endgame? The Weaver tree only exists there (it comes with the
+    /// Woven faction in the Monolith), so its tab is kept out of the way of a character still leveling.
+    /// </summary>
+    public bool InEndgame => Profile.HideGuide || Profile.Level >= 55 || (Route.Chapters.Count > 1 && Tracker.Chapter == Route.Chapters[^1]);
+
+    /// <summary>The Weaver tree and the ready-made ways of filling it, once fetched.</summary>
+    public WeaverSet? Weaver { get; private set; }
+
+    /// <summary>The choice that means "the Weaver points the imported build itself has".</summary>
+    public const string OwnWeaver = "From this build";
+    private bool _buildHasWeaver;
+
+    /// <summary>What can be followed in the Weaver tab: the build's own points if it has any, then the fetched strategies.</summary>
+    public IReadOnlyList<string> WeaverChoices =>
+        (_buildHasWeaver ? new[] { OwnWeaver } : Array.Empty<string>()).Concat(Weaver?.Strategies.Select(s => s.Name) ?? Enumerable.Empty<string>()).ToList();
+
+    /// <summary>The one in use right now ("" when there is no Weaver tab).</summary>
+    public string WeaverChoice
+    {
+        get
+        {
+            var choices = WeaverChoices;
+            return choices.Contains(Profile.WeaverStrategy) ? Profile.WeaverStrategy : choices.FirstOrDefault() ?? "";
+        }
+    }
+
+    public void SetWeaverStrategy(string name)
+    {
+        Profile.WeaverStrategy = name;
+        ReloadPlan();
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Takes over freshly fetched Weaver trees and shows them.</summary>
+    public void SetWeaver(WeaverSet set)
+    {
+        set.Save(Path.Combine(DataDir, WeaverSet.FileName));
+        Weaver = set;
+        ReloadPlan();
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Gives the imported build a Weaver tab. The Weaver tree is the same for every class and is not
+    /// part of a build guide, so the tab is put beside the build's own trees, in every stage, with the
+    /// chosen strategy's point order.
+    /// </summary>
+    private void ApplyWeaver()
+    {
+        Weaver ??= WeaverSet.Load(Path.Combine(DataDir, WeaverSet.FileName));
+        _buildHasWeaver = Tree?.Stages.Any(s => s.Skills.GetValueOrDefault(TreeDef.WeaverName) is { Count: > 0 }) == true;
+        if (Tree is null || Weaver is null) return;
+        string choice = WeaverChoice;
+        if (choice == OwnWeaver || Weaver.Strategies.FirstOrDefault(s => s.Name == choice) is not { } strategy) return;
+
+        if (Tree.Trees.All(t => t.Kind != TreeDef.WeaverKind)) Tree.Trees.Add(Weaver.TabFor(Tree));
+        var known = Tree.Trees.First(t => t.Kind == TreeDef.WeaverKind).Nodes.Select(n => n.Id).ToHashSet();
+        foreach (var stage in Tree.Stages)
+            stage.Skills[TreeDef.WeaverName] = strategy.History.Where(known.Contains).ToList();
     }
 
     private string UniqueName(string name)

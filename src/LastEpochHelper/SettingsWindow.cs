@@ -106,6 +106,7 @@ internal sealed class SettingsWindow : Window
                               + "the text the planner's Export button copies, or the path of a build file someone sent you.";
         character.Children.Add(Indented(Buttons(
             ("Import from Maxroll", Import), ("Import from file...", ImportFile), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
+        character.Children.Add(Indented(Buttons(("Get the Weaver trees from Maxroll", () => GetWeaver(announce: true)))));
 
         // ---- Overlay: looks, and which parts it shows
         var overlayTab = Tab("Overlay");
@@ -417,6 +418,40 @@ internal sealed class SettingsWindow : Window
         ImportFrom(_importLink.Text);
     }
 
+    /// <summary>
+    /// Fetches Maxroll's Weaver trees (the endgame tree that is the same for every build) for the Weaver
+    /// tab of the build tree. Asked for with the button, or done quietly along with a build import.
+    /// </summary>
+    private async void GetWeaver(bool announce)
+    {
+        if (announce) _message.Text = "Fetching the Weaver trees...";
+        try
+        {
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
+            var set = await MaxrollImporter.ImportWeaverAsync(_session.DataDir, http);
+            _session.SetWeaver(set);
+            Applied?.Invoke();
+            if (announce)
+                _message.Text = $"Got {set.Strategies.Count} Weaver trees ({string.Join(", ", set.Strategies.Select(s => s.Name))}). "
+                                + (_session.Tree is null ? "They show as a tab of the build tree once a build is imported." : "They are on the Weaver tab of the build tree; choose one in the gold box at its bottom.");
+        }
+        catch (InvalidDataException e) { if (announce) _message.Text = e.Message; }
+        catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
+        {
+            if (announce) _message.Text = "Could not reach Maxroll (" + e.Message + "). Check your connection and try again.";
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            if (announce) _message.Text = "Could not save the Weaver trees: " + e.Message;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            ActivityLog.Write($"fetching the Weaver trees failed unexpectedly: {e.GetType().Name}: {e.Message}");
+            if (announce) _message.Text = "Fetching the Weaver trees failed in a way the overlay did not expect (" + e.GetType().Name + ").";
+        }
+    }
+
     /// <summary>A build someone sent as a file: this overlay's own build file, or a planner saved as JSON.</summary>
     private void ImportFile()
     {
@@ -458,6 +493,8 @@ internal sealed class SettingsWindow : Window
             _session.Save();
             LoadFromSession();
             Applied?.Invoke();
+            // The Weaver trees come along, unless they were fetched recently.
+            if (_session.Weaver is null || DateTime.Now - _session.Weaver.Fetched > TimeSpan.FromDays(7)) GetWeaver(announce: false);
             _message.Text = $"Imported '{result.Name}' ({result.Steps} points). The order is exact; the levels are estimates."
                 + (results.Count > 1
                     ? $" This guide has {results.Count} versions of the build ({string.Join(", ", result.Tree.Variants)}); switch between them at the bottom of the build tree."

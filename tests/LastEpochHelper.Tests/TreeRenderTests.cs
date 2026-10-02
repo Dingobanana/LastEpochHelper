@@ -35,6 +35,11 @@ public sealed class TreeRenderTests : IDisposable
                 var storage = new Storage(_dir);
                 if (Environment.GetEnvironmentVariable("LEH_ATLAS") is { } atlas)
                     File.Copy(atlas, storage.PathOf(BuildTree.AtlasFile));
+                // LEH_WEAVER: a fetched weaver.json, to draw the Weaver tab too. LEH_ATLAS_NAMED: the icon sheet under its own name.
+                if (Environment.GetEnvironmentVariable("LEH_WEAVER") is { } weaver)
+                    File.Copy(weaver, storage.PathOf(WeaverSet.FileName));
+                if (Environment.GetEnvironmentVariable("LEH_ATLAS_NAMED") is { } named)
+                    File.Copy(named, storage.PathOf(Path.GetFileName(named)));
                 var route = TrackerTests.MakeRoute("A", "B");
                 string filters = Path.Combine(_dir, "Filters");
                 Directory.CreateDirectory(filters);
