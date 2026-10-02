@@ -53,7 +53,11 @@ public static partial class TreeReader
     /// Points per node id for the nodes whose label could be placed. Null when the labels do not
     /// fit this tree (another tab is showing, or too little of it is visible).
     /// </summary>
-    public static Dictionary<int, int>? Read(IReadOnlyList<Token> tokens, TreeDef tree) => Fit(tokens, tree)?.Points;
+    /// <param name="known">
+    /// The tree is known to be the one showing (its title was read), so the labels only have to be
+    /// placed, not to prove which tree it is: a smaller share of its nodes will do.
+    /// </param>
+    public static Dictionary<int, int>? Read(IReadOnlyList<Token> tokens, TreeDef tree, bool known = false) => Fit(tokens, tree, known)?.Points;
 
     /// <summary>The tree among <paramref name="candidates"/> that the labels fit best, with its points.</summary>
     public static (TreeDef Tree, Dictionary<int, int> Points)? ReadBest(IReadOnlyList<Token> tokens, IEnumerable<TreeDef> candidates)
@@ -67,7 +71,7 @@ public static partial class TreeReader
 
     private sealed record Match(Dictionary<int, int> Points);
 
-    private static Match? Fit(IReadOnlyList<Token> tokens, TreeDef tree)
+    private static Match? Fit(IReadOnlyList<Token> tokens, TreeDef tree, bool known = false)
     {
         var nodes = tree.Nodes.Where(n => n.Max >= 1).ToList();
         if (tokens.Count < MinMatches || nodes.Count < MinMatches) return null;
@@ -103,7 +107,7 @@ public static partial class TreeReader
         }
         // Most labels must fall on a node, and a fair share of the tree must be accounted for:
         // a handful of coincidences is not a tree, and a wrong fit would report its points as zero.
-        return best is not null && best.Count >= MinMatches && best.Count * 10 >= tokens.Count * 6 && best.Count * 5 >= nodes.Count * 2
+        return best is not null && best.Count >= MinMatches && best.Count * 10 >= tokens.Count * 6 && (known || best.Count * 5 >= nodes.Count * 2)
             ? new Match(best) : null;
     }
 

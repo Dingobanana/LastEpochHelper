@@ -494,3 +494,6 @@ research/
 # deep-research working files
 research_notes/
 reports/
+
+# machine-local build inputs that must never be published (e.g. where bug reports are sent)
+*.local.txt

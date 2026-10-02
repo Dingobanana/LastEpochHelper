@@ -11,7 +11,7 @@
     <!-- Only for the tray icon and screen capture; see the Using Remove items below. -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.7.3</Version>
+    <Version>0.7.4</Version>
     <!-- The manifest is how a WPF app declares DPI awareness; the WinForms analyzer does not apply. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>
@@ -30,6 +30,18 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="LastEpochHelper.Tests" />
+  </ItemGroup>
+
+  <!--
+    Where "Report a bug" sends to. The address is a secret of sorts, so it is not in this repository:
+    it is read from report-endpoint.local.txt in the repository root (ignored by git) when that file
+    exists, and built into the program. Without the file, reports are saved to the desktop instead.
+  -->
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\report-endpoint.local.txt')">
+    <ReportEndpoint>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\..\report-endpoint.local.txt').Trim())</ReportEndpoint>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ReportEndpoint)' != ''">
+    <AssemblyMetadata Include="ReportEndpoint" Value="$(ReportEndpoint)" />
   </ItemGroup>
 
 </Project>

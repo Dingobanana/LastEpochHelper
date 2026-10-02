@@ -65,6 +65,42 @@ public sealed class BugReportTests : IDisposable
         Assert.Contains("SMITE", Read(zip, "screen/panel-ocr-skills.txt"));
     }
 
+    private sealed class Capture : System.Net.Http.HttpMessageHandler
+    {
+        public string? Body, Url;
+        public System.Net.HttpStatusCode Answer = System.Net.HttpStatusCode.OK;
+
+        protected override async Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, CancellationToken token)
+        {
+            Url = request.RequestUri!.ToString();
+            Body = await request.Content!.ReadAsStringAsync(token);
+            return new System.Net.Http.HttpResponseMessage(Answer);
+        }
+    }
+
+    [Fact]
+    public async Task Sending_PostsTheZipAndTheDescription_AndReportsFailuresInWords()
+    {
+        string zip = Path.Combine(_dir, "report.zip");
+        File.WriteAllText(zip, "zip-bytes-here");
+        var capture = new Capture();
+        using var http = new System.Net.Http.HttpClient(capture);
+
+        Assert.Null(await ReportSender.SendAsync("https://example.invalid/hook", zip, "It broke @everyone", http));
+        Assert.Equal("https://example.invalid/hook", capture.Url);
+        Assert.Contains("zip-bytes-here", capture.Body);
+        Assert.Contains("report.zip", capture.Body);
+        Assert.Contains("It broke", capture.Body);
+        Assert.Contains("allowed_mentions", capture.Body); // a description cannot ping people
+
+        capture.Answer = System.Net.HttpStatusCode.NotFound;
+        Assert.Contains("404", await ReportSender.SendAsync("https://example.invalid/hook", zip, "x", http));
+
+        // Never over plain http, never without a file.
+        Assert.NotNull(await ReportSender.SendAsync("http://example.invalid/hook", zip, "x", http));
+        Assert.NotNull(await ReportSender.SendAsync("https://example.invalid/hook", Path.Combine(_dir, "none.zip"), "x", http));
+    }
+
     [Fact]
     public void MissingFiles_AreSimplyLeftOut()
     {

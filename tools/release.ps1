@@ -24,6 +24,10 @@ $title = ($lines[$start - 1] -replace '^##\s+', '').Trim()
 dotnet test
 if ($LASTEXITCODE -ne 0) { throw 'Tests failed.' }
 
+# "Report a bug" can only send when the address file is present at build time (it is not in git).
+if (Test-Path 'report-endpoint.local.txt') { Write-Host 'Bug reports: address found, this release can send them.' }
+else { Write-Warning 'Bug reports: no report-endpoint.local.txt - this release will save reports to the desktop instead of sending.' }
+
 $out = 'release/LastEpochHelper'
 if (Test-Path $out) { Get-ChildItem $out -Recurse | Remove-Item -Recurse -Force }
 dotnet publish src/LastEpochHelper -c Release -r win-x64 --self-contained true `

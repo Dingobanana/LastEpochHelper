@@ -110,6 +110,60 @@ public class SkillTreeWithUnspentPointsTests
     }
 
     [Fact]
+    public void LookingOnSpec_OnlyBelievesTheGamesOwnHeadings()
+    {
+        var tabs = new[] { "Primalist", "Beastmaster", "Shaman", "Druid" };
+        var skills = new[] { "Gathering Storm", "Summon Thorn Totem" };
+        PanelReading Strict(params ScreenLine[] lines) => PanelDetector.Detect(lines, tabs, skills, strict: true);
+
+        Assert.Equal(GamePanel.Passives, Strict(new ScreenLine("PASSIVES", 25), new ScreenLine("PRIMALIST", 26)).Panel);
+        Assert.Equal(GamePanel.Skills, Strict(new ScreenLine("SKILLS & SPECIALIZATIONS", 32)).Panel);
+        var tree = Strict(new ScreenLine("GATHERING STORM", 21), new ScreenLine("Minimum Specialized Level: 3", 19));
+        Assert.Equal((GamePanel.Skills, "Gathering Storm"), (tree.Panel, tree.Skill));
+
+        // Names alone - a tooltip, chat, the skill bar - open nothing.
+        Assert.Equal(GamePanel.None, Strict(new ScreenLine("Primalist", 20), new ScreenLine("Druid", 20)).Panel);
+        Assert.Equal(GamePanel.None, Strict(new ScreenLine("GATHERING STORM", 21)).Panel);
+        Assert.Equal(GamePanel.None, Strict(new ScreenLine("Gathering Storm", 16), new ScreenLine("Summon Thorn Totem", 16)).Panel);
+    }
+
+    [Fact]
+    public void TheHeadingAboveTheMarker_NamesTheOpenSkill_WhateverElseIsOnScreen()
+    {
+        var tabs = new[] { "Primalist", "Beastmaster", "Shaman", "Druid" };
+        var skills = new[] { "Gathering Storm", "Summon Thorn Totem", "Summon Storm Totem", "Spriggan Form", "Eterra's Blessing" };
+        // The skill bar at the bottom prints skill names almost as large as the heading.
+        var screen = new[]
+        {
+            new ScreenLine("SUMMON THORN TOTEM", 20, 1435, 156, 400), new ScreenLine("LEVEL 6", 16, 1436, 208, 80),
+            new ScreenLine("Minimum Specialized Level: 3", 19, 1434, 259, 300), new ScreenLine("BACK", 14, 1556, 101, 60),
+            new ScreenLine("ETERRA'S BLESSING", 18, 2351, 1319, 250), new ScreenLine("GATHERING STORM", 18, 2000, 1319, 250),
+        };
+        var reading = PanelDetector.Detect(screen, tabs, skills, GamePanel.Skills);
+        Assert.Equal((GamePanel.Skills, "Summon Thorn Totem"), (reading.Panel, reading.Skill));
+        Assert.Equal("Summon Thorn Totem", PanelDetector.Detect(screen, tabs, skills, strict: true).Skill);
+    }
+
+    [Fact]
+    public void ThePassiveTabShowing_IsReadFromItsTitle()
+    {
+        var tabs = new[] { "Primalist", "Beastmaster", "Shaman", "Druid" };
+        var skills = new[] { "Gathering Storm" };
+        // As read from the game: the title beside the heading, the list of all tabs further left.
+        ScreenLine[] Panel(string title) => new[]
+        {
+            new ScreenLine("PASSIVES", 25, 2117, 137, 185), new ScreenLine(title, 26, 2790, 136, 300),
+            new ScreenLine("PRIMALIST", 20, 1664, 126, 150), new ScreenLine("BEASTMASTER", 15, 1513, 543, 150),
+            new ScreenLine("SHAMAN", 19, 1859, 536, 100), new ScreenLine("1 UNSPENT POINTS", 21, 2757, 231, 280),
+        };
+        Assert.Equal("Primalist", PanelDetector.Detect(Panel("PRIMAL 1ST"), tabs, skills).Tab);
+        Assert.Equal("Shaman", PanelDetector.Detect(Panel("SHAMAN"), tabs, skills).Tab);
+        Assert.Equal("Beastmaster", PanelDetector.Detect(Panel("BEASTMASTER"), tabs, skills).Tab);
+        Assert.Null(PanelDetector.Detect(Panel("~~~"), tabs, skills).Tab);
+        Assert.Equal(GamePanel.Passives, PanelDetector.Detect(Panel("~~~"), tabs, skills).Panel);
+    }
+
+    [Fact]
     public void LabelsFromTwoReads_AreCombinedWithoutDoubles()
     {
         var first = new[] { new TreeReader.Token(100, 100, 1, 3), new TreeReader.Token(400, 100, 0, 4) };
@@ -393,5 +447,7 @@ public class TreeReaderTests
         var few = TreeReader.Tokens(Screen(shown, new Dictionary<int, int>(), hidden: new[] { 5, 6, 7, 8, 9, 10, 11 }));
         Assert.Equal(4, few.Count);
         Assert.Null(TreeReader.Read(few, shown));
+        // ...unless the tree is known to be the one showing: then they only have to be placed.
+        Assert.Equal(4, TreeReader.Read(few, shown, known: true)!.Count);
     }
 }

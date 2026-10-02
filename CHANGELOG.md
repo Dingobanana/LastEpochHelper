@@ -2,6 +2,13 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.4 - Panels opened by mouse, reports that send themselves
+
+- The build tree now also opens when the game's passive or skill panel is opened with the mouse (for example the "+" for unspent points), not only with the P / S keys. It checks every couple of seconds; if you close the tree yourself it stays closed until the game's panel is closed.
+- Fixed: the build tree did not switch between your skills when another skill's name was on screen in letters nearly as big (the skill bar). The open tree's own heading is now what counts.
+- The passive tree now follows the tab you open in the game by reading the tab's title, instead of guessing from the node labels - which failed on the mastery tabs.
+- Report a bug has a Send button that delivers the report directly, with no file to pass on. If sending fails the report is saved to your desktop as before.
+
 ## 0.7.3 - Bug reports, steadier mirroring
 
 - New: Report a bug (the ☰ menu). Describe what went wrong and the overlay saves one zip file to your desktop with your description, its error and activity logs, what it last read off the screen and its settings. Nothing is sent automatically; pass the file on to whoever shared the overlay with you. Account and character names are removed.
