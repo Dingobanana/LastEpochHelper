@@ -26,6 +26,99 @@ internal sealed class ScreenReader
 
     public bool Available => _engine is not null;
 
+    /// <summary>
+    /// Reads small boxed labels (the "2/4" under skill nodes), which the plain read mostly misses:
+    /// once enlarged, and once enlarged as black-on-white. Positions are screen pixels.
+    /// </summary>
+    public async Task<List<ScreenLine>[]> ReadLabelsAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks)
+    {
+        int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
+        if (_engine is null || width < 200 || height < 200) return Array.Empty<List<ScreenLine>>();
+        try
+        {
+            using var shot = new Drawing.Bitmap(width, height, Drawing.Imaging.PixelFormat.Format24bppRgb);
+            using (var g = Drawing.Graphics.FromImage(shot))
+            {
+                g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, shot.Size);
+                foreach (var mask in masks)
+                    g.FillRectangle(Drawing.Brushes.Black, mask.Left - bounds.Left, mask.Top - bounds.Top, mask.Right - mask.Left, mask.Bottom - mask.Top);
+            }
+            return await ReadLabelsAsync(shot, bounds.Left, bounds.Top);
+        }
+        catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
+                                      or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)
+        {
+            return Array.Empty<List<ScreenLine>>();
+        }
+    }
+
+    /// <summary>The same two reads on a saved picture, for testing against real screenshots.</summary>
+    public async Task<List<ScreenLine>[]> ReadLabelsFromFileAsync(string path, Drawing.Rectangle region)
+    {
+        if (_engine is null) return Array.Empty<List<ScreenLine>>();
+        using var image = new Drawing.Bitmap(path);
+        using var crop = image.Clone(region, Drawing.Imaging.PixelFormat.Format24bppRgb);
+        return await ReadLabelsAsync(crop, region.Left, region.Top);
+    }
+
+    private async Task<List<ScreenLine>[]> ReadLabelsAsync(Drawing.Bitmap shot, double offsetX, double offsetY)
+    {
+        int limit = (int)OcrEngine.MaxImageDimension;
+        double Factor(double wanted) => Math.Max(1, Math.Min(wanted, Math.Min((double)limit / shot.Width, (double)limit / shot.Height)));
+
+        // White text on a dark plate -> black on white, the form the reader copes with best.
+        using var contrast = await Task.Run(() => Threshold(shot, 190));
+        var reads = new List<List<ScreenLine>>();
+        foreach (var (image, factor) in new[] { (contrast, Factor(3)), (shot, Factor(2)) })
+        {
+            // Enlarging a picture this size takes a while: keep it off the thread that draws the overlay.
+            using var stream = await Task.Run(() =>
+            {
+                using var large = new Drawing.Bitmap((int)(image.Width * factor), (int)(image.Height * factor));
+                using (var g = Drawing.Graphics.FromImage(large))
+                {
+                    g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(image, 0, 0, large.Width, large.Height);
+                }
+                var memory = new MemoryStream();
+                large.Save(memory, Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                return memory;
+            });
+            reads.Add(await RecognizeAsync(stream, offsetX, offsetY, factor, words: true));
+        }
+        return reads.ToArray();
+    }
+
+    private static Drawing.Bitmap Threshold(Drawing.Bitmap source, int cut)
+    {
+        var result = new Drawing.Bitmap(source.Width, source.Height, Drawing.Imaging.PixelFormat.Format24bppRgb);
+        var area = new Drawing.Rectangle(0, 0, source.Width, source.Height);
+        var from = source.LockBits(area, Drawing.Imaging.ImageLockMode.ReadOnly, Drawing.Imaging.PixelFormat.Format24bppRgb);
+        var to = result.LockBits(area, Drawing.Imaging.ImageLockMode.WriteOnly, Drawing.Imaging.PixelFormat.Format24bppRgb);
+        try
+        {
+            var row = new byte[from.Stride];
+            for (int y = 0; y < source.Height; y++)
+            {
+                System.Runtime.InteropServices.Marshal.Copy(from.Scan0 + y * from.Stride, row, 0, row.Length);
+                for (int x = 0; x < source.Width; x++)
+                {
+                    int i = x * 3;
+                    int light = (row[i] * 11 + row[i + 1] * 59 + row[i + 2] * 30) / 100; // blue, green, red
+                    row[i] = row[i + 1] = row[i + 2] = (byte)(light > cut ? 0 : 255);
+                }
+                System.Runtime.InteropServices.Marshal.Copy(row, 0, to.Scan0 + y * to.Stride, row.Length);
+            }
+        }
+        finally
+        {
+            source.UnlockBits(from);
+            result.UnlockBits(to);
+        }
+        return result;
+    }
+
     /// <summary>Reads a saved picture instead of the screen; positions are pixels in the picture.</summary>
     public async Task<List<ScreenLine>> ReadFileAsync(string path, bool words = false)
     {

@@ -57,6 +57,83 @@ public class PanelDetectorTests
     }
 }
 
+public class SkillTreeWithUnspentPointsTests
+{
+    [Fact]
+    public void AnOpenSkillTreeWithPointsToSpend_IsNotThePassivePanel()
+    {
+        // As read from the game: this tree had a point left, and "UNSPENT POINT" used to mean "passives".
+        var tabs = new[] { "Primalist", "Beastmaster", "Shaman", "Druid" };
+        var skills = new[] { "Gathering Storm", "Summon Thorn Totem", "Summon Storm Totem", "Spriggan Form" };
+        var screen = new[]
+        {
+            new ScreenLine("SUMMON THORN TOTEM", 21, 1435, 156, 400), new ScreenLine("Minimum Specialized Level: 3", 19, 1434, 259, 300),
+            new ScreenLine("1 UNSPENT POINT", 19, 2444, 307, 200), new ScreenLine("LEVEL 5", 16, 1436, 208, 80),
+            new ScreenLine("RESPEC", 15, 3487, 178, 80), new ScreenLine("BACK", 14, 1556, 101, 60), new ScreenLine("0/5", 15, 2000, 725, 30),
+        };
+        foreach (var hint in new[] { GamePanel.None, GamePanel.Passives, GamePanel.Skills })
+        {
+            var reading = PanelDetector.Detect(screen, tabs, skills, hint);
+            Assert.Equal(GamePanel.Skills, reading.Panel);
+            Assert.Equal("Summon Thorn Totem", reading.Skill);
+        }
+
+        // Even with the class names in view (a tooltip, chat), a skill tree is a skill tree.
+        var noisy = screen.Concat(new[] { new ScreenLine("Primalist", 16), new ScreenLine("any Druid builds?", 16) }).ToArray();
+        Assert.Equal(GamePanel.Skills, PanelDetector.Detect(noisy, tabs, skills).Panel);
+    }
+
+    [Fact]
+    public void LabelsFromTwoReads_AreCombinedWithoutDoubles()
+    {
+        var first = new[] { new TreeReader.Token(100, 100, 1, 3), new TreeReader.Token(400, 100, 0, 4) };
+        var second = new[] { new TreeReader.Token(104, 97, 7, 8), new TreeReader.Token(700, 300, 2, 4) };
+        var merged = TreeReader.Merge(first, second);
+        Assert.Equal(3, merged.Count);
+        Assert.Contains(merged, m => m.Have == 1 && m.Max == 3); // the first read wins where both saw a label
+        Assert.Contains(merged, m => m.X == 700);
+    }
+}
+
+public class MapCounterTests
+{
+    [Fact]
+    public void FindsThePairOfCounters_HoweverTheyAreSpaced()
+    {
+        Assert.Equal((3, 1), MapCounters.Parse(new[] { new ScreenLine("3/15", 16, 4800, 1300, 40), new ScreenLine("1/8", 16, 4900, 1300, 30) }, 15, 8));
+        Assert.Equal((13, 8), MapCounters.Parse(new[] { new ScreenLine("Passive Points 13 / 15   Idol Slots 8/8", 16, 60, 1300, 500) }, 15, 8));
+        Assert.Equal((0, 0), MapCounters.Parse(new[] { new ScreenLine("O/15", 16, 60, 1300, 40), new ScreenLine("o/8", 16, 60, 1330, 30) }, 15, 8));
+    }
+
+    [Fact]
+    public void ReadsTheMapCorner_AsTheGameShowsIt()
+    {
+        // As read from a real screenshot of the map (5120x1440).
+        var corner = new[]
+        {
+            new ScreenLine("PASSIVE POINTS REWARDS (6/15)", 20, 33, 1247, 364), new ScreenLine("IDOL SLOT REWARDS (1/8)", 20, 33, 1293, 289),
+            new ScreenLine("RESET VIEW", 15, 110, 1400, 120), new ScreenLine("HIDE QUESTS", 15, 320, 1400, 130),
+        };
+        Assert.Equal((6, 1), MapCounters.Parse(corner, 15, 8));
+    }
+
+    [Fact]
+    public void NeedsBothCounters_CloseTogether_AndWithinTheirCaps()
+    {
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("3/15", 16, 100, 100, 40), new ScreenLine("78/78", 16, 150, 100, 40) }, 15, 8));
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("3/15", 16, 100, 100, 40), new ScreenLine("1/8", 16, 4000, 1300, 30) }, 15, 8));
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("16/15", 16, 100, 100, 40), new ScreenLine("9/8", 16, 150, 100, 30) }, 15, 8));
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("3/150", 16, 100, 100, 40), new ScreenLine("1/80", 16, 150, 100, 30) }, 15, 8));
+        // One counter without its partner is reported, so the caller can take a closer look.
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("3/15", 16, 100, 100, 40) }, 15, 8, out bool half));
+        Assert.True(half);
+        Assert.Null(MapCounters.Parse(new[] { new ScreenLine("Find Artem's stash", 16, 100, 100, 40) }, 15, 8, out half));
+        Assert.False(half);
+        // "13/15" is thirteen, not also three.
+        Assert.Equal((13, 2), MapCounters.Parse(new[] { new ScreenLine("13/15", 16, 100, 100, 40), new ScreenLine("2/8", 16, 150, 100, 30) }, 15, 8));
+    }
+}
+
 public sealed class HandSetPointsTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), $"leh-hand-{Guid.NewGuid():N}");

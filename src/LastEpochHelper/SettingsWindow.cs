@@ -34,6 +34,7 @@ internal sealed class SettingsWindow : Window
     private readonly CheckBox _followKeys = new() { Content = "Open the build tree with the game's own passive / skill keys" };
     private readonly CheckBox _followSkill = new() { Content = "Keep the build tree in step with the game's passive / skill panel (reads the screen)" };
     private readonly CheckBox _readPoints = new() { Content = "Read my real points from the game's passive / skill panel when it is open" };
+    private readonly CheckBox _readMap = new() { Content = "Read the passive / idol counters from the game's map when I open it" };
     private readonly CheckBox _orderPassives = new() { Content = "Passive tree: number the next points in order" };
     private readonly CheckBox _orderSkills = new() { Content = "Skill trees: number the next points in order" };
     private readonly CheckBox _amountPassives = new() { Content = "Passive tree: show how many points go into the node (+N)" };
@@ -79,7 +80,7 @@ internal sealed class SettingsWindow : Window
         root.Children.Add(Row("Text size", _fontSize));
         root.Children.Add(Row("Width", _width));
         root.Children.Add(Row("Zone map", _mapMode));
-        foreach (var box in new[] { _autoHide, _showTimer, _showBuild, _autoTick, _autoLearn, _buildLines, _followKeys, _followSkill, _readPoints, _orderPassives, _amountPassives, _orderSkills, _amountSkills })
+        foreach (var box in new[] { _autoHide, _showTimer, _showBuild, _autoTick, _autoLearn, _buildLines, _followKeys, _followSkill, _readPoints, _readMap, _orderPassives, _amountPassives, _orderSkills, _amountSkills })
         {
             box.Margin = new Thickness(0, 4, 0, 0);
             root.Children.Add(box);
@@ -254,6 +255,7 @@ internal sealed class SettingsWindow : Window
         _orderSkills.IsChecked = settings.ShowOrderSkills;
         _amountPassives.IsChecked = settings.ShowAmountPassives;
         _readPoints.IsChecked = settings.ReadPointsFromScreen;
+        _readMap.IsChecked = settings.ReadCountersFromMap;
         _amountSkills.IsChecked = settings.ShowAmountSkills;
         _buildLines.IsChecked = settings.ShowBuildLines;
         _keyPassives.Text = settings.GameKeyPassives;
@@ -299,6 +301,7 @@ internal sealed class SettingsWindow : Window
         settings.ShowOrderSkills = _orderSkills.IsChecked == true;
         settings.ShowAmountPassives = _amountPassives.IsChecked == true;
         settings.ReadPointsFromScreen = _readPoints.IsChecked == true;
+        settings.ReadCountersFromMap = _readMap.IsChecked == true;
         settings.ShowAmountSkills = _amountSkills.IsChecked == true;
         settings.ShowBuildLines = _buildLines.IsChecked == true;
         if (KeyboardWatcher.VirtualKey(_keyPassives.Text) != 0) settings.GameKeyPassives = _keyPassives.Text.Trim();

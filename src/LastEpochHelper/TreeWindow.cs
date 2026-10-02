@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.IO;
@@ -16,7 +17,7 @@ namespace LastEpochHelper;
 /// </summary>
 internal sealed class TreeWindow : Window
 {
-    private const double CanvasWidth = 860, CanvasHeight = 420, Inset = 50, NodeSize = 40, SmallNodeSize = 24;
+    private const double CanvasWidth = 860, CanvasHeight = 440, Inset = 50, NodeSize = 40, SmallNodeSize = 24;
 
     private static readonly Brush Gold = Frozen("#C9A85C");
     private static readonly Brush GoldFill = Frozen("#4A3A14");
@@ -29,11 +30,19 @@ internal sealed class TreeWindow : Window
     private static readonly Brush Red = Frozen("#FF6B5C");
     private static readonly Brush Text = Frozen("#E8E4D8");
     private static readonly Brush Muted = Frozen("#A9A493");
+    // The two markers on a "next" node have their own colours, so they can be told apart at a glance.
+    private static readonly Brush OrderBlue = Frozen("#5BB8FF");
+    private static readonly Brush OrderTint = Frozen("#335BB8FF");
+    private static readonly Brush AmountOrange = Frozen("#FF9A3D");
+    private static readonly Brush AmountTint = Frozen("#33FF9A3D");
+    private static readonly Brush Amber = Frozen("#FFC857");
+    private static readonly Brush Plate = Frozen("#F00E0F14");
 
     private readonly Session _session;
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal };
     private readonly Canvas _canvas = new() { Width = CanvasWidth, Height = CanvasHeight, ClipToBounds = true };
-    private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(0, 4, 0, 0) };
+    private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(2, 10, 2, 0), LineHeight = 20 };
+    private readonly TextBlock _check = new() { TextWrapping = TextWrapping.Wrap, Foreground = Muted, Margin = new Thickness(2, 8, 2, 0), FontSize = 12, MaxWidth = CanvasWidth, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock _points = new() { Foreground = Muted, VerticalAlignment = VerticalAlignment.Center };
     private Border _markers = null!;
     private Border _amounts = null!;
@@ -90,9 +99,9 @@ internal sealed class TreeWindow : Window
         var plus = _plus = HeaderButton("+", () => Adjust(+1));
         minus.ToolTip = "One point fewer";
         plus.ToolTip = "One point more";
-        _markers = HeaderButton("① order", ToggleMarkers);
+        _markers = HeaderButton("① Order", ToggleMarkers);
         _markers.ToolTip = "Show or hide the numbers that mark the order of the next points (remembered separately for passives and skills)";
-        _amounts = HeaderButton("+N", ToggleAmounts);
+        _amounts = HeaderButton("+N Points", ToggleAmounts);
         _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
         // Only there when the game's own points are known for this tree: switches between them and the plan.
         _reset = HeaderButton("game", () => { if (Current() is { } tree) _session.SetPlanView(tree, _session.ShowsActual(tree)); });
@@ -103,7 +112,14 @@ internal sealed class TreeWindow : Window
 
         // The slider is always there. It shows how many points the tree is drawn with; moving it asks
         // for the plan at that many points (hover any control for an explanation).
-        _sliderRow = new DockPanel { Margin = new Thickness(0, 5, 0, 0), LastChildFill = false };
+        _sliderRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
+        foreach (var chip in new[] { _reset, _markers, _amounts })
+        {
+            chip.BorderThickness = new Thickness(1);
+            chip.CornerRadius = new CornerRadius(10);
+            chip.Padding = new Thickness(10, 2, 10, 3);
+            chip.Margin = new Thickness(6, 0, 0, 0);
+        }
         _slider.ValueChanged += (_, _) =>
         {
             if (_settingSlider || Current() is not { } tree) return;
@@ -121,6 +137,7 @@ internal sealed class TreeWindow : Window
         body.Children.Add(header);
         body.Children.Add(new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#14FFFFFF"), CornerRadius = new CornerRadius(4) });
         body.Children.Add(_next);
+        body.Children.Add(_check);
         body.Children.Add(_sliderRow);
 
         Content = new Border
@@ -129,7 +146,7 @@ internal sealed class TreeWindow : Window
             BorderBrush = Frozen("#5A4B2A"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 6, 10, 8),
+            Padding = new Thickness(12, 6, 12, 12),
             Child = body,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: false);
@@ -305,6 +322,7 @@ internal sealed class TreeWindow : Window
             Canvas.SetTop(_empty, CanvasHeight / 2 - 40);
             _canvas.Children.Add(_empty);
             _next.Text = "";
+            _check.Visibility = Visibility.Collapsed;
             _sliderRow.Visibility = Visibility.Collapsed;
             return;
         }
@@ -325,16 +343,25 @@ internal sealed class TreeWindow : Window
         DrawTree(build, tree, state);
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
-        ((TextBlock)_markers.Child).Foreground = MarkersOn(tree) ? Green : Muted;
-        ((TextBlock)_amounts.Child).Foreground = AmountsOn(tree) ? Green : Muted;
-        var parts = new List<string>();
-        for (int i = 0; i < state.Next.Count; i++)
+        Chip(_markers, MarkersOn(tree), OrderBlue, OrderTint);
+        Chip(_amounts, AmountsOn(tree), AmountOrange, AmountTint);
+        // The same colours as the markers on the nodes: blue for the order, orange for the points.
+        _next.Inlines.Clear();
+        if (state.Next.Count == 0)
+            _next.Inlines.Add(new Run(state.StagePoints == 0 ? "No points planned here yet." : "Nothing more planned in this tree.") { Foreground = Muted });
+        else
         {
-            var (id, count) = state.Next[i];
-            parts.Add($"{i + 1}. {build.NodeName(id, passive, tree.Name)} +{count}");
+            _next.Inlines.Add(new Run("NEXT   ") { Foreground = Muted, FontSize = 11, FontWeight = FontWeights.SemiBold });
+            for (int i = 0; i < state.Next.Count; i++)
+            {
+                var (id, count) = state.Next[i];
+                _next.Inlines.Add(new Run($"{i + 1}  ") { Foreground = OrderBlue, FontWeight = FontWeights.Bold });
+                _next.Inlines.Add(new Run(build.NodeName(id, passive, tree.Name)));
+                _next.Inlines.Add(new Run($"  +{count}") { Foreground = AmountOrange, FontWeight = FontWeights.Bold });
+                if (i < state.Next.Count - 1) _next.Inlines.Add(new Run("       "));
+            }
         }
-        _next.Text = parts.Count > 0 ? "Next:  " + string.Join("     ", parts)
-            : state.StagePoints == 0 ? "No points planned here yet." : "Nothing more planned in this tree.";
+        ShowCheck(passive);
 
         // The slider always shows the number of points the tree is drawn with.
         int byLevel = _session.PassivePointsByLevel();
@@ -357,10 +384,48 @@ internal sealed class TreeWindow : Window
         ((TextBlock)_reset.Child).Text = state.FromGame
             ? "● game" + (_session.ActualUpdated is { } when ? $" · {Age(when)}" : "")
             : "○ plan";
-        ((TextBlock)_reset.Child).Foreground = state.FromGame ? Green : Muted;
+        Chip(_reset, state.FromGame, Green, Frozen("#227BE06A"));
         _reset.ToolTip = state.FromGame
             ? "Showing the points your character has in the game" + (state.OffPlan.Count > 0 ? $" ({state.OffPlan.Count} node(s) outside the build, ringed red)" : "") + ".\nClick to see the build's plan instead."
             : $"Showing the build's plan at {state.Points} points. Click to go back to the points read from the game ({_session.ActualPoints(tree)}).";
+    }
+
+    private static void Chip(Border chip, bool on, Brush colour, Brush tint)
+    {
+        ((TextBlock)chip.Child).Foreground = on ? colour : Muted;
+        ((TextBlock)chip.Child).FontWeight = on ? FontWeights.SemiBold : FontWeights.Normal;
+        chip.Background = on ? tint : Brushes.Transparent;
+        chip.BorderBrush = on ? colour : Dim;
+    }
+
+    /// <summary>
+    /// A self-check under the passive tree: do the points seen in the game match the level and the
+    /// quest rewards the overlay has counted? If not, one of the two was read or counted wrong.
+    /// </summary>
+    private void ShowCheck(bool passive)
+    {
+        _check.Visibility = passive ? Visibility.Visible : Visibility.Collapsed;
+        if (!passive) return;
+        var check = _session.CheckPassives();
+        string quests = check.Quest == 1 ? "1 quest passive" : $"{check.Quest} quest passives";
+        if (!check.Known)
+        {
+            _check.Foreground = Muted;
+            _check.Text = $"Check:  level {check.Level} + {quests} should give {check.Expected} passive points. Open the passive tree in the game to compare.";
+            return;
+        }
+        string seen = check.Unspent is { } unspent ? $"{check.InGame} points in the game ({check.Spent} spent + {unspent} unspent)" : $"{check.Spent} points spent in the game";
+        if (check.Agrees)
+        {
+            _check.Foreground = Green;
+            _check.Text = $"✓  {seen} = level {check.Level} + {quests}. The overlay reads your character correctly.";
+            return;
+        }
+        _check.Foreground = Amber;
+        _check.Text = $"⚠  {seen}: with {quests} you should be level {check.ImpliedLevel}, but you are level {check.Level} ({check.Expected} points expected).  "
+            + (check.InGame > check.Expected
+                ? "A quest reward is missing from the count - open the map (M) - or your level has not refreshed yet (it does on a zone change)."
+                : "Unspent points, points in a tab not opened in the game yet, or a quest counted that you have not done.");
     }
 
     private static string Age(DateTime when)
@@ -375,7 +440,7 @@ internal sealed class TreeWindow : Window
         double minX = tree.Nodes.Min(n => n.X), maxX = tree.Nodes.Max(n => n.X);
         double minY = tree.Nodes.Min(n => n.Y), maxY = tree.Nodes.Max(n => n.Y);
         double scale = Math.Min((CanvasWidth - 2 * Inset) / Math.Max(1, maxX - minX), (CanvasHeight - 2 * Inset) / Math.Max(1, maxY - minY));
-        double offsetX = (CanvasWidth - (maxX - minX) * scale) / 2, offsetY = (CanvasHeight - (maxY - minY) * scale) / 2 - 6;
+        double offsetX = (CanvasWidth - (maxX - minX) * scale) / 2, offsetY = (CanvasHeight - (maxY - minY) * scale) / 2 - 10;
         Point At(TreeNode n) => new(offsetX + (n.X - minX) * scale, offsetY + (n.Y - minY) * scale);
         var byId = tree.Nodes.ToDictionary(n => n.Id);
 
@@ -440,27 +505,30 @@ internal sealed class TreeWindow : Window
             if (order < 0) continue;
             if (showOrder)
             {
+            // The order: a blue disc at the top left.
             var badge = new Border
             {
-                Width = 16, Height = 16, CornerRadius = new CornerRadius(8), Background = Green,
+                Width = 20, Height = 20, CornerRadius = new CornerRadius(10), Background = OrderBlue,
+                BorderBrush = Plate, BorderThickness = new Thickness(2),
                 Child = new TextBlock
                 {
-                    Text = (order + 1).ToString(), FontSize = 10, FontWeight = FontWeights.Bold, Foreground = Brushes.Black,
+                    Text = (order + 1).ToString(), FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.Black,
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
                 },
                 IsHitTestVisible = false,
             };
-            Place(badge, p.X + NodeSize / 2 - 9, p.Y - NodeSize / 2 - 6);
+            Place(badge, p.X - NodeSize / 2 - 7, p.Y - NodeSize / 2 - 7);
             }
             if (!showAmount) continue;
 
-            // How many points this step puts here.
+            // How many points this step puts here: an orange tag at the top right.
             var add = new Border
             {
-                Background = Green, CornerRadius = new CornerRadius(3), Padding = new Thickness(3, 0, 3, 0), Height = 15, IsHitTestVisible = false,
-                Child = new TextBlock { Text = $"+{state.Next[order].Count}", FontSize = 10.5, FontWeight = FontWeights.Bold, Foreground = Brushes.Black },
+                Background = AmountOrange, CornerRadius = new CornerRadius(4), Padding = new Thickness(4, 0, 4, 1), Height = 18, IsHitTestVisible = false,
+                BorderBrush = Plate, BorderThickness = new Thickness(2),
+                Child = new TextBlock { Text = $"+{state.Next[order].Count}", FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.Black, VerticalAlignment = VerticalAlignment.Center },
             };
-            Place(add, p.X + 17, p.Y + NodeSize / 2 - 9);
+            Place(add, p.X + NodeSize / 2 - 10, p.Y - NodeSize / 2 - 7);
         }
     }
 

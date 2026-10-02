@@ -14,6 +14,26 @@ public class ScreenReaderTests
         string? output = Environment.GetEnvironmentVariable("LEH_OCR_OUT");
         if (output is null) return;
 
+        // LEH_OCR_LABELS = "left,top,width,height;Skill name": the enlarged label read on a saved picture.
+        if (Environment.GetEnvironmentVariable("LEH_OCR_LABELS") is { } labels && Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } shot
+            && Environment.GetEnvironmentVariable("LEH_TREE_SAMPLE") is { } treeFile && LastEpochHelper.Core.BuildTree.Load(treeFile) is { } tree)
+        {
+            var parts2 = labels.Split(';');
+            var r = parts2[0].Split(',').Select(int.Parse).ToArray();
+            var started2 = DateTime.UtcNow;
+            var reads = await new ScreenReader().ReadLabelsFromFileAsync(shot, new System.Drawing.Rectangle(r[0], r[1], r[2], r[3]));
+            var tokens2 = LastEpochHelper.Core.TreeReader.Merge(reads.Select(LastEpochHelper.Core.TreeReader.Tokens).ToArray());
+            var skill = tree.Trees.First(t => t.Name == parts2[1]);
+            var points = LastEpochHelper.Core.TreeReader.Read(tokens2, skill);
+            File.WriteAllLines(output, new[]
+            {
+                $"ms={(DateTime.UtcNow - started2).TotalMilliseconds:0} per-read labels={string.Join("/", reads.Select(x => LastEpochHelper.Core.TreeReader.Tokens(x).Count))} merged={tokens2.Count} nodes={skill.Nodes.Count(n => n.Max >= 1)}",
+                points is null ? "NO FIT" : $"matched={points.Count}: " + string.Join(", ", points.Where(kv => kv.Value > 0).Select(kv => $"{skill.Nodes.First(n => n.Id == kv.Key).Name}={kv.Value}")),
+                "labels: " + string.Join("  ", tokens2.Select(t => $"{t.Have}/{t.Max}@{t.X:0},{t.Y:0}")),
+            });
+            return;
+        }
+
         // LEH_OCR_FILE reads a saved picture word by word instead of the live screen.
         if (Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } picture)
         {

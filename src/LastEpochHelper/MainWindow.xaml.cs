@@ -64,6 +64,15 @@ public partial class MainWindow : Window
     private GamePanel _expectedPanel;
     /// <summary>Opened by hand (hotkey or menu), so it stays until closed by hand.</summary>
     private bool _treePinned;
+    private TreeDef? _pendingSkillRead;
+    /// <summary>What the game was last seen showing (panel and skill; passive tab), to notice when it changes.</summary>
+    private string? _gameView;
+    private TreeDef? _gameTab;
+    private ScreenReader? _labelReader;
+    private bool _readingLabels;
+    private DateTime _lastLabelRead = DateTime.MinValue;
+    private int _mapReadsLeft;
+    private DateTime _mapReadAt = DateTime.MinValue;
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(6);
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private bool _updating;
@@ -135,7 +144,7 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
-        _followTimer.Tick += (_, _) => WatchPanel();
+        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); };
         _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
@@ -245,7 +254,7 @@ public partial class MainWindow : Window
 
         _keyboard?.Dispose();
         _keyboard = null;
-        if (Settings.FollowGameKeys)
+        if (Settings.FollowGameKeys || Settings.ReadCountersFromMap)
         {
             _keyboard = new KeyboardWatcher();
             // Never do the work inside the hook callback: Windows forbids outgoing COM calls there (which
@@ -376,7 +385,7 @@ public partial class MainWindow : Window
     private void ShowTree(bool show, string? kind = null)
     {
         _treeWanted = show;
-        if (!show) { _panelRegion = null; _panelMisses = 0; }
+        if (!show) { _panelRegion = null; _panelMisses = 0; _gameView = null; _gameTab = null; }
         if (show)
         {
             if (_treeWindow is null)
@@ -449,10 +458,19 @@ public partial class MainWindow : Window
                 if (!quick) _panelRegion = reading.Anchor is { } anchor ? RegionAround(anchor) : null;
 
                 string kind = reading.Panel == GamePanel.Passives ? TreeDef.PassiveKind : TreeDef.SkillKind;
+                // Follow the game when it changes what it shows - not on every look, or a tab the
+                // player picked here by hand would be taken away again a moment later.
+                string view = kind + "|" + reading.Skill;
+                bool changed = view != _gameView;
+                _gameView = view;
                 if (!_treeWanted) ShowTree(true, kind);                       // the game opened a panel we missed
-                else if (_treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
-                if (reading.Skill is not null) _treeWindow?.SelectSkill(reading.Skill);
-                if (!quick) ReadNodePoints(words, reading);
+                else if (changed && _treeWindow!.CurrentKind != kind) _treeWindow.SelectKind(kind);
+                if (changed && reading.Skill is not null) _treeWindow?.SelectSkill(reading.Skill);
+                if (!quick)
+                {
+                    if (reading.Panel == GamePanel.Passives) ReadUnspent(lines);
+                    ReadNodePoints(words, reading);
+                }
             }
             else if (quick)
             {
@@ -469,6 +487,18 @@ public partial class MainWindow : Window
         finally { _reading = false; }
     }
 
+    /// <summary>"3 UNSPENT POINTS" on the passive panel, for the level self-check in the tree window.</summary>
+    private void ReadUnspent(List<ScreenLine> lines)
+    {
+        int? unspent = null;
+        foreach (var line in lines)
+            if (System.Text.RegularExpressions.Regex.Match(line.Text.Replace('O', '0'), @"(\d{1,3})\s*UNSPENT\s*POINT", System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } m)
+                unspent = int.Parse(m.Groups[1].Value);
+        if (unspent is null || unspent == _session.UnspentPassives) return;
+        _session.UnspentPassives = unspent;
+        _treeWindow?.Render();
+    }
+
     /// <summary>
     /// Takes the "2/6" labels under the game's nodes and stores them as the character's real points.
     /// For passives the labels themselves say which tab is showing; for a skill, its heading does.
@@ -477,23 +507,114 @@ public partial class MainWindow : Window
     {
         if (!Settings.ReadPointsFromScreen || _session.Tree is not { } build) return;
         var tokens = TreeReader.Tokens(words);
-        if (tokens.Count < 4) return;
+        if (reading.Panel == GamePanel.Passives && tokens.Count < 4) return;
 
         if (reading.Panel == GamePanel.Passives)
         {
             if (TreeReader.ReadBest(tokens, build.Trees.Where(t => t.Kind == TreeDef.PassiveKind)) is { } fit)
             {
                 _session.SetReadPoints(fit.Tree, fit.Points);
-                // Show the same tab the game is showing.
-                _treeWindow?.SelectTab(fit.Tree);
+                // Show the same tab the game is showing, when the game switches tab.
+                if (fit.Tree != _gameTab)
+                {
+                    _gameTab = fit.Tree;
+                    _treeWindow?.SelectTab(fit.Tree);
+                }
             }
         }
         else if (reading.Skill is not null && build.Trees.FirstOrDefault(t => t.Kind == TreeDef.SkillKind && t.Name == reading.Skill) is { } skill)
         {
+            _pendingSkillRead = skill; // skill labels need the slower, enlarged read: see ReadSkillLabels
+        }
+    }
+
+    /// <summary>
+    /// The labels under skill nodes sit in small dark plates that the ordinary read mostly misses, so
+    /// an open skill tree gets a dedicated read of the panel, enlarged and in high contrast. It is
+    /// slower, so it runs at most every few seconds and only while a skill tree is showing.
+    /// </summary>
+    private async void ReadSkillLabels()
+    {
+        if (_pendingSkillRead is not { } skill || _readingLabels || !_game.GameFocused) return;
+        if (_treeWindow is not { IsVisible: true } || _treeWindow.CurrentKind != TreeDef.SkillKind) { _pendingSkillRead = null; return; }
+        if (DateTime.UtcNow - _lastLabelRead < TimeSpan.FromSeconds(2.5)) return;
+        // Its own reader, so that following the open panel carries on while this slower read runs.
+        _labelReader ??= new ScreenReader();
+        if (!_labelReader.Available) return;
+        _pendingSkillRead = null;
+        _lastLabelRead = DateTime.UtcNow;
+        _readingLabels = true;
+        try
+        {
+            // The game's panel is centred; on an ultrawide the sides are just the game world.
+            var game = _game.GameBounds;
+            int width = game.Right - game.Left, height = game.Bottom - game.Top;
+            int panelWidth = Math.Min(width, (int)(height * 1.8));
+            var area = new Native.RECT { Left = game.Left + (width - panelWidth) / 2, Right = game.Left + (width + panelWidth) / 2, Top = game.Top, Bottom = game.Bottom };
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+
+            var reads = await _labelReader.ReadLabelsAsync(area, masks);
+            // Another skill was opened meanwhile: this picture may be half one tree, half the other.
+            if (_pendingSkillRead is { } now && now != skill) return;
+            var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
             var points = TreeReader.Read(tokens, skill);
             if (points is not null) _session.SetReadPoints(skill, points);
-            WriteSkillTreeDiagnostics(words, tokens, skill, points);
+            WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
         }
+        finally { _readingLabels = false; }
+    }
+
+    /// <summary>
+    /// After the map key: reads the game's quest-reward counters ("3/15" and "1/8" in a corner of the
+    /// map) and takes them as the truth for the overlay's passive and idol counters.
+    /// </summary>
+    private async void ReadMapCounters()
+    {
+        if (_mapReadsLeft <= 0 || _reading || DateTime.UtcNow < _mapReadAt || !_game.GameFocused) return;
+        _screenReader ??= new ScreenReader();
+        if (!_screenReader.Available) { _mapReadsLeft = 0; return; }
+        _mapReadsLeft--;
+        _mapReadAt = DateTime.UtcNow.AddMilliseconds(450);
+        _reading = true;
+        try
+        {
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+            // "PASSIVE POINTS REWARDS (6/15)" and "IDOL SLOT REWARDS (1/8)" stand in the map's bottom
+            // left corner; reading just that corner is quick enough to repeat.
+            var game = _game.GameBounds;
+            var corner = new Native.RECT
+            {
+                Left = game.Left, Right = game.Left + (int)((game.Right - game.Left) * 0.35),
+                Top = game.Bottom - (int)((game.Bottom - game.Top) * 0.3), Bottom = game.Bottom,
+            };
+            var lines = await _screenReader.ReadAsync(corner, masks);
+            var counters = MapCounters.Parse(lines, _session.Guide.PassiveCap, _session.Guide.IdolCap);
+            if (counters is not null || _mapReadsLeft == 0) WriteMapDiagnostics(lines, counters);
+            if (counters is not { } found) return;
+            _mapReadsLeft = 0;
+            _session.SetMapCounters(found.Passive, found.Idol);
+        }
+        finally { _reading = false; }
+    }
+
+    /// <summary>What the reader saw on the map screen, and once a picture of it; local only, for tuning.</summary>
+    private void WriteMapDiagnostics(List<ScreenLine> lines, (int Passive, int Idol)? counters)
+    {
+        try
+        {
+            var text = new List<string> { $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  counters={(counters is { } c ? $"{c.Passive} passives, {c.Idol} idols" : "not found")}" };
+            text.AddRange(lines.OrderBy(l => l.Y).Take(400).Select(l => $"{l.Height,4:0} @{l.X,5:0},{l.Y,5:0}  {l.Text}"));
+            string notes = Path.Combine(_session.DataDir, "panel-ocr-map.txt"), picture = Path.Combine(_session.DataDir, "panel-map.png");
+            // The key closes the map as well as opening it, so keep the look before this one too.
+            if (File.Exists(notes)) File.Copy(notes, Path.Combine(_session.DataDir, "panel-ocr-map-previous.txt"), overwrite: true);
+            File.WriteAllLines(notes, text);
+            if (!File.Exists(picture)) ScreenCapture.Save(_game.GameBounds, picture, maxWidth: int.MaxValue);
+        }
+        catch (IOException) { }
     }
 
     /// <summary>
@@ -590,11 +711,22 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (key == KeyboardWatcher.VirtualKey(Settings.GameKeyMap) && Settings.ReadCountersFromMap && !_chatting)
+        {
+            // The map fades in over about a second; look a few times until the counters are there.
+            _mapReadsLeft = 5;
+            _mapReadAt = DateTime.UtcNow.AddMilliseconds(400);
+            return;
+        }
+        if (!Settings.FollowGameKeys) return;
+
         string? kind = key == KeyboardWatcher.VirtualKey(Settings.GameKeyPassives) ? TreeDef.PassiveKind
             : key == KeyboardWatcher.VirtualKey(Settings.GameKeySkills) ? TreeDef.SkillKind : null;
         if (kind is null) return;
 
         _expectedPanel = kind == TreeDef.PassiveKind ? GamePanel.Passives : GamePanel.Skills;
+        _gameView = null;
+        _gameTab = null;
         _lastPanelKey = DateTime.UtcNow;
         _verifyUntil = DateTime.UtcNow.AddSeconds(2.5);
         _forceFullRead = true;

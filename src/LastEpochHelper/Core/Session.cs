@@ -5,6 +5,17 @@ namespace LastEpochHelper.Core;
 /// <summary>A reward-bearing side quest line in a step the player has already left without ticking it.</summary>
 public sealed record PendingReward(string Key, GuideTask Task, string Zone);
 
+/// <param name="Expected">Points the level and quest rewards should give.</param>
+/// <param name="Spent">Points seen in the game's passive tree; null when it has not been read.</param>
+public sealed record PassiveCheck(int Level, int Quest, int Expected, int? Spent, int? Unspent)
+{
+    public bool Known => Spent is not null;
+    public int InGame => (Spent ?? 0) + (Unspent ?? 0);
+    /// <summary>The level a character with these points and quest rewards would be.</summary>
+    public int ImpliedLevel => Math.Max(1, InGame - Quest + 2);
+    public bool Agrees => Known && InGame == Expected;
+}
+
 /// <summary>
 /// The overlay's state without any UI: which character is being played, where it is in its route,
 /// what it has earned, and how long it has taken. Fed with log events; raises <see cref="Changed"/>.
@@ -602,6 +613,20 @@ public sealed class Session
     /// <summary>When the points shown for the character were last read or set; null if never.</summary>
     public DateTime? ActualUpdated => Profile.Actual?.Fetched;
 
+    /// <summary>"N UNSPENT POINTS" as last read off the game's passive panel; null when not seen.</summary>
+    public int? UnspentPassives { get; set; }
+
+    /// <summary>
+    /// Compares the passive points seen in the game with what the character's level and counted quest
+    /// rewards should give. When the two disagree, something was read or counted wrong.
+    /// </summary>
+    public PassiveCheck CheckPassives()
+    {
+        int quest = Rewards().Passive;
+        int? spent = Profile.Actual is { Passives.Count: > 0 } actual ? actual.Passives.Values.Sum() : null;
+        return new PassiveCheck(Profile.Level, quest, BuildTree.PassivePoints(Profile.Level, quest), spent, spent is null ? null : UnspentPassives);
+    }
+
     /// <summary>Total points the game was last seen to have in this kind of tree.</summary>
     public int ActualPoints(TreeDef tree) => Profile.Actual is not { } actual ? 0
         : tree.Kind == TreeDef.PassiveKind ? actual.Passives.Values.Sum()
@@ -667,9 +692,44 @@ public sealed class Session
     /// </summary>
     public (int Passive, int Idol, List<PendingReward> Pending) Rewards()
     {
+        var (passive, idol, pending) = OwnRewards();
+        // What the game's map said, plus what has been earned since. Ticking an older quest later does
+        // not add to it: the map had already counted that one.
+        if (Profile.MapPassives is { } seenPassives && Profile.MapIdols is { } seenIdols)
+        {
+            var (sincePassive, sinceIdol, _) = OwnRewards(Profile.MapIndex);
+            passive = seenPassives + Math.Max(0, sincePassive - Profile.MapBasePassives);
+            idol = seenIdols + Math.Max(0, sinceIdol - Profile.MapBaseIdols);
+        }
+        return (Math.Min(passive, Guide.PassiveCap), Math.Min(idol, Guide.IdolCap), pending);
+    }
+
+    /// <summary>
+    /// Takes the counters read from the game's map as the truth. If they equal the overlay's count
+    /// plus every side-quest reward still listed as unclaimed, those are evidently done and are ticked.
+    /// </summary>
+    public void SetMapCounters(int passive, int idol)
+    {
+        var (ownPassive, ownIdol, pending) = OwnRewards();
+        if (pending.Count > 0 && passive == ownPassive + pending.Sum(p => p.Task.Passive) && idol == ownIdol + pending.Sum(p => p.Task.Idol))
+        {
+            foreach (var reward in pending) Profile.Done.Add(reward.Key);
+        }
+        Profile.MapPassives = passive;
+        Profile.MapIdols = idol;
+        Profile.MapIndex = Tracker.Index;
+        (Profile.MapBasePassives, Profile.MapBaseIdols, _) = OwnRewards(Tracker.Index);
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>The overlay's own bookkeeping, before the map's counters are applied.</summary>
+    /// <param name="from">Only steps from this one onwards.</param>
+    private (int Passive, int Idol, List<PendingReward> Pending) OwnRewards(int from = 0)
+    {
         int passive = 0, idol = 0;
         var pending = new List<PendingReward>();
-        for (int i = 0; i <= Tracker.Index; i++)
+        for (int i = Math.Max(0, from); i <= Tracker.Index; i++)
         {
             var step = Route.Flat[i].Step;
             for (int j = 0; j < step.Tasks.Count; j++)

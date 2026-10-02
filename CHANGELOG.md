@@ -2,6 +2,15 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.2 - Counters from the map, skill trees read properly
+
+- The "x/15 passives" and "x/8 idol slots" counters are now taken from the game's own map: open the map (M) and the overlay reads "Passive points rewards (6/15)" and "Idol slot rewards (1/8)" from its bottom left corner. Side-quest rewards listed as unclaimed are ticked off when the numbers show you have them. The map key can be changed, or the reading turned off, in Settings.
+- Fixed: opening a skill tree that had unspent points (for example Summon Thorn Totem) made the build tree jump back to the passives tab.
+- Fixed: a tab you picked yourself in the build tree was taken away again a moment later. The tree now follows the game when the game changes what it shows, and otherwise leaves your choice alone.
+- New self-check under the passive tree: the points seen in the game are compared with your level and counted quest rewards ("✓ 17 points = level 13 + 6 quest passives"). If they disagree it says which level the points would mean, so you can tell that something was read or counted wrong.
+- The order number (blue) and the "+N points" tag (orange) on the next nodes now have their own colours and corners, with matching switches at the bottom; a little more room under the tree.
+- Points in skill trees are now read from the game far more reliably: the small labels under the nodes get their own enlarged read.
+
 ## 0.7.1 - Steadier sync with the game
 
 - A skill tree that could not be read reliably is no longer shown as having zero points; the overlay keeps the plan view for it instead.

@@ -117,6 +117,75 @@ public sealed class SessionTests : IDisposable
     }
 
     [Fact]
+    public void MapCounters_AreTheTruth_AndLaterRewardsAreAddedOnTop()
+    {
+        var session = MakeSession();
+        EnterWorld(session, "ZA", 1, 0, created: "Hero");
+        session.Tracker.JumpTo(1); // standing in B; the overlay has counted nothing yet
+        Assert.Equal(0, session.Rewards().Passive);
+
+        // The game says 4 passives and 2 idol slots (rewards the overlay knew nothing about).
+        session.SetMapCounters(4, 2);
+        Assert.Equal((4, 2), (session.Rewards().Passive, session.Rewards().Idol));
+
+        // Passing C earns its main reward: one more than the map said.
+        session.Tracker.JumpTo(3);
+        Assert.Equal(5, session.Rewards().Passive);
+
+        // The next look at the map replaces the estimate.
+        session.SetMapCounters(6, 2);
+        Assert.Equal(6, session.Rewards().Passive);
+
+        // Ticking the old side quest afterwards adds nothing: the map had already counted it.
+        session.ToggleDone(Assert.Single(session.Rewards().Pending).Key);
+        Assert.Equal(6, session.Rewards().Passive);
+
+        session.ResetProgress();
+        Assert.Equal(0, session.Rewards().Passive);
+    }
+
+    [Fact]
+    public void PassiveCheck_ComparesPointsInTheGame_WithLevelAndQuestRewards()
+    {
+        var session = MakeSession();
+        EnterWorld(session, "ZA", 13, 0, created: "Hero");
+        session.SetMapCounters(6, 1);
+
+        var unread = session.CheckPassives();
+        Assert.False(unread.Known);
+        Assert.Equal(17, unread.Expected); // 11 from level 13, 6 from quests
+
+        session.Profile.Actual = new ActualTrees { Passives = { [1] = 8, [3] = 5, [6] = 3 } };
+        session.UnspentPassives = 1;
+        var good = session.CheckPassives();
+        Assert.True(good.Agrees);
+        Assert.Equal(17, good.InGame);
+        Assert.Equal(13, good.ImpliedLevel);
+
+        // One point more than level and quests explain: it would take level 14.
+        session.UnspentPassives = 2;
+        var off = session.CheckPassives();
+        Assert.False(off.Agrees);
+        Assert.Equal(14, off.ImpliedLevel);
+    }
+
+    [Fact]
+    public void MapCounters_TickUnclaimedSideRewards_WhenTheNumbersShowTheyAreDone()
+    {
+        var session = MakeSession();
+        EnterWorld(session, "ZA", 1, 0, created: "Hero");
+        session.Tracker.JumpTo(3);
+        Assert.Single(session.Rewards().Pending); // overlay: 1 passive, the side quest unclaimed
+
+        session.SetMapCounters(1, 0); // the game agrees with the overlay: the side quest is not done
+        Assert.Single(session.Rewards().Pending);
+
+        session.SetMapCounters(2, 0); // one more than the overlay counted: exactly the side quest
+        Assert.Empty(session.Rewards().Pending);
+        Assert.Equal(2, session.Rewards().Passive);
+    }
+
+    [Fact]
     public void Rewards_MainCountsWhenPassed_SideIsPendingUntilTickedOrSkipped()
     {
         var session = MakeSession();

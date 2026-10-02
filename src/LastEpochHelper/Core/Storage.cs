@@ -69,6 +69,9 @@ public sealed class Settings
     public bool ShowBuildLines { get; set; }
     public string GameKeyPassives { get; set; } = "P";
     public string GameKeySkills { get; set; } = "S";
+    /// <summary>The game's map key: the map shows the true quest-reward counters, which are read from it.</summary>
+    public string GameKeyMap { get; set; } = "M";
+    public bool ReadCountersFromMap { get; set; } = true;
     // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings
     // file that fails to save loses everything else in it too.)
     public double? TreeLeft { get; set; }
@@ -121,6 +124,16 @@ public sealed class Profile
     public List<DeathEntry> DeathLog { get; set; } = new();
     /// <summary>Trees where the slider's plan view was chosen over the points read from the game.</summary>
     public HashSet<string> PlanViewTrees { get; set; } = new();
+    /// <summary>
+    /// Quest passive points / idol slots as last read from the game's map. Rewards the overlay counts
+    /// from the step the player stood on then (<see cref="MapIndex"/>) onwards, beyond what it counted
+    /// there at the time, are added on top until the next read.
+    /// </summary>
+    public int? MapPassives { get; set; }
+    public int? MapIdols { get; set; }
+    public int MapIndex { get; set; }
+    public int MapBasePassives { get; set; }
+    public int MapBaseIdols { get; set; }
     public string LastSkillTab { get; set; } = "";
     public DateTime LastPlayed { get; set; }
 
@@ -142,6 +155,7 @@ public sealed class Profile
 
     public void ResetProgress()
     {
+        MapPassives = MapIdols = null;
         Index = 0;
         Done.Clear();
         Skipped.Clear();

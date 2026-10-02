@@ -36,6 +36,20 @@ public static partial class TreeReader
     }
 
     /// <summary>
+    /// Combines the labels of several reads of the same picture: each read misses different ones.
+    /// Where two reads see a label in the same place, the earlier list wins.
+    /// </summary>
+    public static List<Token> Merge(params IEnumerable<Token>[] reads)
+    {
+        var merged = new List<Token>();
+        foreach (var read in reads)
+            foreach (var token in read)
+                if (!merged.Any(m => Math.Abs(m.X - token.X) < 25 && Math.Abs(m.Y - token.Y) < 18))
+                    merged.Add(token);
+        return merged;
+    }
+
+    /// <summary>
     /// Points per node id for the nodes whose label could be placed. Null when the labels do not
     /// fit this tree (another tab is showing, or too little of it is visible).
     /// </summary>

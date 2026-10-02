@@ -27,18 +27,21 @@ public static class PanelDetector
                 .OrderByDescending(t => t.Line.Height).Select(t => t.Line).FirstOrDefault();
         }
 
-        // The game's own headings are the best evidence (1.5): "PASSIVES" with "N UNSPENT POINTS"
-        // on the passive panel, "SKILLS & SPECIALIZATIONS" on the skill overview.
-        var passiveHeading = text.Where(t => t.Letters == "passives" || t.Letters.Contains("unspentpoint", StringComparison.Ordinal))
-            .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
+        // The game's own headings are the best evidence (1.5): "PASSIVES" on the passive panel,
+        // "SKILLS & SPECIALIZATIONS" on the skill overview. ("N UNSPENT POINTS" is no evidence: a
+        // skill tree with points left to spend says it too.)
+        var passiveHeading = text.Where(t => t.Letters == "passives").Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
         var skillsHeading = text.Where(t => t.Letters.Contains("skillsspecializations", StringComparison.Ordinal) || t.Letters == "skillsandspecializations")
             .Select(t => t.Line).FirstOrDefault();
 
         // Without a heading, fall back on the tabs naming the class and its masteries - but the skill
         // overview prints those names too ("Unlocked by spending points in the Shaman passive tree").
+        // "Minimum Specialized Level" is printed under the heading of every open skill tree, and nowhere else.
+        bool skillTree = text.Any(t => t.Letters.Contains("specializedlevel", StringComparison.Ordinal));
+
         PanelReading? passives = null;
         if (passiveHeading is not null) passives = new PanelReading(GamePanel.Passives, Anchor: passiveHeading);
-        else if (skillsHeading is null)
+        else if (skillsHeading is null && !skillTree)
         {
             var tabLines = passiveTabs.Select(LineWith).Where(l => l is not null).Select(l => l!).ToList();
             if (tabLines.Count >= 2) passives = new PanelReading(GamePanel.Passives, Anchor: tabLines.OrderBy(l => l.Y).First());
