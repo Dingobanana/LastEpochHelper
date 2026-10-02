@@ -617,6 +617,8 @@ public partial class MainWindow : Window
             if (quick) lines = await _screenReader.ReadAsync(_panelRegion!.Value, masks);
             else (lines, words) = await _screenReader.ReadBothAsync(_game.GameBounds, masks);
             var reading = PanelDetector.Detect(lines, tabs, skills, _expectedPanel);
+            // How the picture of the screen came out says a lot when following fails on someone's machine (HDR).
+            if (!quick) ActivityLog.Change("levels", $"screen picture: darkest {Levels.Last.Low}, brightest {Levels.Last.High}{(Levels.Last.Stretched ? " - washed out, contrast restored before reading" : "")}");
             // A quick look that misses is routine (the next full look decides), so it is not worth a line.
             if (!quick || reading.Panel != GamePanel.None)
                 ActivityLog.Change(quick ? "panel-quick" : "panel", $"game shows {reading.Panel}{(reading.Skill ?? reading.Tab) switch { null => "", var what => " / " + what }} ({(quick ? "quick look" : "full look")})");

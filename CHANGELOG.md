@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.13 - Following skills with HDR on
+
+- With HDR switched on, Windows gives programs a washed-out copy of the screen, and the small grey print the overlay used to recognise an open skill tree was lost in it - so the build tree stopped following the skill you opened. Two changes: the overlay now restores the contrast of such a picture before reading it, and it recognises an open skill tree by the skill's name with "LEVEL n" in white right under it, which stays readable.
+- The activity log (in a bug report) now says how the picture of the screen came out, so a problem like this can be seen instead of guessed.
+
 ## 0.7.12 - No more jumping between skills
 
 - Fixed: on the game's Skills & Specializations overview the build tree could jump from one skill's tab to another every second or two. The overview lists every skill at the same size, and the overlay took whichever name happened to be read slightly bigger for an open skill tree. A skill is now only followed when the game really has that skill's tree open.

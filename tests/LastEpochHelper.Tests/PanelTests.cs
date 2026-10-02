@@ -199,6 +199,39 @@ public class SkillTreeWithUnspentPointsTests
     }
 
     [Fact]
+    public void AnOpenTree_IsRecognisedByItsLevelLine_WhenTheSmallPrintCannotBeRead()
+    {
+        var tabs = new[] { "Mage", "Sorcerer", "Spellblade", "Runemaster" };
+        var skills = new[] { "Flame Reave", "Enchant Weapon", "Surge", "Firebrand" };
+        // What is left of an open tree when the grey small print is lost: the heading and "LEVEL 12" under it.
+        var tree = new[]
+        {
+            new ScreenLine("FLAME REAVE", 21, 1435, 156, 200), new ScreenLine("LEVEL 12", 16, 1436, 208, 80),
+            new ScreenLine("Enchant Weapon", 13, 3300, 149, 120), // another skill's name elsewhere on screen
+        };
+        foreach (bool strict in new[] { false, true })
+        {
+            var reading = PanelDetector.Detect(tree, tabs, skills, strict: strict);
+            Assert.Equal((GamePanel.Skills, "Flame Reave"), (reading.Panel, reading.Skill));
+            Assert.True(reading.Anchor!.Y + reading.Anchor.Height * 3 >= 208 + 16); // name and level are watched together
+        }
+        Assert.Equal("Surge", PanelDetector.Detect(new[] { new ScreenLine("SURGE", 21, 1435, 156, 90), new ScreenLine("LEVEL l2", 16, 1436, 208, 80) }, tabs, skills).Skill);
+
+        // A skill the build does not use: the tree stays open, but nothing opens it unasked.
+        var unknown = new[] { new ScreenLine("STATIC ORB", 21, 1435, 156, 200), new ScreenLine("LEVEL 3", 16, 1436, 208, 80) };
+        Assert.Equal(GamePanel.Skills, PanelDetector.Detect(unknown, tabs, skills, GamePanel.Skills).Panel);
+        Assert.Null(PanelDetector.Detect(unknown, tabs, skills, GamePanel.Skills).Skill);
+        Assert.Equal(GamePanel.None, PanelDetector.Detect(unknown, tabs, skills, strict: true).Panel);
+
+        // Not a tree: a level line with nothing over it, one that is not under the name, or the overview.
+        Assert.Equal(GamePanel.None, PanelDetector.Detect(new[] { new ScreenLine("LEVEL 13", 16, 2500, 800, 80) }, tabs, skills).Panel);
+        Assert.Null(PanelDetector.Detect(new[] { new ScreenLine("FLAME REAVE", 21, 1435, 156, 200), new ScreenLine("LEVEL 13", 16, 2500, 800, 80) }, tabs, skills).Skill);
+        var overview = new[] { new ScreenLine("S & SPECIALIZATIONS", 32, 1539, 82, 400), new ScreenLine("Flame Reave", 21, 1801, 562, 140), new ScreenLine("LEVEL 12", 16, 1802, 600, 80) };
+        Assert.Null(PanelDetector.Detect(overview, tabs, skills).Skill);
+        Assert.Equal(GamePanel.Skills, PanelDetector.Detect(overview, tabs, skills, strict: true).Panel);
+    }
+
+    [Fact]
     public void LabelsFromTwoReads_AreCombinedWithoutDoubles()
     {
         var first = new[] { new TreeReader.Token(100, 100, 1, 3), new TreeReader.Token(400, 100, 0, 4) };

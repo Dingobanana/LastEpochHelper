@@ -40,9 +40,11 @@ internal sealed class ScreenReader
             using (var g = Drawing.Graphics.FromImage(shot))
             {
                 g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, shot.Size);
+            }
+            Levels.Restore(shot);
+            using (var g = Drawing.Graphics.FromImage(shot))
                 foreach (var mask in masks)
                     g.FillRectangle(Drawing.Brushes.Black, mask.Left - bounds.Left, mask.Top - bounds.Top, mask.Right - mask.Left, mask.Bottom - mask.Top);
-            }
             return await ReadLabelsAsync(shot, bounds.Left, bounds.Top);
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
@@ -120,10 +122,13 @@ internal sealed class ScreenReader
     }
 
     /// <summary>Reads a saved picture instead of the screen; positions are pixels in the picture.</summary>
-    public async Task<List<ScreenLine>> ReadFileAsync(string path, bool words = false)
+    /// <param name="restore">Put the contrast back first if the picture is washed out, as a read of the screen does.</param>
+    public async Task<List<ScreenLine>> ReadFileAsync(string path, bool words = false, bool restore = true)
     {
         if (_engine is null) return new List<ScreenLine>();
-        using var image = new Drawing.Bitmap(path);
+        using var loaded = new Drawing.Bitmap(path);
+        using var image = loaded.Clone(new Drawing.Rectangle(0, 0, loaded.Width, loaded.Height), Drawing.Imaging.PixelFormat.Format32bppArgb);
+        if (restore) Levels.Restore(image);
         using var stream = new MemoryStream();
         double scale = 1;
         int limit = (int)OcrEngine.MaxImageDimension;
@@ -190,9 +195,11 @@ internal sealed class ScreenReader
                 using (var g = Drawing.Graphics.FromImage(shot))
                 {
                     g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, shot.Size);
+                }
+                Levels.Restore(shot);
+                using (var g = Drawing.Graphics.FromImage(shot))
                     foreach (var mask in masks)
                         g.FillRectangle(Drawing.Brushes.Black, mask.Left - bounds.Left, mask.Top - bounds.Top, mask.Right - mask.Left, mask.Bottom - mask.Top);
-                }
                 // The engine refuses images beyond its limit; a 2x smaller ultrawide still has readable headings.
                 int limit = (int)OcrEngine.MaxImageDimension;
                 if (width > limit || height > limit)
@@ -212,5 +219,66 @@ internal sealed class ScreenReader
             // A failed read just means no tab switch this time.
         }
         return lines;
+    }
+}
+
+/// <summary>
+/// Puts the contrast back into a picture of the screen that came out washed. With HDR switched on,
+/// Windows hands programs a copy of the screen in which black is grey and everything is squeezed
+/// into a narrow band of brightness; small print disappears in it. Stretching that band back out to
+/// black-to-white makes the text readable again. A normal picture already spans the range and is left alone.
+/// </summary>
+internal static class Levels
+{
+    /// <summary>What the last look found: darkest and brightest level in use, and whether it was stretched. For the logs.</summary>
+    public static (int Low, int High, bool Stretched) Last { get; private set; }
+
+    public static void Restore(Drawing.Bitmap picture)
+    {
+        var area = new Drawing.Rectangle(0, 0, picture.Width, picture.Height);
+        var data = picture.LockBits(area, Drawing.Imaging.ImageLockMode.ReadWrite, Drawing.Imaging.PixelFormat.Format32bppArgb);
+        try
+        {
+            int bytes = Math.Abs(data.Stride) * picture.Height;
+            var pixels = new byte[bytes];
+            System.Runtime.InteropServices.Marshal.Copy(data.Scan0, pixels, 0, bytes);
+
+            // Brightness of every 16th pixel is plenty to see how much of the range is in use.
+            var histogram = new int[256];
+            int samples = 0;
+            for (int i = 0; i + 2 < bytes; i += 64)
+            {
+                histogram[(pixels[i] * 11 + pixels[i + 1] * 59 + pixels[i + 2] * 30) / 100]++;
+                samples++;
+            }
+            if (samples == 0) return;
+            int low = Percentile(histogram, samples, 0.01), high = Percentile(histogram, samples, 0.995);
+            // A game screen has true black and bright text somewhere. If it does not, the copy is washed out.
+            bool washed = low > 24 || (high < 190 && high - low > 20);
+            Last = (low, high, washed);
+            if (!washed || high - low < 20) return;
+
+            var table = new byte[256];
+            for (int v = 0; v < 256; v++) table[v] = (byte)Math.Clamp((v - low) * 255 / (high - low), 0, 255);
+            for (int i = 0; i + 2 < bytes; i += 4)
+            {
+                pixels[i] = table[pixels[i]];
+                pixels[i + 1] = table[pixels[i + 1]];
+                pixels[i + 2] = table[pixels[i + 2]];
+            }
+            System.Runtime.InteropServices.Marshal.Copy(pixels, 0, data.Scan0, bytes);
+        }
+        finally { picture.UnlockBits(data); }
+    }
+
+    private static int Percentile(int[] histogram, int samples, double share)
+    {
+        int wanted = (int)(samples * share), seen = 0;
+        for (int v = 0; v < 256; v++)
+        {
+            seen += histogram[v];
+            if (seen > wanted) return v;
+        }
+        return 255;
     }
 }

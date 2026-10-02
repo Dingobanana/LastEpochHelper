@@ -36,8 +36,9 @@ public static class PanelDetector
         // "SKILLS & SPECIALIZATIONS" on the skill overview. ("N UNSPENT POINTS" is no evidence: a
         // skill tree with points left to spend says it too.)
         var passiveHeading = text.Where(t => t.Letters == "passives").Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
-        var skillsHeading = text.Where(t => t.Letters.Contains("skillsspecializations", StringComparison.Ordinal) || t.Letters == "skillsandspecializations")
-            .Select(t => t.Line).FirstOrDefault();
+        // (Often read with its first word cut off: "S & SPECIALIZATIONS".)
+        var skillsHeading = text.Where(t => t.Letters.EndsWith("specializations", StringComparison.Ordinal) && t.Letters.Length <= 26)
+            .Select(t => t.Line).OrderByDescending(l => l.Height).FirstOrDefault();
 
         // Without a heading, fall back on the tabs naming the class and its masteries - but the skill
         // overview prints those names too ("Unlocked by spending points in the Shaman passive tree").
@@ -48,6 +49,35 @@ public static class PanelDetector
         bool specialized = treeMarker is not null;
         treeMarker ??= (text.Any(t => t.Letters == "back") ? text.Where(t => t.Letters == "respec").Select(t => t.Line).FirstOrDefault() : null);
         bool skillTree = treeMarker is not null;
+
+        // Those markers are small grey print, the first thing to go when the picture of the screen is
+        // poor (HDR washes it out). An open tree also shows "LEVEL 12" in plain white right under its
+        // heading, left edges aligned - and the overview has no such pair anywhere.
+        (string Skill, ScreenLine Line)? titled = null;
+        if (passiveHeading is null && skillsHeading is null)
+        {
+            foreach (var level in lines.Where(l => System.Text.RegularExpressions.Regex.IsMatch(l.Text, @"^\s*LEVEL\s*[0-9OoIl|]{1,2}\s*$",
+                         System.Text.RegularExpressions.RegexOptions.IgnoreCase)))
+            {
+                var above = lines.Where(l => l != level && l.Y < level.Y && level.Y - l.Y < Math.Max(l.Height, level.Height) * 5
+                                             && Math.Abs(l.X - level.X) < level.Height * 4).ToList();
+                if ((SkillTitleMatcher.PickLine(above, skills) ?? SkillTitleMatcher.PickClosest(above, skills)) is { } known)
+                {
+                    // Watch name and level together from now on.
+                    titled = (known.Skill, known.Line with { Height = Math.Max(known.Line.Height, (level.Y + level.Height - known.Line.Y) / 3 + 4) });
+                    treeMarker ??= level;
+                    skillTree = true;
+                    break;
+                }
+                // A skill the build does not use: some heading in bigger letters over the level line. Good enough
+                // to keep an open tree open, not to open one unasked (the world map has "LEVEL 13" under a zone name).
+                if (!strict && above.Any(l => l.Height >= level.Height * 1.15 && Letters(l.Text).Length >= 4))
+                {
+                    treeMarker ??= level;
+                    skillTree = true;
+                }
+            }
+        }
 
         PanelReading? passives = null;
         if (passiveHeading is not null)
@@ -85,6 +115,7 @@ public static class PanelDetector
             // A heading read with a letter or two wrong ("SUMM0N TH0RN TOTEM") is still that skill.
             openTree = SkillTitleMatcher.PickLine(above, skills) ?? SkillTitleMatcher.PickClosest(above, skills);
         }
+        openTree ??= titled;
         if (openTree is null && passiveHeading is null && skillTree)
             openTree = SkillTitleMatcher.PickLine(lines, skills) ?? SkillTitleMatcher.PickClosest(lines, skills);
         // Keep an eye on heading and marker together: a quick look at the heading alone could not tell an open tree from the overview.

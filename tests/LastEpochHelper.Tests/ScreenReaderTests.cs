@@ -38,11 +38,12 @@ public class ScreenReaderTests
         if (Environment.GetEnvironmentVariable("LEH_OCR_DETECT") is not null && Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } panelShot
             && Environment.GetEnvironmentVariable("LEH_TREE_SAMPLE") is { } buildFile && LastEpochHelper.Core.BuildTree.Load(buildFile) is { } shownBuild)
         {
-            var read = await new ScreenReader().ReadFileAsync(panelShot);
+            // LEH_OCR_RAW: read the picture as it is, without putting its contrast back first.
+            var read = await new ScreenReader().ReadFileAsync(panelShot, restore: Environment.GetEnvironmentVariable("LEH_OCR_RAW") is null);
             var skillNames = shownBuild.Trees.Where(t => t.Kind == LastEpochHelper.Core.TreeDef.SkillKind).Select(t => t.Name).ToList();
             var seen = LastEpochHelper.Core.PanelDetector.Detect(read, shownBuild.PassiveTabNames, skillNames);
             var strict = LastEpochHelper.Core.PanelDetector.Detect(read, shownBuild.PassiveTabNames, skillNames, strict: true);
-            File.WriteAllLines(output, new[] { $"panel={seen.Panel} skill={seen.Skill} tab={seen.Tab} | strict: panel={strict.Panel} skill={strict.Skill} tab={strict.Tab}" });
+            File.WriteAllLines(output, new[] { $"panel={seen.Panel} skill={seen.Skill} tab={seen.Tab} | strict: panel={strict.Panel} skill={strict.Skill} tab={strict.Tab} | {read.Count} lines read" });
             return;
         }
 
