@@ -249,6 +249,17 @@ internal sealed class TreeWindow : Window
         return trees.FirstOrDefault(t => t.Name == _session.Profile.TreeTab) ?? trees[0];
     }
 
+    /// <summary>
+    /// The tabs to offer. A guide with stages names different skills at different levels; showing only
+    /// the ones of the stage in use keeps skills dropped long ago (or not picked up yet) out of the way.
+    /// The tab that is showing always stays - the game may have a skill open that the stage does not use.
+    /// </summary>
+    private List<TreeDef> VisibleTrees(BuildTree build, TreeDef? showing)
+    {
+        if (build.Stages.Count < 2 || _session.Stage is not { } stage) return build.Trees;
+        return build.Trees.Where(t => t.Kind == TreeDef.PassiveKind || t == showing || stage.Skills.ContainsKey(t.Name)).ToList();
+    }
+
     /// <summary>Shows the first passive tab, or the last-used (else first) skill tab.</summary>
     public void SelectKind(string kind)
     {
@@ -256,7 +267,9 @@ internal sealed class TreeWindow : Window
         if (trees is null) return;
         if (Current() is { } current && current.Kind == kind) return;
         string? remembered = kind == TreeDef.SkillKind ? _session.Profile.LastSkillTab : null;
-        var target = trees.FirstOrDefault(t => t.Kind == kind && t.Name == remembered) ?? trees.FirstOrDefault(t => t.Kind == kind);
+        var offered = VisibleTrees(_session.Tree!, null);
+        var target = offered.FirstOrDefault(t => t.Kind == kind && t.Name == remembered) ?? offered.FirstOrDefault(t => t.Kind == kind)
+                     ?? trees.FirstOrDefault(t => t.Kind == kind);
         if (target is not null) Select(target);
     }
 
@@ -344,7 +357,8 @@ internal sealed class TreeWindow : Window
         // Rebuilding the picture makes it blink, and this is called for every change anywhere in the
         // overlay - so first see whether anything this window shows is different from last time.
         var state = _session.TreeState(tree);
-        string signature = string.Join("|", build.Name, tree.Name, string.Join(",", build.Trees.Select(t => t.Name)),
+        var tabs = VisibleTrees(build, tree);
+        string signature = string.Join("|", build.Name, tree.Name, string.Join(",", tabs.Select(t => t.Name)),
             state.Points, state.StagePoints, state.Stage, state.FromGame,
             string.Join(",", state.Allocated.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
             string.Join(",", state.Target.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
@@ -359,7 +373,7 @@ internal sealed class TreeWindow : Window
         _canvas.Children.Clear();
 
         string? previousKind = null;
-        foreach (var tab in build.Trees)
+        foreach (var tab in tabs)
         {
             // A divider between the passive tabs and the skill tabs.
             if (previousKind is not null && previousKind != tab.Kind)

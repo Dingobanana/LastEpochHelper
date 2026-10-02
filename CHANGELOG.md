@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.8 - Only the stage's skills
+
+- With a guide that has stages, the build tree now shows only the skills of the stage in use - not every skill the guide ever uses. A skill the game has open stays visible even if the stage does not use it.
+
 ## 0.7.7 - Imports that understand the guide
 
 - Most Maxroll build guides hold several versions of one build (Starter, Endgame, Aspirational, sometimes a hardcore or alternative setup). The import used to read those as steps to take one after another, which produced respecs and skill swaps that are not part of any build. Now all versions are imported side by side and one is in use - the first by default.
