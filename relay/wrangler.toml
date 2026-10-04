@@ -23,4 +23,4 @@ simple = { limit = 40, period = 60 }
 # and put the id it prints here.
 [[kv_namespaces]]
 binding = "COUNTS"
-id = "REPLACE_WITH_KV_ID"
+id = "0197e0d268c742998138ce90db18903a"
