@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json.Nodes;
 
 namespace LastEpochHelper.Core;
@@ -17,17 +16,12 @@ public sealed class ActualTrees
 }
 
 /// <summary>
-/// Reads an online character's public profile from Last Epoch Tools, the only place an online
-/// character's trees can be seen from outside the game. Only ever called when the user asks: the
-/// endpoint is undocumented, and the site refreshes a profile at most every couple of hours.
+/// The shape of a character's trees as Last Epoch Tools publishes them. The overlay itself never
+/// fetches from that site (it does not allow programs); this reads the format, for tests and for
+/// files someone saved by hand.
 /// </summary>
 public static class LetProfile
 {
-    public static string ProfilePage(string account) => $"https://www.lastepochtools.com/profile/{Uri.EscapeDataString(account)}";
-
-    private static string Endpoint(string account, string character) =>
-        $"https://www.lastepochtools.com/api/public/account/{Uri.EscapeDataString(account)}/character/{Uri.EscapeDataString(character)}";
-
     /// <summary>Null when the site has no data for that character (it has to be looked up there once).</summary>
     public static ActualTrees? Parse(string json)
     {
@@ -56,15 +50,5 @@ public static class LetProfile
         foreach (var (node, count) in nodes)
             if (int.TryParse(node, out int id) && count is not null) points[id] = count.GetValue<int>();
         return points;
-    }
-
-    public static async Task<ActualTrees?> FetchAsync(string account, string character, HttpClient http)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, Endpoint(account, character));
-        // The site turns away clients that do not look like a browser.
-        request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) LastEpochHelper");
-        using var response = await http.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        return Parse(await response.Content.ReadAsStringAsync());
     }
 }
