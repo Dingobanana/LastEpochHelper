@@ -305,8 +305,7 @@ public static partial class MaxrollImporter
         if (profile["specializedSkills"] is not JsonArray && profile["skillTrees"] is JsonObject trees && game["abilities"] is JsonObject abilities)
         {
             var used = trees.Where(kv => History(kv.Value).Count > 0).Select(kv => kv.Key).ToHashSet();
-            var skills = abilities.Where(kv => kv.Value is JsonObject ability && ability["playerAbilityID"] is JsonValue tree
-                                               && tree.TryGetValue(out string? treeId) && treeId is not null && used.Contains(treeId))
+            var skills = abilities.Where(kv => kv.Value is JsonObject ability && ability["playerAbilityID"].StrOrNull() is { } treeId && used.Contains(treeId))
                 .Select(kv => kv.Key).ToList();
             profile["specializedSkills"] = new JsonArray(skills.Select(s => (JsonNode?)JsonValue.Create(s)).ToArray());
             if (profile["activeSkills"] is not JsonArray)
@@ -404,7 +403,7 @@ public static partial class MaxrollImporter
         var icons = new Dictionary<string, int>();
         if (game["treeAtlas"] is JsonArray cells)
             for (int i = 0; i < cells.Count; i++)
-                if (cells[i] is JsonValue cell && cell.TryGetValue(out string? name) && name is not null) icons[name] = i;
+                if (cells[i].StrOrNull() is { } name) icons[name] = i;
 
         var set = new WeaverSet { AtlasName = atlas ?? "", AtlasCells = icons.Count, Fetched = DateTime.Now };
         set.Tree.Nodes = nodes.Where(kv => int.TryParse(kv.Key, out _) && kv.Value is JsonObject).Select(kv => ToNode(kv.Key, kv.Value!, icons)).ToList();
@@ -602,24 +601,24 @@ public static partial class MaxrollImporter
             || game["classes"] is not JsonArray classes || classIndex < 0 || classIndex >= classes.Count)
             throw new InvalidDataException("The planner does not say which class the build is for (or names one this version of the game data does not have).");
         var cls = classes[classIndex]!;
-        var passiveTree = game["skillTrees"]![cls["treeID"]!.GetValue<string>()]!;
+        var passiveTree = game["skillTrees"]![cls["treeID"].Str()]!;
         var masteries = cls["masteries"]!.AsArray();
-        string MasteryName(int i) => masteries[i]!["name"]!.GetValue<string>();
-        string SkillName(string ability) => game["abilities"]?[ability]?["abilityName"]?.GetValue<string>() ?? ability;
+        string MasteryName(int i) => masteries[i]!["name"].Str();
+        string SkillName(string ability) => game["abilities"]?[ability]?["abilityName"].StrOrNull() ?? ability;
         JsonNode? PassiveNode(int node) => passiveTree["nodes"]?[node.ToString()];
 
         // Base-class skills unlock at a character level; tree skills after N points in that tree.
         var unlock = new Dictionary<string, int>();
         foreach (var a in cls["unlockableAbilities"]!.AsArray())
-            unlock[a!["ability"]!.GetValue<string>()] = a["level"]!.GetValue<int>();
-        foreach (var a in cls["knownAbilities"]!.AsArray()) unlock[a!.GetValue<string>()] = 1;
+            unlock[a!["ability"].Str()] = a["level"].Int();
+        foreach (var a in cls["knownAbilities"]!.AsArray()) unlock[a.Str()] = 1;
         var treeUnlocks = masteries.Select(m => m!["abilities"]!.AsArray()
-            .Select(a => (Need: a!["level"]!.GetValue<int>(), Ability: a["ability"]!.GetValue<string>()))
+            .Select(a => (Need: a!["level"].Int(), Ability: a["ability"].Str()))
             .OrderBy(a => a.Need).ToList()).ToList();
 
         static List<string> Skills(JsonNode? profile, string key) =>
             profile is JsonObject && profile[key] is JsonArray listed
-                ? listed.Select(s => s is JsonValue value && value.TryGetValue(out string? ability) ? ability : null).Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList()
+                ? listed.Select(s => s.StrOrNull()).Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList()
                 : new();
         var used = profiles.SelectMany(p => Skills(p!, "specializedSkills").Concat(Skills(p!, "activeSkills"))).ToHashSet();
 
@@ -631,7 +630,7 @@ public static partial class MaxrollImporter
         var atlas = new Dictionary<string, int>();
         if (game["treeAtlas"] is JsonArray cells)
             for (int i = 0; i < cells.Count; i++)
-                if (cells[i]?.GetValue<string>() is { } cell) atlas[cell] = i;
+                if (cells[i].StrOrNull() is { } cell) atlas[cell] = i;
         var build = new BuildTree
         {
             Name = name, AtlasCells = atlas.Count,
@@ -685,13 +684,13 @@ public static partial class MaxrollImporter
                 int node = added[i];
                 running[node] = running.GetValueOrDefault(node) + 1;
                 var info = PassiveNode(node);
-                int tree = info?["mastery"]?.GetValue<int>() ?? 0;
+                int tree = info?["mastery"].IntOrNull() ?? 0;
                 int at = Interpolate(i + 1, added.Count, lo, level);
-                string nodeName = info?["nodeName"]?.GetValue<string>() ?? $"node {node}";
-                Add(at, "passive", "", group: MasteryName(tree), item: $"{nodeName} ({running[node]}/{info?["maxPoints"]?.GetValue<int>() ?? 0})|{nodeName}");
+                string nodeName = info?["nodeName"].StrOrNull() ?? $"node {node}";
+                Add(at, "passive", "", group: MasteryName(tree), item: $"{nodeName} ({running[node]}/{info?["maxPoints"].IntOrNull() ?? 0})|{nodeName}");
                 if (firstMasteryLevel is null && mastery != 0 && tree == mastery) firstMasteryLevel = at;
 
-                int inTree = running.Where(kv => (PassiveNode(kv.Key)?["mastery"]?.GetValue<int>() ?? 0) == tree).Sum(kv => kv.Value);
+                int inTree = running.Where(kv => (PassiveNode(kv.Key)?["mastery"].IntOrNull() ?? 0) == tree).Sum(kv => kv.Value);
                 foreach (var (need, ability) in treeUnlocks[tree])
                 {
                     if (inTree < need || unlock.ContainsKey(ability)) continue;
@@ -704,7 +703,7 @@ public static partial class MaxrollImporter
             {
                 int at = firstMasteryLevel ?? (index > 0 ? lo + 1 : lo);
                 Add(at, "mastery", $"Choose mastery: {MasteryName(mastery)}");
-                if (masteries[mastery]!["masteryAbility"]?.GetValue<string>() is { } masteryAbility) unlock[masteryAbility] = at;
+                if (masteries[mastery]!["masteryAbility"].StrOrNull() is { } masteryAbility) unlock[masteryAbility] = at;
             }
 
             // ---------- skills
@@ -715,7 +714,7 @@ public static partial class MaxrollImporter
             var newly = spec.Where(s => !prevSpec.Contains(s)).ToList();
             foreach (string ability in spec)
             {
-                string? treeId = game["abilities"]?[ability]?["playerAbilityID"]?.GetValue<string>();
+                string? treeId = game["abilities"]?[ability]?["playerAbilityID"].StrOrNull();
                 var tree = treeId is null ? null : game["skillTrees"]?[treeId];
                 var known = treeId is null ? null : game["skillTrees"]?[treeId]?["nodes"] as JsonObject;
                 var points = treeId is null || known is null || profile["skillTrees"] is not JsonObject
@@ -761,15 +760,15 @@ public static partial class MaxrollImporter
                     int node = fresh[i];
                     count[node] = count.GetValueOrDefault(node) + 1;
                     var info = tree["nodes"]?[node.ToString()];
-                    string nodeName = info?["nodeName"]?.GetValue<string>() ?? $"node {node}";
+                    string nodeName = info?["nodeName"].StrOrNull() ?? $"node {node}";
                     Add(Interpolate(i + 1, fresh.Count, start, level), "skill", "", group: skill,
-                        item: $"{nodeName} ({count[node]}/{info?["maxPoints"]?.GetValue<int>() ?? 0})|{nodeName}");
+                        item: $"{nodeName} ({count[node]}/{info?["maxPoints"].IntOrNull() ?? 0})|{nodeName}");
                 }
             }
 
             var stage = new TreeStage
             {
-                Name = profile["name"]?.GetValue<string>() ?? $"Level {level}",
+                Name = profile["name"].StrOrNull() ?? $"Level {level}",
                 Level = level,
                 Passives = history,
                 Skills = skillHistory.Where(kv => skillTrees.ContainsKey(SkillName(kv.Key)))
@@ -799,26 +798,26 @@ public static partial class MaxrollImporter
 
         foreach (var a in cls["unlockableAbilities"]!.AsArray())
         {
-            string ability = a!["ability"]!.GetValue<string>();
-            int level = a["level"]!.GetValue<int>();
+            string ability = a!["ability"].Str();
+            int level = a["level"].Int();
             if (used.Contains(ability) && level > 1) Add(level, "unlock", $"{SkillName(ability)} unlocks", exact: true);
         }
 
         // One passive tab per tree the build puts points in (the base class tree always).
         var passiveNodes = passiveTree["nodes"]!.AsObject();
         var usedMasteries = build.Stages.SelectMany(s => s.Passives)
-            .Select(n => PassiveNode(n)?["mastery"]?.GetValue<int>() ?? 0).Append(0).Distinct().OrderBy(m => m);
+            .Select(n => PassiveNode(n)?["mastery"].IntOrNull() ?? 0).Append(0).Distinct().OrderBy(m => m);
         foreach (int m in usedMasteries)
             build.Trees.Add(new TreeDef
             {
                 Name = MasteryName(m),
                 Kind = TreeDef.PassiveKind,
-                Nodes = passiveNodes.Where(kv => (kv.Value?["mastery"]?.GetValue<int>() ?? 0) == m).Select(kv => ToNode(kv.Key, kv.Value!, atlas)).ToList(),
+                Nodes = passiveNodes.Where(kv => (kv.Value?["mastery"].IntOrNull() ?? 0) == m).Select(kv => ToNode(kv.Key, kv.Value!, atlas)).ToList(),
             });
         foreach (var (skill, tree) in skillTrees)
         {
             // The root node of a skill tree shows the skill's own icon.
-            string? skillIcon = tree["ability"]?.GetValue<string>() is { } key ? game["abilities"]?[key]?["sprite"]?.GetValue<string>() : null;
+            string? skillIcon = tree["ability"].StrOrNull() is { } key ? game["abilities"]?[key]?["sprite"].StrOrNull() : null;
             build.Trees.Add(new TreeDef
             {
                 Name = skill,
@@ -843,20 +842,20 @@ public static partial class MaxrollImporter
     /// <param name="fallbackIcon">For a node the data gives no picture (a few trees' root nodes): the skill's own.</param>
     private static TreeNode ToNode(string id, JsonNode node, Dictionary<string, int> atlas, string? iconOverride = null, string? fallbackIcon = null)
     {
-        string icon = iconOverride ?? node["icon"]?.GetValue<string>() ?? fallbackIcon ?? "";
-        string description = node["altText"]?.GetValue<string>() ?? "";
-        if (description.Length == 0) description = node["description"]?.GetValue<string>() ?? "";
-        var stats = (node["stats"] as JsonArray)?.Select(s => $"{s?["value"]?.GetValue<string>()} {s?["statName"]?.GetValue<string>()}".Trim())
+        string icon = iconOverride ?? node["icon"].StrOrNull() ?? fallbackIcon ?? "";
+        string description = node["altText"].StrOrNull() ?? "";
+        if (description.Length == 0) description = node["description"].StrOrNull() ?? "";
+        var stats = (node["stats"] as JsonArray)?.Select(s => $"{s?["value"].StrOrNull()} {s?["statName"].StrOrNull()}".Trim())
             .Where(s => s.Length > 0) ?? Enumerable.Empty<string>();
         return new TreeNode
         {
             Id = int.Parse(id),
-            Name = node["nodeName"]?.GetValue<string>() ?? $"node {id}",
-            Max = node["maxPoints"]?.GetValue<int>() ?? 0,
-            X = node["transform"]?["x"]?.GetValue<double>() ?? 0,
+            Name = node["nodeName"].StrOrNull() ?? $"node {id}",
+            Max = node["maxPoints"].IntOrNull() ?? 0,
+            X = node["transform"]?["x"].DoubleOrNull() ?? 0,
             // The planner's y axis points up; screens point down.
-            Y = -(node["transform"]?["y"]?.GetValue<double>() ?? 0),
-            Requires = (node["requirements"] as JsonArray)?.Select(r => r!["node"]!.GetValue<int>()).ToList() ?? new List<int>(),
+            Y = -(node["transform"]?["y"].DoubleOrNull() ?? 0),
+            Requires = (node["requirements"] as JsonArray)?.Select(r => r!["node"].Int()).ToList() ?? new List<int>(),
             Description = string.Join("\n", stats.Append(description).Where(s => s.Length > 0)),
             IconIndex = atlas.GetValueOrDefault(icon, -1),
         };

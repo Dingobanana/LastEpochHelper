@@ -517,6 +517,37 @@ public class MaxrollImporterTests
     }
     """;
 
+    /// <summary>Every text that reads as a number ("12", "1.5") becomes that number, all through the document.</summary>
+    private static System.Text.Json.Nodes.JsonNode? NumbersForText(System.Text.Json.Nodes.JsonNode? node) => node switch
+    {
+        System.Text.Json.Nodes.JsonObject obj => new System.Text.Json.Nodes.JsonObject(obj.Select(kv =>
+            new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(kv.Key, NumbersForText(kv.Value)))),
+        System.Text.Json.Nodes.JsonArray list => new System.Text.Json.Nodes.JsonArray(list.Select(NumbersForText).ToArray()),
+        System.Text.Json.Nodes.JsonValue value when value.TryGetValue(out string? text)
+            && double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double number)
+            => System.Text.Json.Nodes.JsonValue.Create(number),
+        _ => node?.DeepClone(),
+    };
+
+    [Fact]
+    public void Convert_DoesNotCareWhetherMaxrollSendsAValueAsTextOrAsANumber()
+    {
+        // Maxroll's data has switched fields between "12" and 12; one player got a copy where it had,
+        // and every import failed with "An element of type 'Number' cannot be converted to a 'String'".
+        var game = System.Text.Json.Nodes.JsonNode.Parse(Game)!;
+        // A node's stats, as Maxroll lists them: the value is text here...
+        game["skillTrees"]!["kn"]!["nodes"]!["1"]!["stats"] = System.Text.Json.Nodes.JsonNode.Parse("""[{ "value": "5", "statName": "Armour" }]""");
+        var planner = System.Text.Json.Nodes.JsonNode.Parse(Planner)!;
+        var expected = MaxrollImporter.Convert("abc123", "Test build", planner, game);
+
+        // ...and a number in the copy that one player got.
+        var result = MaxrollImporter.Convert("abc123", "Test build", NumbersForText(planner)!, NumbersForText(game)!);
+
+        Assert.Equal(expected.Text, result.Text);
+        Assert.Equal(expected.Tree.Trees[0].Nodes.First(n => n.Name == "Juggernaut").Description,
+                     result.Tree.Trees[0].Nodes.First(n => n.Name == "Juggernaut").Description);
+    }
+
     [Fact]
     public void Convert_KeepsPointOrder_MergesPerLevel_AndProducesAParsablePlan()
     {

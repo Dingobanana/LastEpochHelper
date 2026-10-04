@@ -36,47 +36,47 @@ internal static class MaxrollGear
 
         if (profile["blessings"] is JsonArray blessings)
             foreach (var blessing in blessings)
-                if (blessing is not null && (blessing["itemType"]?.GetValue<int>() ?? -1) == BlessingItemType)
+                if (blessing is not null && (blessing["itemType"].IntOrNull() ?? -1) == BlessingItemType)
                     stage.Blessings.Add(BaseName(blessing, game));
     }
 
     private static JsonNode? Find(JsonNode? list, string key, int value) =>
-        (list as JsonArray)?.FirstOrDefault(n => (n?[key]?.GetValue<int>() ?? -1) == value);
+        (list as JsonArray)?.FirstOrDefault(n => (n?[key].IntOrNull() ?? -1) == value);
 
     private static string Text(JsonNode? node, params string[] keys)
     {
         foreach (string key in keys)
-            if (node?[key]?.GetValue<string>() is { Length: > 0 } text) return text;
+            if (node?[key].StrOrNull() is { Length: > 0 } text) return text;
         return "";
     }
 
     private static string BaseName(JsonNode item, JsonNode game)
     {
-        var type = Find(game["itemTypes"], "baseTypeID", item["itemType"]?.GetValue<int>() ?? -1);
-        var sub = Find(type?["subItems"], "subTypeID", item["subType"]?.GetValue<int>() ?? -1);
+        var type = Find(game["itemTypes"], "baseTypeID", item["itemType"].IntOrNull() ?? -1);
+        var sub = Find(type?["subItems"], "subTypeID", item["subType"].IntOrNull() ?? -1);
         string name = Text(sub, "displayName", "name");
         return name.Length > 0 ? name : Text(type, "displayName", "BaseTypeName");
     }
 
     private static GearItem Describe(string slot, JsonNode item, JsonNode game)
     {
-        var type = Find(game["itemTypes"], "baseTypeID", item["itemType"]?.GetValue<int>() ?? -1);
+        var type = Find(game["itemTypes"], "baseTypeID", item["itemType"].IntOrNull() ?? -1);
         var gear = new GearItem { Slot = slot, Name = BaseName(item, game), Type = Text(type, "displayName", "BaseTypeName") };
-        if (item["uniqueID"] is { } uniqueId && Find(game["uniques"], "uniqueID", uniqueId.GetValue<int>()) is { } unique)
+        if (item["uniqueID"] is { } uniqueId && Find(game["uniques"], "uniqueID", uniqueId.Int()) is { } unique)
         {
             gear.Name = Text(unique, "displayName", "name");
-            gear.UniqueId = uniqueId.GetValue<int>();
-            gear.Rarity = unique["isSetItem"]?.GetValue<bool>() == true ? "set" : "unique";
+            gear.UniqueId = uniqueId.Int();
+            gear.Rarity = unique["isSetItem"].BoolOrNull() == true ? "set" : "unique";
         }
 
         void AddAffix(JsonNode? affix, string suffix = "")
         {
             if (affix?["id"] is not { } id) return;
-            var definition = Find(game["affixes"], "affixId", id.GetValue<int>());
+            var definition = Find(game["affixes"], "affixId", id.Int());
             string name = Text(definition, "affixDisplayName", "affixName");
             if (name.Length == 0) return;
-            gear.Affixes.Add($"{name} T{affix["tier"]?.GetValue<int>() ?? 1}{suffix}");
-            gear.AffixIds.Add(id.GetValue<int>());
+            gear.Affixes.Add($"{name} T{affix["tier"].IntOrNull() ?? 1}{suffix}");
+            gear.AffixIds.Add(id.Int());
         }
         foreach (var affix in item["affixes"] as JsonArray ?? new JsonArray()) AddAffix(affix);
         AddAffix(item["sealedAffix"], " (sealed)");

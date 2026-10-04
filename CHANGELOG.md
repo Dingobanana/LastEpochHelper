@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.22 - Imports that take Maxroll's data as it comes
+
+- Fixed: for some players every build import (and the Weaver trees) failed with "This planner could not be read: it holds something the importer does not understand". Maxroll's game data had sent a value as a number where the importer only took text. The importer now reads such values either way.
+
 ## 0.7.21 - Imports that try again
 
 - If a build cannot be read, the import now fetches Maxroll's game data again and tries once more. The overlay keeps a copy of that data for a day, and a guide updated in the meantime can name skills or nodes the old copy does not know.
