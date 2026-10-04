@@ -160,3 +160,12 @@ The script prints a `WARNING` if a quest step cannot be placed on the full route
 2. Commit.
 3. `pwsh tools/release.ps1` runs the tests, builds the zip and creates the GitHub release `vx.y.z` with the changelog
    section as its text. Running installations find it by themselves.
+
+## License
+
+The code and text in this repository are under the [MIT License](LICENSE): use, change and share them as you like,
+keeping the copyright notice.
+
+That covers this project's own work only. Last Epoch, its name, artwork, icons and game data belong to Eleventh Hour
+Games; build planners and their icons belong to Maxroll; the datamined quest and zone data comes from
+<https://lastepoch.tunklab.com>. None of that is licensed here.
