@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -84,6 +85,7 @@ internal static class Theme
         window.Background = Plate(0xFF);
         window.Foreground = Text;
         window.FontFamily = new FontFamily("Segoe UI");
+        window.Icon = AppIcon;
         window.SourceInitialized += (_, _) =>
         {
             var hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle;
@@ -93,6 +95,18 @@ internal static class Theme
             DwmSetWindowAttribute(hwnd, 35, ref caption, sizeof(int)); // title bar colour
             DwmSetWindowAttribute(hwnd, 34, ref border, sizeof(int));  // window edge colour
         };
+    }
+
+    [ThreadStatic] private static ImageSource? _appIcon;
+
+    /// <summary>The program's icon (app.ico) for a window's title bar and the taskbar.</summary>
+    public static ImageSource? AppIcon
+    {
+        get
+        {
+            try { return _appIcon ??= System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/app.ico")); }
+            catch (Exception e) when (e is IOException or NotSupportedException or UriFormatException) { return null; } // tests: no application
+        }
     }
 
     [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
@@ -166,7 +180,14 @@ internal static class Theme
                                     <TextBlock x:Name="Mark" Text="✓" FontSize="12" FontWeight="Bold" Foreground="#E6CC8C"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" Visibility="Collapsed"/>
                                 </Border>
-                                <ContentPresenter Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                <!-- Long labels wrap instead of running off the window. -->
+                                <ContentPresenter Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">

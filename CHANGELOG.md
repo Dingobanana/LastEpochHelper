@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.23 - An icon of its own
+
+- The overlay has its own icon instead of Windows' plain program icon: "LEH" in gold on the overlay's dark plate with its bronze edge. It shows on the program file, beside the clock, in the taskbar and in the title bar of the settings and the other windows.
+- Long lines in the settings (such as "Help me understand where Last Epoch Helper is used") now wrap onto a second line instead of being cut off.
+
 ## 0.7.22 - Imports that take Maxroll's data as it comes
 
 - Fixed: for some players every build import (and the Weaver trees) failed with "This planner could not be read: it holds something the importer does not understand". Maxroll's game data had sent a value as a number where the importer only took text. The importer now reads such values either way, and so do the loot filter tools.

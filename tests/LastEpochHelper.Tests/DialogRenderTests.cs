@@ -49,6 +49,7 @@ public class DialogRenderTests
         page.Children.Add(Theme.Heading("Can the overlay read the game?"));
         page.Children.Add(new CheckBox { Content = "Ticked box", IsChecked = true, Margin = new Thickness(0, 4, 0, 0) });
         page.Children.Add(new CheckBox { Content = "Unticked box", Margin = new Thickness(0, 4, 0, 0) });
+        page.Children.Add(new CheckBox { Content = UsagePing.Question + " (sends your country and the version)", IsChecked = true, Margin = new Thickness(0, 4, 0, 0) });
         page.Children.Add(new TextBox { Text = "https://maxroll.gg/last-epoch/planner/abc", Margin = new Thickness(0, 6, 0, 0) });
         page.Children.Add(new ComboBox { ItemsSource = new[] { "Always", "Only while the mouse is over it" }, SelectedIndex = 1, Margin = new Thickness(0, 6, 0, 0) });
         page.Children.Add(new Slider { Minimum = 0, Maximum = 1, Value = 0.6, Margin = new Thickness(0, 6, 0, 0) });

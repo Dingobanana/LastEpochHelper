@@ -25,25 +25,12 @@ internal sealed class Tray : IDisposable
         _icon.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) toggleVisible(); };
     }
 
+    /// <summary>The program's icon (app.ico, see tools/make_icon.py) at the size Windows uses beside the clock.</summary>
     private static Drawing.Icon CreateIcon()
     {
-        using var bitmap = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bitmap))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            using var background = new Drawing.SolidBrush(Drawing.Color.FromArgb(0x0E, 0x0F, 0x14));
-            using var gold = new Drawing.SolidBrush(Drawing.Color.FromArgb(0xC9, 0xA8, 0x5C));
-            using var border = new Drawing.Pen(Drawing.Color.FromArgb(0xC9, 0xA8, 0x5C), 2);
-            g.FillRectangle(background, 0, 0, 32, 32);
-            g.DrawRectangle(border, 1, 1, 29, 29);
-            using var font = new Drawing.Font("Segoe UI", 13, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel);
-            var format = new Drawing.StringFormat { Alignment = Drawing.StringAlignment.Center, LineAlignment = Drawing.StringAlignment.Center };
-            g.DrawString("LE", font, gold, new Drawing.RectangleF(0, 0, 32, 32), format);
-        }
-        IntPtr handle = bitmap.GetHicon();
-        try { return (Drawing.Icon)Drawing.Icon.FromHandle(handle).Clone(); }
-        finally { Native.DestroyIcon(handle); }
+        using var stream = typeof(Tray).Assembly.GetManifestResourceStream("app.ico")
+                           ?? throw new InvalidOperationException("app.ico is missing from the program.");
+        return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
     }
 
     public void Dispose()
