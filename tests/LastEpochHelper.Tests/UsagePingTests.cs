@@ -19,13 +19,30 @@ public class UsagePingTests
     [Fact]
     public void ItIsSentOncePerVersion_AndNotAtAllWhenSwitchedOff()
     {
-        var settings = new Settings();
+        var settings = new Settings { CountryAsked = true };
         Assert.True(UsagePing.Due(settings, "0.7.17"));
         settings.CountrySentFor = "0.7.17";
         Assert.False(UsagePing.Due(settings, "0.7.17"));
         Assert.True(UsagePing.Due(settings, "0.7.18"));
         settings.ShareCountry = false;
         Assert.False(UsagePing.Due(settings, "0.7.18"));
+    }
+
+    [Fact]
+    public void NothingIsSent_BeforeThePlayerSaidYes()
+    {
+        var settings = new Settings(); // ShareCountry is on by default, but nobody has been asked
+        Assert.False(UsagePing.Due(settings, "0.7.20"));
+        Assert.True(UsagePing.ShouldAsk(settings, "0.7.20"));
+
+        settings.CountryAskedFor = "0.7.20"; // the question was closed without an answer
+        Assert.False(UsagePing.ShouldAsk(settings, "0.7.20"));
+        Assert.True(UsagePing.ShouldAsk(settings, "0.7.21")); // asked again after an update
+        Assert.False(UsagePing.Due(settings, "0.7.21"));
+
+        settings.CountryAsked = true; settings.ShareCountry = false; // "No thanks"
+        Assert.False(UsagePing.ShouldAsk(settings, "0.7.22"));
+        Assert.False(UsagePing.Due(settings, "0.7.22"));
     }
 
     [Fact]

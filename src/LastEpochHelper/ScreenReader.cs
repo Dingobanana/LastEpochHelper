@@ -18,13 +18,23 @@ internal sealed class ScreenReader
     {
         try
         {
-            _engine = OcrEngine.TryCreateFromUserProfileLanguages()
-                      ?? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
+            // The game's text is English, so English recognition comes first, whatever language
+            // Windows itself is in; a Chinese or Russian recognizer reads English text badly.
+            var languages = OcrEngine.AvailableRecognizerLanguages;
+            var english = languages.FirstOrDefault(l => l.LanguageTag.Equals("en-US", StringComparison.OrdinalIgnoreCase))
+                          ?? languages.FirstOrDefault(l => l.LanguageTag.StartsWith("en", StringComparison.OrdinalIgnoreCase));
+            _engine = (english is null ? null : OcrEngine.TryCreateFromLanguage(english)) ?? OcrEngine.TryCreateFromUserProfileLanguages();
         }
         catch (Exception) { _engine = null; } // no OCR language pack installed
     }
 
     public bool Available => _engine is not null;
+
+    /// <summary>The language the text is read in ("en-US"), or null when Windows has no text recognition at all.</summary>
+    public string? Language => _engine?.RecognizerLanguage.LanguageTag;
+
+    /// <summary>Reading in English, as the game's text needs.</summary>
+    public bool English => Language?.StartsWith("en", StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
     /// Reads small boxed labels (the "2/4" under skill nodes), which the plain read mostly misses:

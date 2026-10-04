@@ -61,9 +61,302 @@ internal static class Theme
         return brush;
     }
 
+    /// <summary>Text on the plate, and quieter text beside it.</summary>
+    public static readonly Brush Text = Solid("#E8E4D8");
+    public static readonly Brush Muted = Solid("#A9A493");
+    /// <summary>Good and bad news in a check list, readable on the dark plate.</summary>
+    public static readonly Brush Good = Solid("#8FCB7A");
+    public static readonly Brush Bad = Solid("#E58A78");
+
+    // ------------------------------------------------------------------ dialogs
+
+    [ThreadStatic] private static ResourceDictionary? _dialog; // WPF objects belong to the thread that made them
+
+    /// <summary>
+    /// Gives an ordinary window (settings, tour, bug report, what's new) the overlay's look: the dark
+    /// plate, light text, a dark title bar, and buttons, boxes, lists and tabs to match.
+    /// </summary>
+    public static void Dialog(Window window)
+    {
+        _dialog ??= (ResourceDictionary)XamlReader.Parse(DialogXaml);
+        Controls(window);
+        window.Resources.MergedDictionaries.Add(_dialog);
+        window.Background = Plate(0xFF);
+        window.Foreground = Text;
+        window.FontFamily = new FontFamily("Segoe UI");
+        window.SourceInitialized += (_, _) =>
+        {
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            int on = 1, caption = 0x00211817, border = 0x004C8BA8; // COLORREF is 0x00BBGGRR: #171821, #A88B4C
+            // A Windows that does not know one of these ignores it (Windows 10 has no caption colour).
+            DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));      // dark title bar
+            DwmSetWindowAttribute(hwnd, 35, ref caption, sizeof(int)); // title bar colour
+            DwmSetWindowAttribute(hwnd, 34, ref border, sizeof(int));  // window edge colour
+        };
+    }
+
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    /// <summary>A section heading in a dialog: the title face, in gold.</summary>
+    public static TextBlock Heading(string text) => new()
+    {
+        Text = text, FontFamily = TitleFont, FontSize = 15, FontWeight = FontWeights.SemiBold, Foreground = Gold,
+        Margin = new Thickness(0, 12, 0, 4),
+    };
+
+    private const string DialogXaml = """
+        <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+            <LinearGradientBrush x:Key="PopupPlate" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FA17181F" Offset="0"/>
+                <GradientStop Color="#FA0C0D12" Offset="1"/>
+            </LinearGradientBrush>
+
+            <Style TargetType="Button">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="Background" Value="#1AFFFFFF"/>
+                <Setter Property="BorderBrush" Value="#6E5B33"/>
+                <Setter Property="Padding" Value="10,3"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Face" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsDefault" Value="True">
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="#C9A85C"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Face" Property="Background" Value="#33C9A85C"/>
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="#C9A85C"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="#E6CC8C"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Face" Property="Background" Value="#55C9A85C"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <Grid Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Box" Width="15" Height="15" CornerRadius="3" BorderThickness="1" BorderBrush="#8A7543"
+                                        Background="#14FFFFFF" VerticalAlignment="Top" Margin="0,2,0,0">
+                                    <TextBlock x:Name="Mark" Text="✓" FontSize="12" FontWeight="Bold" Foreground="#E6CC8C"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" Visibility="Collapsed"/>
+                                </Border>
+                                <ContentPresenter Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="Box" Property="Background" Value="#26C9A85C"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="#E6CC8C"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="Background" Value="#0FFFFFFF"/>
+                <Setter Property="BorderBrush" Value="#5F4F2C"/>
+                <Setter Property="CaretBrush" Value="#E6CC8C"/>
+                <Setter Property="SelectionBrush" Value="#C9A85C"/>
+                <Setter Property="Padding" Value="3,2"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="Field" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="False"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Field" Property="BorderBrush" Value="#8A7543"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Field" Property="BorderBrush" Value="#C9A85C"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBox">
+                            <Grid>
+                                <ToggleButton Focusable="False" ClickMode="Press" Cursor="Hand"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="Field" Background="#0FFFFFFF" BorderBrush="#5F4F2C" BorderThickness="1" CornerRadius="4">
+                                                <TextBlock Text="▾" Foreground="#C9A85C" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,1"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Field" Property="BorderBrush" Value="#C9A85C"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter IsHitTestVisible="False" Margin="7,3,24,3" VerticalAlignment="Center"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+                                <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="2" AllowsTransparency="True" Focusable="False"
+                                       PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
+                                    <Border Background="{StaticResource PopupPlate}" BorderBrush="#7A6538" BorderThickness="1.5" CornerRadius="6" Padding="3"
+                                            MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                            MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <ScrollViewer>
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBoxItem">
+                            <Border x:Name="Row" Background="Transparent" CornerRadius="4" Padding="7,3,10,4">
+                                <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Foreground" Value="#E6CC8C"/>
+                                </Trigger>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Row" Property="Background" Value="#33C9A85C"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="TabControl">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabControl">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TabPanel IsItemsHost="True" Margin="4,0,4,0"/>
+                                <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="#6E5B33">
+                                    <ContentPresenter ContentSource="SelectedContent"/>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="TabItem">
+                <!-- Set here, not left to the window: whatever the tab's Foreground is, its page inherits. -->
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border x:Name="Tab" Background="Transparent" BorderBrush="Transparent" BorderThickness="1,1,1,0"
+                                    CornerRadius="5,5,0,0" Padding="{TemplateBinding Padding}" Margin="0,0,2,0">
+                                <ContentPresenter x:Name="Header" ContentSource="Header" HorizontalAlignment="Center" TextElement.Foreground="#A9A493"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Header" Property="TextElement.Foreground" Value="#E8E4D8"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Tab" Property="Background" Value="#1FC9A85C"/>
+                                    <Setter TargetName="Tab" Property="BorderBrush" Value="#6E5B33"/>
+                                    <Setter TargetName="Header" Property="TextElement.Foreground" Value="#E6CC8C"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ToolTip">
+                <Setter Property="Foreground" Value="#E8E4D8"/>
+                <Setter Property="HasDropShadow" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToolTip">
+                            <Border Background="{StaticResource PopupPlate}" BorderBrush="#7A6538" BorderThickness="1" CornerRadius="5" Padding="8,5" MaxWidth="420">
+                                <ContentPresenter>
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+        """;
+
     // ------------------------------------------------------------------ menus
 
-    private static ResourceDictionary? _menu;
+    [ThreadStatic] private static ResourceDictionary? _menu;
 
     /// <summary>Gives a menu the overlay's look instead of Windows' white one.</summary>
     public static ContextMenu Styled(ContextMenu menu)
@@ -76,7 +369,7 @@ internal static class Theme
 
     // ------------------------------------------------------------------ sliders and scroll bars
 
-    private static ResourceDictionary? _controls;
+    [ThreadStatic] private static ResourceDictionary? _controls;
 
     /// <summary>Makes the sliders and scroll bars inside a dark window dark too, instead of Windows' light ones.</summary>
     public static void Controls(FrameworkElement root)

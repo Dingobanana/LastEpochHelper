@@ -25,6 +25,7 @@ internal sealed class BugReportWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Topmost = true;
+        Theme.Dialog(this);
 
         string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         var intro = new TextBlock
@@ -40,7 +41,7 @@ internal sealed class BugReportWindow : Window
         };
         var note = new TextBlock
         {
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0), Foreground = SystemColors.GrayTextBrush,
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0), Foreground = Theme.Muted,
             Text = (send is not null
                        ? "Send delivers the report privately to the people who maintain the overlay. "
                        : "The report is a zip file saved to your desktop - nothing is sent automatically; pass it on privately to whoever shared the overlay with you. ")

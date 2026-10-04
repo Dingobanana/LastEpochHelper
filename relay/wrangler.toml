@@ -1,0 +1,26 @@
+# Cloudflare Worker that passes bug reports and country pings on to Discord. See README.md.
+name = "leh-relay"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+# A few per minute per address; Cloudflare counts these per location, so the numbers are rough.
+[[ratelimits]]
+name = "REPORT_PER_IP"
+namespace_id = "1001"
+simple = { limit = 2, period = 60 }
+
+[[ratelimits]]
+name = "PING_PER_IP"
+namespace_id = "1002"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "PING_ALL"
+namespace_id = "1003"
+simple = { limit = 40, period = 60 }
+
+# Daily report counts. Create it once with `npx wrangler kv namespace create COUNTS`
+# and put the id it prints here.
+[[kv_namespaces]]
+binding = "COUNTS"
+id = "REPLACE_WITH_KV_ID"

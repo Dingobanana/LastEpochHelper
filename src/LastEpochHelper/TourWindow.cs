@@ -51,13 +51,13 @@ internal sealed class TourWindow : Window
         new("Updates and problems",
             "The overlay checks for a new version by itself and tells you; Settings → Look for update does it on demand, and \"What's new\" lists the changes.\n\n"
             + "If something misbehaves: ☰ → Report a bug. Describe it, press Send, and the report with the overlay's logs goes to us.\n\n"
-            + "One more thing: once per version the overlay tells us which country it is used in - the country code and the version, nothing else. Settings → Version switches it off.\n\nThat's the tour - good luck out there."),
+            + "One more thing, if you said yes to it: once per version the overlay tells me which country it is used in - the country code and the version, nothing else. Settings → Version changes your answer.\n\nThat's the tour - good luck out there."),
     };
 
     private readonly Action<string?> _show;
-    private readonly TextBlock _title = new() { FontSize = 16, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _title = new() { FontFamily = Theme.TitleFont, FontSize = 17, FontWeight = FontWeights.SemiBold, Foreground = Theme.Gold, TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock _body = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 0), LineHeight = 20 };
-    private readonly TextBlock _count = new() { Foreground = SystemColors.GrayTextBrush, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _count = new() { Foreground = Theme.Muted, VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _back = new() { Content = "Back", Padding = new Thickness(12, 3, 12, 3) };
     private readonly Button _next = new() { Padding = new Thickness(16, 3, 16, 3), Margin = new Thickness(8, 0, 0, 0), FontWeight = FontWeights.SemiBold };
     private readonly Button _skip = new() { Content = "Skip the tour", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(8, 0, 0, 0) };
@@ -73,6 +73,7 @@ internal sealed class TourWindow : Window
         ResizeMode = ResizeMode.NoResize;
         Topmost = true;
         ShowActivated = false; // offered at start-up: must not pull focus out of the game
+        Theme.Dialog(this);
         WindowStartupLocation = WindowStartupLocation.Manual;
         // Lower right of the screen, clear of the guide box and of the windows the steps open.
         Left = Math.Max(0, SystemParameters.WorkArea.Right - Width - 60);

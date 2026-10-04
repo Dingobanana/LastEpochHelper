@@ -22,8 +22,20 @@ public static class ReportSender
     public static string? Endpoint { get; } = Assembly.GetExecutingAssembly().GetCustomAttributes<AssemblyMetadataAttribute>()
         .FirstOrDefault(a => a.Key == "ReportEndpoint")?.Value is { } value && Usable(value) ? value.Trim() : null;
 
+    /// <summary>The message beside the zip. The relay in front of the channel checks that it starts like this.</summary>
+    public static string Summary(string version, string description) => $"**Bug report** - version {version}\n{description}";
+
+    /// <summary>A client that says it is the overlay: the relay in front of the channel takes nothing else.</summary>
+    public static HttpClient CreateClient(TimeSpan timeout)
+    {
+        var http = new HttpClient { Timeout = timeout };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd($"LastEpochHelper/{Updater.Display(Updater.Current)}");
+        return http;
+    }
+
     public static bool Usable(string? endpoint) =>
-        Uri.TryCreate(endpoint?.Trim(), UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps;
+        Uri.TryCreate(endpoint?.Trim(), UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback); // plain http only to this machine, for testing
 
     /// <returns>Null when the report arrived; otherwise why it did not.</returns>
     public static async Task<string?> SendAsync(string endpoint, string zipPath, string summary, HttpClient http)
@@ -41,10 +53,13 @@ public static class ReportSender
             string payload = JsonSerializer.Serialize(new { content = summary, allowed_mentions = new { parse = Array.Empty<string>() } });
 
             using var form = new MultipartFormDataContent();
-            form.Add(new StringContent(payload, Encoding.UTF8, "application/json"), "payload_json");
+            // Names in quotes: .NET leaves them bare, which Discord accepts but stricter readers (the relay) do not.
+            form.Add(new StringContent(payload, Encoding.UTF8, "application/json"), "\"payload_json\"");
             var zip = new ByteArrayContent(await File.ReadAllBytesAsync(zipPath));
             zip.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-            form.Add(zip, "files[0]", file.Name);
+            // Set by hand: Add(content, name, fileName) also writes "filename*", which would carry the quotes along encoded.
+            zip.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "\"files[0]\"", FileName = $"\"{file.Name}\"" };
+            form.Add(zip);
 
             using var response = await http.PostAsync(endpoint.Trim(), form);
             return response.IsSuccessStatusCode ? null : $"the server answered {(int)response.StatusCode}";

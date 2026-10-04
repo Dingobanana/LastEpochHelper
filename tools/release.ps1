@@ -28,6 +28,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Tests failed.' }
 if (Test-Path 'report-endpoint.local.txt') { Write-Host 'Bug reports: address found, this release can send them.' }
 else { Write-Warning 'Bug reports: no report-endpoint.local.txt - this release will save reports to the desktop instead of sending.' }
 if (-not (Test-Path 'usage-endpoint.local.txt')) { Write-Warning 'Country: no usage-endpoint.local.txt - this release will not send the country code.' }
+# A Discord webhook built into the program can be dug out of it and used by anyone; the relay (relay/) keeps it secret.
+foreach ($file in 'report-endpoint.local.txt', 'usage-endpoint.local.txt') {
+    if ((Test-Path $file) -and ((Get-Content $file -Raw) -match 'discord(app)?\.com/api/webhooks')) {
+        Write-Warning "$file holds a Discord webhook itself. Put the relay's address there instead (see relay/README.md)."
+    }
+}
 
 $out = 'release/LastEpochHelper'
 if (Test-Path $out) { Get-ChildItem $out -Recurse | Remove-Item -Recurse -Force }

@@ -16,6 +16,11 @@ to the game.
    The first time, Windows shows "Windows protected your PC" (the program is not signed): **More info** → **Run anyway**.
 3. Play. The overlay moves to the right step when you enter a new zone, and hides when the game does not have focus.
 
+The build tree, the map counters and the item check read the game's text off the screen, so they need the game
+in **English** and Windows' text recognition for English (it comes with the English language in Windows' language
+settings). The overlay says so at start if either is missing, and Settings → Following the game → **Check** shows
+what it can see. The campaign guide works in any language.
+
 New here? The menu (`☰`) has **Take a tour**, a two-minute walk through everything below.
 
 | Hotkey | What it does |

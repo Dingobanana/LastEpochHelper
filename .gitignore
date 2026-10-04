@@ -497,3 +497,7 @@ reports/
 
 # machine-local build inputs that must never be published (e.g. where bug reports are sent)
 *.local.txt
+
+# relay: local secrets and tooling
+relay/.dev.vars
+relay/.wrangler/

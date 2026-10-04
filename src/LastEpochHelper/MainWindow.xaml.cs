@@ -161,14 +161,92 @@ public partial class MainWindow : Window
                           + $"build '{_session.Profile.BuildPlan}', follow keys={Settings.FollowGameKeys} screen={Settings.FollowSkillOnScreen} points={Settings.ReadPointsFromScreen}");
 
         Render();
-        ShowWhatsNew();
+        var whatsNew = ShowWhatsNew();
         MentionNewErrors();
+        WarnIfCannotRead();
         if (!Settings.TourOffered)
         {
             Settings.TourOffered = true;
             SaveSettings();
-            TakeTour();
+            TakeTour(); // the country question follows when it closes
         }
+        // One window at a time: the question waits for "What's new" to be closed.
+        else if (whatsNew is not null) whatsNew.Closed += (_, _) => AskAboutCountry();
+        else AskAboutCountry();
+    }
+
+    /// <summary>
+    /// At start: say once if something keeps the overlay from reading the game (no English text
+    /// recognition, the game in another language). Otherwise the build tree just never follows.
+    /// </summary>
+    private void WarnIfCannotRead()
+    {
+        _screenReader ??= new ScreenReader();
+        string? gameLanguage = GameLanguage.Read();
+        ActivityLog.Write($"reading: text recognition {_screenReader.Language ?? "missing"}, game language {gameLanguage ?? "unknown"}");
+        var problem = Readiness.Problems(_screenReader.Available, _screenReader.Language, gameLanguage)
+            .FirstOrDefault(p => !Settings.ReadinessWarned.Contains(p.Key));
+        if (problem is null) return;
+        Settings.ReadinessWarned.Add(problem.Key);
+        SaveSettings();
+        _session.ShowAlert(problem.Short, 45);
+    }
+
+    /// <summary>What Settings → Following the game → Check shows: each condition for reading the game, met or not.</summary>
+    public List<(bool Ok, string Text)> ReadinessReport()
+    {
+        _screenReader ??= new ScreenReader();
+        string? gameLanguage = GameLanguage.Read();
+        var report = new List<(bool, string)>();
+        if (_screenReader.Available && _screenReader.English) report.Add((true, $"Windows reads text in English ({_screenReader.Language})."));
+        if (GameLanguage.IsEnglish(gameLanguage)) report.Add((true, "Last Epoch is set to English."));
+        else if (gameLanguage is null) report.Add((true, "Last Epoch's language is not known yet (the game saves it once it has run). It needs to be English."));
+        report.AddRange(Readiness.Problems(_screenReader.Available, _screenReader.Language, gameLanguage).Select(p => (false, p.Long)));
+
+        var game = _game.GameBounds;
+        int width = game.Right - game.Left, height = game.Bottom - game.Top;
+        report.Add(width > 0
+            ? (true, $"The game window is {width} x {height}.")
+            : (false, "The game window was not found. Start Last Epoch (in Borderless Windowed mode) and check again."));
+
+        string Seen(string what, DateTime? at) => at is { } time
+            ? $"The {what} panel was recognised {Ago(time)}."
+            : $"The {what} panel has not been seen since the overlay started. Open it in the game and check again.";
+        report.Add((_passivesSeenAt is not null, Seen("passive", _passivesSeenAt)));
+        report.Add((_skillsSeenAt is not null, Seen("skill", _skillsSeenAt)));
+        return report;
+    }
+
+    private static string Ago(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        return span.TotalMinutes < 1 ? "just now" : span.TotalHours < 1 ? $"{(int)span.TotalMinutes} min ago" : $"at {utc.ToLocalTime():HH:mm}";
+    }
+
+    /// <summary>When the game's passive / skill panel was last recognised on screen, for the check in the settings.</summary>
+    private DateTime? _passivesSeenAt, _skillsSeenAt;
+
+    private CountryQuestionWindow? _countryWindow;
+
+    /// <summary>Once: may the overlay send which country it is used in? Nothing is sent before a yes.</summary>
+    private void AskAboutCountry()
+    {
+        string version = Updater.Display(Updater.Current);
+        if (_countryWindow is not null || UsagePing.Endpoint is null || !UsagePing.ShouldAsk(Settings, version)) return;
+        _countryWindow = new CountryQuestionWindow(UsagePing.Country(), version, yes =>
+        {
+            Settings.CountryAsked = true;
+            Settings.ShareCountry = yes;
+            SaveSettings();
+        });
+        _countryWindow.Closed += (_, _) =>
+        {
+            _countryWindow = null;
+            if (Settings.CountryAsked) return;
+            Settings.CountryAskedFor = version; // closed without an answer: asked again after an update
+            SaveSettings();
+        };
+        _countryWindow.Show();
     }
 
     private TourWindow? _tourWindow;
@@ -192,7 +270,7 @@ public partial class MainWindow : Window
             }
             else if (_tourOpenedPlanner) { _tourOpenedPlanner = false; ShowPlanner(false); }
         });
-        _tourWindow.Closed += (_, _) => _tourWindow = null;
+        _tourWindow.Closed += (_, _) => { _tourWindow = null; AskAboutCountry(); };
         _tourWindow.Show();
     }
 
@@ -246,8 +324,8 @@ public partial class MainWindow : Window
         string version = Updater.Display(Updater.Current);
         Func<string, string, Task<string?>>? send = ReportSender.Endpoint is not { } endpoint ? null : async (zip, description) =>
         {
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-            string? problem = await ReportSender.SendAsync(endpoint, zip, $"**Bug report** - version {version}\n{description}", http);
+            using var http = ReportSender.CreateClient(TimeSpan.FromSeconds(60));
+            string? problem = await ReportSender.SendAsync(endpoint, zip, ReportSender.Summary(version, description), http);
             ActivityLog.Write(problem is null ? "bug report sent" : "bug report not sent: " + problem);
             return problem;
         };
@@ -261,7 +339,7 @@ public partial class MainWindow : Window
                 $"Windows: {Environment.OSVersion.VersionString}",
                 $"Primary screen: {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0} (WPF units)",
                 $"Game window: {game.Right - game.Left}x{game.Bottom - game.Top} at {game.Left},{game.Top}",
-                $"Text recognition available: {(_screenReader ?? new ScreenReader()).Available}",
+                $"Text recognition: {(_screenReader ?? new ScreenReader()).Language ?? "not available"}; game language: {GameLanguage.Read() ?? "unknown"}",
                 $"Character: class {profile.ClassId}, mastery {profile.Mastery}, level {profile.Level}, route {profile.RouteId}, step {profile.Index}",
                 $"Build: {profile.BuildPlan}; trees: {string.Join(", ", _session.Tree?.Trees.Select(t => t.Name) ?? Enumerable.Empty<string>())}",
                 $"Icon sheet: {IconSheetFacts()}",
@@ -290,19 +368,23 @@ public partial class MainWindow : Window
     // ------------------------------------------------------------------ updates
 
     /// <summary>After an update (or the first run of a version with this feature), list what changed.</summary>
-    private void ShowWhatsNew()
+    /// <returns>The "What's new" window, when one opened.</returns>
+    private Window? ShowWhatsNew()
     {
         string current = Updater.Display(Updater.Current);
         string last = Settings.LastRunVersion;
-        if (last == current) return;
+        if (last == current) return null;
         Settings.LastRunVersion = current;
         _session.SaveSettings();
         // A brand-new install has nothing to compare with; existing users came from before 0.5.
-        if (last.Length == 0 && _session.Store.Profiles.All(p => p.ClassId < 0)) return;
+        if (last.Length == 0 && _session.Store.Profiles.All(p => p.ClassId < 0)) return null;
         if (!Updater.TryParseVersion(last, out var previous)) previous = new Version(0, 4, 0);
 
         var changes = Updater.ChangesSince(Updater.ParseChangelog(Updater.LoadBundledChangelog()), previous, Updater.Current);
-        if (changes.Count > 0) new ChangelogWindow(changes, $"Updated to {current}").Show();
+        if (changes.Count == 0) return null;
+        var window = new ChangelogWindow(changes, $"Updated to {current}");
+        window.Show();
+        return window;
     }
 
     public void ShowChangelog() =>
@@ -372,7 +454,7 @@ public partial class MainWindow : Window
         _sendingCountry = true; // one attempt per run; a failure is tried again next time the overlay starts
         try
         {
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            using var http = ReportSender.CreateClient(TimeSpan.FromSeconds(20));
             if (!await UsagePing.SendAsync(endpoint, UsagePing.Message(UsagePing.Country(), version), http)) return;
             Settings.CountrySentFor = version;
             _session.SaveSettings();
@@ -649,6 +731,7 @@ public partial class MainWindow : Window
             if (reading.Panel != GamePanel.None)
             {
                 _panelMisses = 0;
+                if (reading.Panel == GamePanel.Passives) _passivesSeenAt = DateTime.UtcNow; else _skillsSeenAt = DateTime.UtcNow;
                 if (reading.Panel == GamePanel.Passives && !Settings.PanelSeenPassives) { Settings.PanelSeenPassives = true; SaveSettings(); }
                 if (reading.Panel == GamePanel.Skills && !Settings.PanelSeenSkills) { Settings.PanelSeenSkills = true; SaveSettings(); }
                 if (!quick) _panelRegion = reading.Anchor is { } anchor ? RegionAround(anchor) : null;

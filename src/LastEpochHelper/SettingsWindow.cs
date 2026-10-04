@@ -17,7 +17,7 @@ internal sealed class SettingsWindow : Window
     private readonly CheckBox _autoUpdate = new() { Content = "Look for new versions automatically (never installs without asking)" };
     private readonly CheckBox _shareCountry = new()
     {
-        Content = "Tell us which country the overlay is used in",
+        Content = UsagePing.Question + " (sends your country and the version)",
         ToolTip = "Once per version the overlay sends two things: the country Windows is set to (like \"DK\") and the overlay's version. No name, no id, nothing about you or your machine.",
     };
     private readonly TextBlock _updateInfo = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8, Margin = new Thickness(0, 2, 0, 2) };
@@ -72,6 +72,7 @@ internal sealed class SettingsWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Topmost = true;
+        Theme.Dialog(this);
 
         // One tab per subject; Apply at the bottom saves all of them at once.
         var tabs = new TabControl();
@@ -152,6 +153,16 @@ internal sealed class SettingsWindow : Window
             Text = "The build tree is also shrunk by itself to fit a small screen. Its \"Mini\" switch (bottom right of the tree) leaves just the tabs and the next points.",
             TextWrapping = TextWrapping.Wrap, Opacity = 0.7,
         }));
+        gameTab.Children.Add(Heading("Can the overlay read the game?"));
+        var checkResult = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 2), LineHeight = 19 };
+        gameTab.Children.Add(Indented(Buttons(("Check", () =>
+        {
+            checkResult.Inlines.Clear();
+            foreach (var (ok, text) in _overlay.ReadinessReport())
+                checkResult.Inlines.Add(new System.Windows.Documents.Run((ok ? "✓  " : "✗  ") + text + "\n")
+                    { Foreground = ok ? Theme.Good : Theme.Bad });
+        }))));
+        gameTab.Children.Add(Indented(checkResult));
         gameTab.Children.Add(Heading("The game's own keys"));
         gameTab.Children.Add(Row("Passives", _keyPassives));
         gameTab.Children.Add(Row("Skills", _keySkills));
@@ -232,13 +243,7 @@ internal sealed class SettingsWindow : Window
 
     // ------------------------------------------------------------------ layout helpers
 
-    private static TextBlock Heading(string text) => new()
-    {
-        Text = text,
-        FontWeight = FontWeights.SemiBold,
-        FontSize = 14,
-        Margin = new Thickness(0, 12, 0, 4),
-    };
+    private static TextBlock Heading(string text) => Theme.Heading(text);
 
     private static Grid Row(string label, FrameworkElement control)
     {
@@ -333,7 +338,7 @@ internal sealed class SettingsWindow : Window
         _autoLearn.IsChecked = settings.AutoLearn;
         _followKeys.IsChecked = settings.FollowGameKeys;
         _autoUpdate.IsChecked = settings.AutoCheckUpdates;
-        _shareCountry.IsChecked = settings.ShareCountry;
+        _shareCountry.IsChecked = settings.CountryAsked && settings.ShareCountry; // unticked until the player said yes
         _followSkill.IsChecked = settings.FollowSkillOnScreen;
         _orderPassives.IsChecked = settings.ShowOrderPassives;
         _orderSkills.IsChecked = settings.ShowOrderSkills;
@@ -385,7 +390,12 @@ internal sealed class SettingsWindow : Window
         settings.AutoLearn = _autoLearn.IsChecked == true;
         settings.FollowGameKeys = _followKeys.IsChecked == true;
         settings.AutoCheckUpdates = _autoUpdate.IsChecked == true;
-        settings.ShareCountry = _shareCountry.IsChecked == true;
+        // Ticking it is a yes; unticking a yes is a no. Left unticked by someone never asked, it stays unanswered.
+        if (_shareCountry.IsChecked == true || settings.CountryAsked)
+        {
+            settings.ShareCountry = _shareCountry.IsChecked == true;
+            settings.CountryAsked = true;
+        }
         settings.FollowSkillOnScreen = _followSkill.IsChecked == true;
         settings.ShowOrderPassives = _orderPassives.IsChecked == true;
         settings.ShowOrderSkills = _orderSkills.IsChecked == true;

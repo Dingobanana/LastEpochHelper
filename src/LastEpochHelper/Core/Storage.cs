@@ -13,8 +13,13 @@ public sealed class Settings
     public bool Locked { get; set; }
     /// <summary>Look for a new version on GitHub at start and a few times a day. Nothing installs by itself.</summary>
     public bool AutoCheckUpdates { get; set; } = true;
-    /// <summary>Tell the maintainers which country the overlay is used in: a country code and the version, once per version.</summary>
+    /// <summary>Tell the maintainers which country the overlay is used in: a country code and the version, once per version.
+    /// Only after the player said yes (<see cref="CountryAsked"/>).</summary>
     public bool ShareCountry { get; set; } = true;
+    /// <summary>The player answered the question about <see cref="ShareCountry"/>, here or in the settings.</summary>
+    public bool CountryAsked { get; set; }
+    /// <summary>The version the question was last put in without an answer (the window was closed); asked again after an update.</summary>
+    public string CountryAskedFor { get; set; } = "";
     /// <summary>The version the country was last sent for; it is sent once per version.</summary>
     public string CountrySentFor { get; set; } = "";
     /// <summary>Version that last ran here; a difference triggers the "What's new" window.</summary>
@@ -96,6 +101,8 @@ public sealed class Settings
     public long ErrorLogBytes { get; set; }
     /// <summary>The tour has been offered once; after that it is only in the menu.</summary>
     public bool TourOffered { get; set; }
+    /// <summary>Problems with reading the game that were mentioned at start already (<see cref="ReadinessProblem.Key"/>); each is said once.</summary>
+    public List<string> ReadinessWarned { get; set; } = new();
     // Null until the window has been placed once. (Not NaN: JSON cannot store it, and a settings
     // file that fails to save loses everything else in it too.)
     public double? TreeLeft { get; set; }

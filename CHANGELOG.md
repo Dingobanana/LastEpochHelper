@@ -2,6 +2,13 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.20 - Can it see your game?
+
+- New: Settings → Following the game → Check. It lists what the overlay needs to read the game and whether it has it: Windows' text recognition in English, the game set to English, the game window, and when it last recognised the passive and skill panels.
+- If Windows has no English text recognition, or Last Epoch is set to another language, the overlay now says so once at start, with what to do. Before, the build tree simply never followed the game. The campaign guide works in any language.
+- Text is now always read in English when Windows has it, even if Windows itself is in another language.
+- Settings, the tour, "Report a bug" and "What's new" now have the overlay's dark look too.
+
 ## 0.7.19 - New address
 
 - The project has moved to github.com/Dingobanana/LastEpochHelper. Updates now come from there.
