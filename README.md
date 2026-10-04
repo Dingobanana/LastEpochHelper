@@ -103,18 +103,6 @@ activity logs, what it last read off the screen, its settings, the end of the ga
 goes to the maintainers. Account and character names are removed. A build made from this source code has no address
 to send to and saves the report as a zip file on your desktop instead.
 
-## What the app sends
-
-The app is read-only towards the game and talks to the network for three things only:
-
-- **Updates:** it asks GitHub whether there is a new release.
-- **Bug reports:** only when you press Send in ☰ → Report a bug.
-- **Country:** once per installed version it sends the country Windows is set to (two letters, like `DK`) and the
-  app's version - so we can see roughly where in the world it is used. No name, no id, nothing about your machine or
-  your game. It is sent a few minutes after start, and **Settings → Version → "Tell us which country the overlay is
-  used in"** switches it off. The code is in `Core/UsagePing.cs`; a build made from this repository has no address
-  to send to and sends nothing.
-
 ## How it works
 
 - The game writes `Scene Z32 load started: load mode: Single` to `Player.log` on every zone change.

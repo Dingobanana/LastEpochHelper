@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.19 - New address
+
+- The project has moved to github.com/Dingobanana/LastEpochHelper. Updates now come from there.
+- "Report a bug" and the README link to the new address.
+
 ## 0.7.18 - A new coat
 
 - The overlay has a new look, closer to Last Epoch's own panels: rounder corners, a bronze edge that catches the light at the top, a slightly lit dark plate instead of flat black, and lines between sections that fade out towards the sides.
@@ -12,7 +17,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 ## 0.7.17 - A new setting
 
-- There is a new option under Settings → Version.
+- Small changes under the hood.
 
 ## 0.7.16 - Put the box away
 
