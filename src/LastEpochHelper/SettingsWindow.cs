@@ -446,7 +446,7 @@ internal sealed class SettingsWindow : Window
         try
         {
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd($"LastEpochHelper/{Updater.Display(Updater.Current)}");
             var set = await MaxrollImporter.ImportWeaverAsync(_session.DataDir, http);
             _session.SetWeaver(set);
             Applied?.Invoke();
@@ -487,7 +487,7 @@ internal sealed class SettingsWindow : Window
         try
         {
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("LastEpochHelper/0.2");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd($"LastEpochHelper/{Updater.Display(Updater.Current)}");
             // A path to a file on this computer can be pasted in the link box too.
             string asPath = link.Trim().Trim('"');
             var results = asPath.IndexOfAny(Path.GetInvalidPathChars()) < 0 && File.Exists(asPath)
