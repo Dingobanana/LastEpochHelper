@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.21 - Imports that try again
+
+- If a build cannot be read, the import now fetches Maxroll's game data again and tries once more. The overlay keeps a copy of that data for a day, and a guide updated in the meantime can name skills or nodes the old copy does not know.
+- When an import still fails, the full reason is written to the overlay's log, so ☰ → Report a bug can tell us what went wrong.
+
 ## 0.7.20 - Can it see your game?
 
 - New: Settings → Following the game → Check. It lists what the overlay needs to read the game and whether it has it: Windows' text recognition in English, the game set to English, the game window, and when it last recognised the passive and skill panels.

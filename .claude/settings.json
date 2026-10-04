@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(pwsh -NoProfile -File tools/release.ps1)",
+      "PowerShell(Stop-Process -Name LastEpochHelper*)",
+      "Bash(git branch -f test main)",
+      "Bash(git push origin test)"
+    ]
+  }
+}

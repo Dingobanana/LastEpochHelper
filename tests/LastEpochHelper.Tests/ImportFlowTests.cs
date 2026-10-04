@@ -71,6 +71,26 @@ public sealed class ImportFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task AKeptCopyOfTheGameDataOlderThanThePlanner_IsFetchedAgain()
+    {
+        var maxroll = Maxroll();
+        using var http = new HttpClient(maxroll);
+        await MaxrollImporter.ImportAsync("https://maxroll.gg/last-epoch/planner/ab12cd34", _dir, http); // icon sheet and game data kept
+
+        // Hours later Maxroll has new game data, and the planner names nodes the kept copy does not know.
+        string kept = Path.Combine(_dir, "maxroll_le_data.json");
+        File.WriteAllText(kept, "{}");
+        File.SetLastWriteTimeUtc(kept, DateTime.UtcNow.AddHours(-3));
+        maxroll.Asked.Clear();
+
+        var result = Assert.Single(await MaxrollImporter.ImportAsync("https://maxroll.gg/last-epoch/planner/ab12cd34", _dir, http));
+
+        Assert.Equal("Test build", result.Name);
+        Assert.Single(maxroll.Asked, url => url == Data);
+        Assert.NotEqual("{}", File.ReadAllText(kept));
+    }
+
+    [Fact]
     public async Task AGuidePage_LeadsToItsPlanner()
     {
         var maxroll = Maxroll();

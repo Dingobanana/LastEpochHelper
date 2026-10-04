@@ -480,6 +480,18 @@ internal sealed class SettingsWindow : Window
         if (dialog.ShowDialog(this) == true) ImportFrom(dialog.FileName);
     }
 
+    /// <summary>
+    /// What went wrong with an import, in full, for a bug report: the link, and the error with where
+    /// in the code it happened. Of a file only its name is written - the folder may name the person.
+    /// </summary>
+    private static void LogImportFailure(string link, Exception error)
+    {
+        string input = link.Trim().Trim('"');
+        if (input.Contains('\\') || input.Contains(':') && !input.Contains("://")) input = "file " + Path.GetFileName(input);
+        else if (input.Length > 300) input = input[..300] + "...";
+        ActivityLog.Write($"import failed: {input}\n{error}");
+    }
+
     private async void ImportFrom(string link)
     {
         _message.Text = "Importing...";
@@ -521,20 +533,25 @@ internal sealed class SettingsWindow : Window
         }
         catch (InvalidDataException e)
         {
+            LogImportFailure(link, e);
             _message.Text = e.Message; // already a sentence for the player
+            // A planner that could not be read is ours to fix: the cause is in the log, a report brings it.
+            if (e.InnerException is not null) _message.Text += " Menu (☰) → Report a bug sends us the details.";
         }
         catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
         {
+            LogImportFailure(link, e);
             _message.Text = "Could not reach Maxroll (" + e.Message + "). Check your connection and try again.";
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
+            LogImportFailure(link, e);
             _message.Text = "Could not save the build: " + e.Message;
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
             // Not foreseen: say so, and leave a trace for a bug report.
-            ActivityLog.Write($"import failed unexpectedly: {e.GetType().Name}: {e.Message}");
+            LogImportFailure(link, e);
             _message.Text = "Import failed in a way the overlay did not expect (" + e.GetType().Name + "). Menu (☰) → Report a bug sends us the details.";
         }
     }

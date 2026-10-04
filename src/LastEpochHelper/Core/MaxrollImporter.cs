@@ -256,8 +256,17 @@ public static partial class MaxrollImporter
         // Icons are positions in the sheet, listed in the game data: the two must be of the same age.
         var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
         var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
-        if (exported) planner = FromExport((JsonObject)planner!, title, game);
-        var results = ConvertAll(id.Length > 0 ? id : "pasted", title, planner!, game, preferred);
+        List<Result> Convert(JsonNode data) =>
+            ConvertAll(id.Length > 0 ? id : "pasted", title, exported ? FromExport((JsonObject)planner!, title, data) : planner!, data, preferred);
+        List<Result> results;
+        try { results = Convert(game); }
+        catch (InvalidDataException) when (GameDataAge(cacheDir) > TimeSpan.FromMinutes(5))
+        {
+            // The kept copy of the game data can be older than the planner (Maxroll updated it since),
+            // and then the planner names nodes it does not know. Fetch it again, once, and try again.
+            game = await LoadGameDataAsync(cacheDir, http, refresh: true);
+            results = Convert(game);
+        }
         foreach (var result in results)
         {
             result.Tree.AtlasName = atlas ?? "";
@@ -537,6 +546,12 @@ public static partial class MaxrollImporter
         }
         catch (IOException) { return null; }
         catch (System.Text.Json.JsonException) { return null; }
+    }
+
+    private static TimeSpan GameDataAge(string cacheDir)
+    {
+        string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
+        return File.Exists(cache) ? DateTime.UtcNow - File.GetLastWriteTimeUtc(cache) : TimeSpan.Zero;
     }
 
     private static async Task<JsonNode> LoadGameDataAsync(string cacheDir, HttpClient http, bool refresh = false)
