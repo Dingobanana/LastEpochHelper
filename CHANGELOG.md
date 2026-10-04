@@ -4,7 +4,8 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 ## 0.7.22 - Imports that take Maxroll's data as it comes
 
-- Fixed: for some players every build import (and the Weaver trees) failed with "This planner could not be read: it holds something the importer does not understand". Maxroll's game data had sent a value as a number where the importer only took text. The importer now reads such values either way.
+- Fixed: for some players every build import (and the Weaver trees) failed with "This planner could not be read: it holds something the importer does not understand". Maxroll's game data had sent a value as a number where the importer only took text. The importer now reads such values either way, and so do the loot filter tools.
+- Bug reports now say which copy of Maxroll's game data the overlay has, since Maxroll's servers do not hand out the same copy everywhere.
 
 ## 0.7.21 - Imports that try again
 

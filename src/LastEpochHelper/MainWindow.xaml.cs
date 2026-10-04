@@ -343,6 +343,7 @@ public partial class MainWindow : Window
                 $"Character: class {profile.ClassId}, mastery {profile.Mastery}, level {profile.Level}, route {profile.RouteId}, step {profile.Index}",
                 $"Build: {profile.BuildPlan}; trees: {string.Join(", ", _session.Tree?.Trees.Select(t => t.Name) ?? Enumerable.Empty<string>())}",
                 $"Icon sheet: {IconSheetFacts()}",
+                $"Maxroll game data: {MaxrollImporter.GameDataFacts(_session.DataDir)}",
                 "Nodes without an icon: " + string.Join(", ", _session.Tree?.Trees.Select(t => $"{t.Name} {t.Nodes.Count(n => n.IconIndex < 0)}/{t.Nodes.Count}") ?? Enumerable.Empty<string>()),
                 $"Tree window: wanted={_treeWanted} pinned={_treePinned} tab={profile.TreeTab}",
             };

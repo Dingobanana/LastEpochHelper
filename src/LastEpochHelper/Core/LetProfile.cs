@@ -34,11 +34,11 @@ public static class LetProfile
         {
             Fetched = DateTime.Now,
             Updated = root["charInfo"]?["lastUpdated"]?.ToString() ?? "",
-            Level = root["buildInfo"]?["level"]?.GetValue<int>() ?? 0,
+            Level = root["buildInfo"]?["level"].IntOrNull() ?? 0,
             Passives = Points(data["charTree"]?["selected"]),
         };
         foreach (var tree in data["skillTrees"] as JsonArray ?? new JsonArray())
-            if (tree?["treeID"]?.GetValue<string>() is { Length: > 0 } id)
+            if (tree?["treeID"].StrOrNull() is { Length: > 0 } id)
                 trees.Skills[id] = Points(tree["selected"]);
         return trees;
     }
@@ -48,7 +48,7 @@ public static class LetProfile
         var points = new Dictionary<int, int>();
         if (selected is not JsonObject nodes) return points;
         foreach (var (node, count) in nodes)
-            if (int.TryParse(node, out int id) && count is not null) points[id] = count.GetValue<int>();
+            if (int.TryParse(node, out int id) && count is not null) points[id] = count.Int();
         return points;
     }
 }

@@ -190,14 +190,14 @@ public static class LootFilters
         {
             int newest = uniqueIds.Max();
             newerUniques = (game["uniques"] as JsonArray ?? new JsonArray())
-                .Where(u => (u?["uniqueID"]?.GetValue<int>() ?? -1) > newest)
+                .Where(u => (u?["uniqueID"].IntOrNull() ?? -1) > newest)
                 .Select(u => Name(u, "displayName", "name")).Where(n => n.Length > 0).ToList();
         }
         if (game is not null && affixIds.Count >= 40)
         {
             int newest = affixIds.Max();
             newerAffixes = (game["affixes"] as JsonArray ?? new JsonArray())
-                .Where(a => (a?["affixId"]?.GetValue<int>() ?? -1) > newest)
+                .Where(a => (a?["affixId"].IntOrNull() ?? -1) > newest)
                 .Select(a => Name(a, "affixDisplayName", "affixName")).Where(n => n.Length > 0).Distinct().ToList();
         }
         if (game is null) notes.Add("Import a Maxroll build once to enable the check for uniques and affixes newer than the filter.");
@@ -209,7 +209,7 @@ public static class LootFilters
     private static string Name(JsonNode? node, params string[] keys)
     {
         foreach (string key in keys)
-            if (node?[key]?.GetValue<string>() is { Length: > 0 } text) return text;
+            if (node?[key].StrOrNull() is { Length: > 0 } text) return text;
         return "";
     }
 

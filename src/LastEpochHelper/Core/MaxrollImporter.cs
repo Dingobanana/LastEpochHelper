@@ -547,6 +547,24 @@ public static partial class MaxrollImporter
         catch (System.Text.Json.JsonException) { return null; }
     }
 
+    /// <summary>
+    /// Which copy of Maxroll's game data this machine has, for a bug report: Maxroll's servers hand out
+    /// different copies in different places, and a fault in one is invisible with another.
+    /// </summary>
+    public static string GameDataFacts(string cacheDir)
+    {
+        string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
+        try
+        {
+            var file = new FileInfo(cache);
+            if (!file.Exists) return "none kept";
+            using var stream = file.OpenRead();
+            string hash = System.Convert.ToHexString(System.Security.Cryptography.MD5.HashData(stream))[..12].ToLowerInvariant();
+            return $"{file.Length} bytes, md5 {hash}, fetched {file.LastWriteTimeUtc:yyyy-MM-dd HH:mm} UTC";
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return "could not be read: " + e.Message; }
+    }
+
     private static TimeSpan GameDataAge(string cacheDir)
     {
         string cache = Path.Combine(cacheDir, "maxroll_le_data.json");
