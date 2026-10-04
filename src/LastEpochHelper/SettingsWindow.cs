@@ -183,7 +183,6 @@ internal sealed class SettingsWindow : Window
                      ("Capture zone map", nameof(Settings.HotkeyCapture)),
                      ("Build tree", nameof(Settings.HotkeyTree)),
                      ("Planner", nameof(Settings.HotkeyPlanner)),
-                     ("Check hovered item", nameof(Settings.HotkeyLookup)),
                  })
         {
             var box = new TextBox();

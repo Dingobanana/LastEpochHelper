@@ -16,7 +16,7 @@ to the game.
    The first time, Windows shows "Windows protected your PC" (the program is not signed): **More info** → **Run anyway**.
 3. Play. The overlay moves to the right step when you enter a new zone, and hides when the game does not have focus.
 
-The build tree, the map counters and the item check read the game's text off the screen, so they need the game
+The build tree and the map counters read the game's text off the screen, so they need the game
 in **English** and Windows' text recognition for English (it comes with the English language in Windows' language
 settings). The overlay says so at start if either is missing, and Settings → Following the game → **Check** shows
 what it can see. The campaign guide works in any language.
@@ -31,7 +31,6 @@ New here? The menu (`☰`) has **Take a tour**, a two-minute walk through everyt
 | `Ctrl+Shift+C` | Switch between box, compact box and horizontal bar |
 | `Ctrl+Shift+G` | Planner: build summary, gear, idols, loot filter, Monolith, dungeons |
 | `Ctrl+Shift+T` | Build tree |
-| `Ctrl+Shift+E` | Check the item under the mouse against the build's affixes |
 | `Ctrl+Shift+M` | Zone map: off / in the overlay / large in the middle of the screen |
 | `Ctrl+Shift+S` | Save a screenshot of the game as the map for the zone you are in |
 
@@ -95,8 +94,6 @@ asking, and only zip files from this repository's own releases are downloaded. Y
   *Loot filter* (a filter generated from your build, written straight into the game's folder; filters by level;
   a check of filters against the current patch), *Monolith* and *Dungeons* (checklists), *Deaths* (a journal of
   where and why), and reference pages for the 1.5 systems.
-- **Item check.** Hover an item and press `Ctrl+Shift+E`: the overlay reads the tooltip off the screen and says
-  which of the build's affixes are on it.
 - **Character profiles.** Every character has its own progress, route, time and build. A new character gets a
   profile by itself; the log only names a character when it is created, otherwise it is recognised by class,
   mastery and level.

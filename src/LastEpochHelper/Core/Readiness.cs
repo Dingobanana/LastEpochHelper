@@ -6,13 +6,13 @@ public sealed record ReadinessProblem(string Key, string Short, string Long);
 /// <summary>
 /// What has to be true for the overlay to read the game's screen: Windows' text recognition, in
 /// English, and the game itself in English. Someone for whom one of these fails sees the build
-/// tree, the map counters and the item check do nothing - so it is said once, plainly, at start.
+/// tree and the map counters do nothing - so it is said once, plainly, at start.
 /// </summary>
 public static class Readiness
 {
     private const string AddEnglish = "Windows Settings → Time & language → Language & region → Add a language → English (United States), then restart the overlay. "
                                       + "(Or in PowerShell as administrator: Add-WindowsCapability -Online -Name \"Language.OCR~~~en-US~0.0.1.0\")";
-    private const string NeedsReading = "the build tree cannot follow the game's panels, and the map counters and the item check do not work. The campaign guide works without it";
+    private const string NeedsReading = "the build tree cannot follow the game's panels, and the map counters cannot be read. The campaign guide works without it";
 
     /// <param name="ocrAvailable">Windows can recognise text at all.</param>
     /// <param name="ocrLanguage">The language it reads in ("en-US"), null when unknown.</param>
@@ -32,7 +32,7 @@ public static class Readiness
         {
             string name = GameLanguage.Name(gameLanguage);
             problems.Add(new("game-" + gameLanguage,
-                $"Last Epoch is set to {name}. The overlay reads the game's English text, so the build tree, the map counters and the item check need the game in English.",
+                $"Last Epoch is set to {name}. The overlay reads the game's English text, so the build tree and the map counters need the game in English.",
                 $"Last Epoch is set to {name}. The overlay reads the game's text in English, so {NeedsReading.Replace("works without it", "follows you in any language")}. "
                 + "Set the game's language to English in its settings to use them."));
         }

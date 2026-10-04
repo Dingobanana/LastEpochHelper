@@ -40,7 +40,7 @@ public sealed class Session
 
     public event Action? Changed;
 
-    /// <summary>A message worth interrupting for (a death, an item check), shown for a short while.</summary>
+    /// <summary>A message worth interrupting for (a death, a warning), shown for a short while.</summary>
     public string? Alert => _alertUntil > DateTime.UtcNow ? _alert : null;
     private string? _alert;
     private DateTime _alertUntil;

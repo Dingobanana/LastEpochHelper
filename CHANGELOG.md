@@ -8,6 +8,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 - If Windows has no English text recognition, or Last Epoch is set to another language, the overlay now says so once at start, with what to do. Before, the build tree simply never followed the game. The campaign guide works in any language.
 - Text is now always read in English when Windows has it, even if Windows itself is in another language.
 - Settings, the tour, "Report a bug" and "What's new" now have the overlay's dark look too.
+- The item check (Ctrl+Shift+E) is gone. The names a build guide gives affixes differ too much from the game's own wording, so it could say an item has an affix it does not have. The Gear page in the planner still lists what to look for.
 
 ## 0.7.19 - New address
 

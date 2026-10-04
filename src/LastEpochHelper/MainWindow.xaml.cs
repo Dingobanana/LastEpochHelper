@@ -483,7 +483,6 @@ public partial class MainWindow : Window
         Register(Settings.HotkeyCapture, CaptureMap);
         Register(Settings.HotkeyTree, () => { _treePinned = !_treeWanted; _dismissed = _treeWanted; ShowTree(!_treeWanted); });
         Register(Settings.HotkeyPlanner, () => ShowPlanner(!_plannerWanted));
-        Register(Settings.HotkeyLookup, LookUpItem);
 
         _keyboard?.Dispose();
         _keyboard = null;
@@ -508,7 +507,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// "Only while the mouse is over it": away from the mouse the box fades to a faint outline that
     /// lets clicks through to the game; resting the mouse on it brings it back. A message (a death,
-    /// an item check) also brings it up, so nothing is said to an empty screen.
+    /// a warning) also brings it up, so nothing is said to an empty screen.
     /// </summary>
     private void UpdateHover()
     {
@@ -561,45 +560,6 @@ public partial class MainWindow : Window
         ApplyAppearance();
         SaveSettings();
         Render();
-    }
-
-    // ------------------------------------------------------------------ item check
-
-    /// <summary>
-    /// Reads the tooltip under the mouse and says which of the build's affixes are on the item.
-    /// The game shows the tooltip; this only reads the picture of it.
-    /// </summary>
-    private async void LookUpItem()
-    {
-        if (_reading) return;
-        _game.Refresh();
-        if (!_game.GameFocused) { _session.ShowAlert("Item check: hover an item in Last Epoch first."); return; }
-        if (_session.Stage is not { } stage)
-        {
-            _session.ShowAlert("Item check needs an imported build (settings: Import from Maxroll).");
-            return;
-        }
-        _screenReader ??= new ScreenReader();
-        if (!_screenReader.Available) { _session.ShowAlert("Item check: Windows text recognition is not available."); return; }
-
-        _reading = true;
-        try
-        {
-            // Tooltips open beside the cursor; a generous box around it catches them on either side.
-            var cursor = System.Windows.Forms.Cursor.Position;
-            var game = _game.GameBounds;
-            var box = new Native.RECT
-            {
-                Left = Math.Max(game.Left, cursor.X - 750), Right = Math.Min(game.Right, cursor.X + 750),
-                Top = Math.Max(game.Top, cursor.Y - 800), Bottom = Math.Min(game.Bottom, cursor.Y + 800),
-            };
-            var masks = new List<Native.RECT> { ScreenRect(this) };
-            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
-            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
-            var lines = await _screenReader.ReadAsync(box, masks);
-            _session.ShowAlert(ItemCheck.Describe(lines, stage), 20);
-        }
-        finally { _reading = false; }
     }
 
     // ------------------------------------------------------------------ planner
@@ -1192,7 +1152,7 @@ public partial class MainWindow : Window
     {
         if (_capturing) return;
         bool focusOk = !Settings.AutoHide || !_game.Running || _game.GameFocused || _game.OwnFocused;
-        // A box that is kept hidden still has things to say now and then (a death, an item check, a
+        // A box that is kept hidden still has things to say now and then (a death, a warning, a
         // warning): for as long as such a message lasts it comes up, showing only the message.
         bool messageOnly = _userHidden && Settings.BoxMode == 2 && _session.Alert is not null;
         if (messageOnly != _messageOnly)
@@ -1659,10 +1619,10 @@ public partial class MainWindow : Window
         var planner = new MenuItem { Header = "Planner: gear, idols, loot filter, Monolith, dungeons" };
         planner.Click += (_, _) => ShowPlanner(true);
         menu.Items.Add(planner);
-        // Put the whole box away: the build tree, planner and item check keep working without it.
+        // Put the whole box away: the build tree and planner keep working without it.
         var hideBox = new MenuItem { Header = ToggleKey.Length > 0 ? $"Hide this box  ({ToggleKey} brings it back)" : "Hide this box  (the tray icon brings it back)" };
-        hideBox.ToolTip = "Keeps the box hidden, also the next time the overlay starts. The build tree, the planner and the item check work as before; "
-                          + "messages (a death, an item check) still come up for a few seconds. Change it back under Settings → Overlay → Show the box.";
+        hideBox.ToolTip = "Keeps the box hidden, also the next time the overlay starts. The build tree and the planner work as before; "
+                          + "messages (a death, a warning) still come up for a few seconds. Change it back under Settings → Overlay → Show the box.";
         hideBox.Click += (_, _) =>
         {
             Settings.BoxMode = 2;

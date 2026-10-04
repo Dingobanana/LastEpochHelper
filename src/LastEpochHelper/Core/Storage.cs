@@ -32,7 +32,6 @@ public sealed class Settings
     public double? PlannerLeft { get; set; }
     public double? PlannerTop { get; set; }
     public string HotkeyPlanner { get; set; } = "Ctrl+Shift+G";
-    public string HotkeyLookup { get; set; } = "Ctrl+Shift+E";
     /// <summary>Last Epoch account name, filled in from the game log - only so a bug report can leave it out.</summary>
     public string AccountName { get; set; } = "";
     /// <summary>Hide while another application has focus.</summary>

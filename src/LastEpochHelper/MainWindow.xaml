@@ -68,7 +68,7 @@
                 <TextBlock x:Name="UpdateText" Visibility="Collapsed" Foreground="#7BE06A" FontWeight="SemiBold" Cursor="Hand"
                            TextWrapping="Wrap" Margin="0,2,0,0" MouseLeftButtonUp="UpdateText_Click"/>
 
-                <!-- Short-lived messages: a death, the result of an item check -->
+                <!-- Short-lived messages: a death, a warning -->
                 <Border x:Name="AlertSection" Visibility="Collapsed" Background="#2A7BE06A" BorderBrush="#997BE06A" BorderThickness="1" CornerRadius="6" Padding="8,4,8,5" Margin="0,4,0,0">
                     <TextBlock x:Name="AlertText" TextWrapping="Wrap" Foreground="#E8E4D8"/>
                 </Border>

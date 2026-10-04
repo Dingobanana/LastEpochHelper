@@ -200,39 +200,6 @@ public class ProfileSyncTests
     }
 }
 
-public class ItemCheckTests
-{
-    private static TreeStage Stage() => new()
-    {
-        Gear =
-        {
-            new GearItem { Slot = "Ring 1", Name = "Flames of Midnight", Rarity = "unique", Affixes = { "Added Health T5", "Hybrid Health T5" } },
-            new GearItem { Slot = "Helmet", Name = "Augury Helm", Affixes = { "Void Resistance T3", "Increased Melee Attack Speed T5" } },
-        },
-    };
-
-    [Fact]
-    public void FindsBuildAffixes_InTooltipText()
-    {
-        var lines = new[] { new ScreenLine("Rusted Coif", 20), new ScreenLine("+45 Health", 14), new ScreenLine("+12% Void Resistance", 14), new ScreenLine("+3 Mana", 14) };
-
-        string result = ItemCheck.Describe(lines, Stage());
-
-        Assert.Contains("2 build affixes", result);
-        Assert.Contains("Added Health", result);
-        Assert.Contains("Void Resistance", result);
-    }
-
-    [Fact]
-    public void RecognisesANamedItem_AndSaysSoWhenNothingMatches()
-    {
-        Assert.Contains("the build's Flames of Midnight (Ring 1)", ItemCheck.Describe(new[] { new ScreenLine("FLAMES OF MIDNIGHT", 22) }, Stage()));
-        Assert.Contains("right base: Augury Helm", ItemCheck.Describe(new[] { new ScreenLine("Augury Helm", 22) }, Stage()));
-        Assert.Contains("none of the build's", ItemCheck.Describe(new[] { new ScreenLine("+3 Mana", 14) }, Stage()));
-        Assert.Contains("no text found", ItemCheck.Describe(Array.Empty<ScreenLine>(), Stage()));
-    }
-}
-
 public class EndgameDataTests
 {
     [Fact]

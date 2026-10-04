@@ -42,8 +42,7 @@ internal sealed class TourWindow : Window
             + "• Click a node to correct it: left adds a point, right removes one.", "tree"),
         new("The planner",
             "Gear, idols and blessings the build wears at each stage, where its uniques drop, ready-made stash search strings (click to copy), "
-            + "a loot filter generated from your build, and checklists for the Monolith and dungeons.\n\n"
-            + "Hover an item in the game and press the item-check hotkey (Ctrl+Shift+E) to see whether it has affixes your build wants.", "planner"),
+            + "a loot filter generated from your build, and checklists for the Monolith and dungeons.", "planner"),
         new("Make it yours",
             "☰ → Bar layout turns the box into one line across the screen. Settings has opacity, font size, the hotkeys, the route "
             + "(full campaign or the shorter leveling routes) and what follows the game.\n\n"
