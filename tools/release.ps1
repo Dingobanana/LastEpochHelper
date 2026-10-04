@@ -1,5 +1,5 @@
 # Builds the self-contained zip and publishes it as a GitHub release for the version in the csproj.
-# The release notes are that version's section of CHANGELOG.md. Requires the GitHub CLI (gh), logged in.
+# The release notes are that version's section of CHANGELOG.md. Requires the GitHub CLI (gh), logged in as the repository owner.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
@@ -42,5 +42,9 @@ Compress-Archive $out $zip -Force
 $notesFile = Join-Path ([IO.Path]::GetTempPath()) "leh-notes-$version.md"
 ($notes -join "`n").Trim() | Set-Content $notesFile -Encoding utf8
 git push
-gh release create $tag $zip --title $title --notes-file $notesFile
+# Publish as the account that owns the repository the app updates from, whichever gh account is active.
+$repository = [regex]::Match((Get-Content 'src/LastEpochHelper/Core/Updater.cs' -Raw), 'Repository = "([^"]+)"').Groups[1].Value
+$env:GH_TOKEN = gh auth token --user $repository.Split('/')[0]
+if (-not $env:GH_TOKEN) { throw "gh is not logged in as $($repository.Split('/')[0])." }
+gh release create $tag $zip --repo $repository --title $title --notes-file $notesFile
 Write-Host "Released $tag"
