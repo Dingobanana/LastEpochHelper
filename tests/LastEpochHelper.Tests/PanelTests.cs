@@ -27,7 +27,7 @@ public class PanelDetectorTests
     }
 
     [Fact]
-    public void TheWeaverTree_IsItsOwnPanel_NotASkillTree_AndSaysHowManyPointsItHas()
+    public void TheWeaverTree_IsItsOwnPanel_NotASkillTree_AndSaysHowManyPointsArePlaced()
     {
         // As read from a real 1.5 screen (5120 wide): BACK and RESPEC are there as on an open skill tree.
         var weaver = new[]
@@ -43,11 +43,17 @@ public class PanelDetectorTests
             var reading = PanelDetector.Detect(weaver, Tabs, Skills, strict: strict);
             Assert.Equal(GamePanel.Weaver, reading.Panel);
             Assert.Equal("WEAVER TREE", reading.Anchor!.Text);
-            Assert.Equal(2, reading.Completion);
+            // Two points unlocked ("COMPLETION 2/53"), both still unspent: none placed.
+            Assert.Equal(0, reading.WeaverPlaced);
         }
-        // Just the heading band (the quick look): the panel, without its total.
+        // Three placed of five unlocked.
+        var later = weaver.Select(l => l.Text == "2/53" ? l with { Text = "5/53" } : l).ToList();
+        Assert.Equal(3, PanelDetector.Detect(later, Tabs, Skills).WeaverPlaced);
+        // Every point spent: no unspent line at all.
+        Assert.Equal(2, PanelDetector.Detect(weaver.Where(l => !l.Text.Contains("UNSPENT")).ToList(), Tabs, Skills).WeaverPlaced);
+        // Just the heading band (the quick look): the panel, but no guess at its points.
         var band = PanelDetector.Detect(weaver.Where(l => l.Y < 200).ToList(), Tabs, Skills, strict: true);
-        Assert.Equal((GamePanel.Weaver, (int?)null), (band.Panel, band.Completion));
+        Assert.Equal((GamePanel.Weaver, (int?)null), (band.Panel, band.WeaverPlaced));
         // A tooltip that mentions the tree is not the panel.
         var tip = new[] { new ScreenLine("Unlocks a node in the Weaver Tree", 14), new ScreenLine("BACK", 15), new ScreenLine("RESPEC", 16) };
         Assert.NotEqual(GamePanel.Weaver, PanelDetector.Detect(tip, Tabs, Skills).Panel);

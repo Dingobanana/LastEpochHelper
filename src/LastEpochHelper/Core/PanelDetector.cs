@@ -6,9 +6,12 @@ public enum GamePanel { None, Passives, Skills, Weaver }
 /// <param name="Anchor">A line that proves the panel is there; watching just that spot is cheap.</param>
 /// <param name="Tab">The passive tab (class or mastery) that is showing, when its title could be read.</param>
 /// <param name="Level">The level printed under an open skill tree's heading ("LEVEL 7"): the points that skill has.</param>
-/// <param name="Completion">The Weaver tree's "COMPLETION 2/53" at the bottom of its panel: the points placed in it.</param>
+/// <param name="WeaverPlaced">
+/// Points placed in the Weaver tree: its "COMPLETION 2/53" (points unlocked) less its "2 UNSPENT POINTS".
+/// Null when the completion count was not read (the quick look sees only the heading). No unspent line means none unspent.
+/// </param>
 public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null, int? Level = null,
-    int? Completion = null);
+    int? WeaverPlaced = null);
 
 /// <summary>
 /// Works out from the text on screen whether the game is showing its passive tree or its skill
@@ -40,7 +43,8 @@ public static class PanelDetector
         var weaverHeading = text.Where(t => t.Letters.Contains("weavertree", StringComparison.Ordinal) && t.Letters.Length <= 14)
             .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
         if (weaverHeading is not null && !text.Any(t => t.Letters == "passives"))
-            return new PanelReading(GamePanel.Weaver, Anchor: weaverHeading, Completion: WeaverCompletion(lines));
+            return new PanelReading(GamePanel.Weaver, Anchor: weaverHeading,
+                WeaverPlaced: WeaverUnlocked(lines) is { } unlocked && (Unspent(lines) ?? 0) is var unspent && unspent <= unlocked ? unlocked - unspent : null);
 
         // The game's own headings are the best evidence (1.5): "PASSIVES" on the passive panel,
         // "SKILLS & SPECIALIZATIONS" on the skill overview. ("N UNSPENT POINTS" is no evidence: a
@@ -160,8 +164,17 @@ public static class PanelDetector
         return passives ?? skillPanel ?? new PanelReading(GamePanel.None);
     }
 
-    /// <summary>"COMPLETION" with "2/53" on its line or just under it: the points placed in the Weaver tree.</summary>
-    private static int? WeaverCompletion(IReadOnlyList<ScreenLine> lines)
+    /// <summary>"N UNSPENT POINTS"; null when there is no such line (the game shows none when every point is spent).</summary>
+    private static int? Unspent(IReadOnlyList<ScreenLine> lines)
+    {
+        foreach (var line in lines)
+            if (System.Text.RegularExpressions.Regex.Match(line.Text, @"^\s*(\d{1,3})\s*UNSPENT\s*POINTS?\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } found)
+                return int.Parse(found.Groups[1].Value);
+        return null;
+    }
+
+    /// <summary>"COMPLETION" with "2/53" on its line or just under it: the points unlocked in the Weaver tree, spent or not.</summary>
+    private static int? WeaverUnlocked(IReadOnlyList<ScreenLine> lines)
     {
         var label = lines.FirstOrDefault(l => Letters(l.Text).Contains("completion", StringComparison.Ordinal));
         if (label is null) return null;

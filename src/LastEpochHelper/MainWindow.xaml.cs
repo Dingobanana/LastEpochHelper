@@ -767,7 +767,7 @@ public partial class MainWindow : Window
                     }
                 }
                 // The Weaver panel's nodes carry no names, so its labels are not read; its total is.
-                if (kind == _gameKind && reading.Completion is { } placed && weaverTab is not null && _stableReads.Twice("weaver", placed.ToString()))
+                if (kind == _gameKind && reading.WeaverPlaced is { } placed && weaverTab is not null && _stableReads.Twice("weaver", placed.ToString()))
                     _session.SetReadPoints(weaverTab, placed);
                 if (!quick && reading.Panel != GamePanel.Weaver) ReadNodePoints(words, reading);
             }
