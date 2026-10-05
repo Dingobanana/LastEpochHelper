@@ -204,7 +204,7 @@ internal sealed class PlannerWindow : Window
     {
         if (_session.Plan is not { } plan)
         {
-            Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll planner or build guide link and press 'Import from Maxroll'.");
+            Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll or Last Epoch Tools build link and press 'Import build'.");
             return;
         }
         var summary = BuildSummary.From(plan);
@@ -233,7 +233,7 @@ internal sealed class PlannerWindow : Window
     private TreeStage? Stage()
     {
         if (_session.Stage is { } stage) return stage;
-        Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll planner or build guide link and press 'Import from Maxroll'.");
+        Note("No build imported for this character. Open settings (the gear on the overlay), paste a Maxroll or Last Epoch Tools build link and press 'Import build'.");
         return null;
     }
 
@@ -442,7 +442,7 @@ internal sealed class PlannerWindow : Window
         {
             string? name = _filterBuilds.Count == 0 ? null : _session.GenerateFilter(_filterBuilds);
             _filterMessage = name is null
-                ? "No build with gear to generate from - import a Maxroll build first (and re-import builds imported before 0.7)."
+                ? "No build with gear to generate from - import a build first (and re-import builds imported before 0.7)."
                 : $"Wrote \"{name}\". In game: Shift+F, then pick it from the list.";
             Render();
         }, color: Green);

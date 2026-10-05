@@ -23,12 +23,14 @@ public sealed class ImportFlowTests : IDisposable
     {
         public readonly Dictionary<string, (HttpStatusCode Status, string Body)> Pages = new();
         public readonly List<string> Asked = new();
+        public readonly List<string> Agents = new();
         public bool Offline;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token)
         {
             string url = request.RequestUri!.ToString();
             Asked.Add(url);
+            Agents.Add(request.Headers.UserAgent.ToString());
             if (Offline) throw new HttpRequestException("No such host is known.");
             var (status, body) = Pages.TryGetValue(url, out var page) ? page : (HttpStatusCode.NotFound, "{\"error\":\"Profile not found\"}");
             return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body) });
@@ -109,13 +111,70 @@ public sealed class ImportFlowTests : IDisposable
         Assert.Contains("no page at that address", missing.Message);
     }
 
+    // A Last Epoch Tools build in the shape its public address answers, for the cut-down game data:
+    // a node the game data does not know (77), an empty blessing list as [], and gear in its own ids.
+    internal const string LeToolsBuild = """
+    {"data":{"bio":{"level":30,"characterClass":0,"chosenMastery":3},
+      "charTree":{"treeID":"","selected":{"1":3,"2":2,"9":1,"77":4},"version":3},
+      "charTreeProgression":[1,2,1,2,1,9],
+      "skillTrees":[{"treeID":"rv","selected":{"0":0,"4":2,"5":1},"level":3,"slotNumber":0,"version":2}],
+      "skillTreesProgression":{"rv":[4,5,4]},
+      "weaverTree":{"treeID":"","selected":{},"version":10},"weaverTreeProgression":[],
+      "hud":["rv","",""],"blessings":[],"equipment":{"head":{"id":"UAwRgrALA7CQ","affixes":[]}}},
+     "level":30,"class":0,"mastery":3,"data_version":"Version 1.5.0","guide":null}
+    """;
+
+    [Fact]
+    public async Task ALastEpochToolsPlannerLink_IsFetchedFromItsPublicAddress_AndConvertedInItsOwnOrder()
+    {
+        var maxroll = Maxroll();
+        maxroll.Pages["https://www.lastepochtools.com/api/public/build_data/AbCdEf12"] = (HttpStatusCode.OK, LeToolsBuild);
+        using var http = new HttpClient(maxroll);
+
+        var results = await MaxrollImporter.ImportAsync("look: https://www.lastepochtools.com/planner/AbCdEf12", _dir, http);
+
+        var result = Assert.Single(results);
+        Assert.Equal("Paladin - Last Epoch Tools AbCdEf12", result.Name);
+        Assert.Equal("letools:AbCdEf12", result.Tree.SourceId);
+        Assert.Contains("# Imported from https://www.lastepochtools.com/planner/AbCdEf12", result.Text);
+        Assert.Contains("gear and idols are not imported", result.Text);
+        var stage = Assert.Single(result.Tree.Stages);
+        Assert.Equal(30, stage.Level);
+        Assert.Equal(new[] { 1, 2, 1, 2, 1, 9 }, stage.Passives); // its order; node 77 is not in the game
+        Assert.Equal(new[] { 4, 5, 4 }, stage.Skills["Rive"]);
+        Assert.Empty(stage.Gear);
+        // Asked once, saying who asks; the id keeps its capitals.
+        int index = maxroll.Asked.IndexOf("https://www.lastepochtools.com/api/public/build_data/AbCdEf12");
+        Assert.True(index >= 0);
+        Assert.Contains("github.com/Dingobanana/LastEpochHelper", maxroll.Agents[index]);
+        Assert.Single(maxroll.Asked, url => url.Contains("lastepochtools"));
+    }
+
+    [Fact]
+    public async Task ALastEpochToolsPlannerThatIsNotThere_IsSaidSo()
+    {
+        var maxroll = Maxroll();
+        // Not found still answers 200.
+        maxroll.Pages["https://www.lastepochtools.com/api/public/build_data/Gone1234"] = (HttpStatusCode.OK, "{\"code\":3,\"error\":\"Build not found\"}");
+        using var http = new HttpClient(maxroll);
+
+        var gone = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/planner/Gone1234", _dir, http));
+        Assert.Contains("no public planner 'Gone1234'", gone.Message);
+        var missing = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/planner/Nope5678", _dir, http));
+        Assert.Contains("no planner 'Nope5678'", missing.Message);
+        // Cloudflare's bot check answers 403 with a challenge page.
+        maxroll.Pages["https://www.lastepochtools.com/api/public/build_data/Wall1234"] = (HttpStatusCode.Forbidden, "<html>Just a moment...</html>");
+        var walled = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/planner/Wall1234", _dir, http));
+        Assert.Contains("turned the overlay away", walled.Message);
+    }
+
     [Fact]
     public async Task WhatCannotBeImported_IsRefusedInWords_WithoutAskingTheNetworkWhenItNeedNot()
     {
         var maxroll = Maxroll();
         using var http = new HttpClient(maxroll);
 
-        var tools = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/planner/AbCdEf12", _dir, http));
+        var tools = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/profile/SomeOne/character/Two", _dir, http));
         Assert.Contains("Last Epoch Tools", tools.Message);
         Assert.Empty(maxroll.Asked); // refused from the text alone
 

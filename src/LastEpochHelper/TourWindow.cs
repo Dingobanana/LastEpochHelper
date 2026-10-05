@@ -29,7 +29,7 @@ internal sealed class TourWindow : Window
             + "• Specialization reminders tick themselves once the overlay has seen that many skills with points in the game.\n"
             + "• The others are just reminders - the overlay cannot see whether you did them.", "overlay"),
         new("Import a build",
-            "Settings (the gear) → paste a Maxroll planner or build-guide link → Import from Maxroll.\n\n"
+            "Settings (the gear) → paste a Maxroll planner or build-guide link, or a Last Epoch Tools planner link → Import build.\n\n"
             + "That gives the overlay the build's passive and skill trees with the order of every point, its gear, idols and blessings. "
             + "Each character remembers its own build.", "settings"),
         new("The build in short",

@@ -217,6 +217,9 @@ public static partial class MaxrollImporter
             return await FromJsonAsync(found, "", "Pasted build", cacheDir, http);
         }
 
+        if (pasted.LeToolsId is { } leTools)
+            return await FromJsonAsync(await LeTools.FetchAsync(leTools, http), LeTools.SourcePrefix + leTools, "", cacheDir, http);
+
         var (id, variant) = await ResolveAsync(pasted, http);
         using var answer = await http.GetAsync(ProfileUrl + id);
         if (answer.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -231,9 +234,10 @@ public static partial class MaxrollImporter
     }
 
     /// <summary>
-    /// Builds from planner data in any of the three shapes it travels in: Maxroll's answer for a planner
-    /// ({"name", "data": "..."}), a planner's inner data ({"profiles": [...]}), or one version as the
-    /// planner's Export button copies it ({"class", "passives", "skillTrees", "items", ...}).
+    /// Builds from planner data in any of the shapes it travels in: Maxroll's answer for a planner
+    /// ({"name", "data": "..."}), a planner's inner data ({"profiles": [...]}), one version as the
+    /// planner's Export button copies it ({"class", "passives", "skillTrees", "items", ...}), or a
+    /// Last Epoch Tools build ({"data": {"bio", "charTree", "skillTrees", ...}}).
     /// </summary>
     /// <param name="id">The planner's id when it is known ("" for pasted or file data).</param>
     /// <param name="preferred">The version (0-based) the link or guide page pointed at.</param>
@@ -241,6 +245,7 @@ public static partial class MaxrollImporter
     {
         JsonNode? planner = found;
         string title = fallbackName;
+        bool leTools = found["data"] is JsonObject build && (build["charTree"] is JsonObject || build["bio"] is JsonObject);
         if (found["data"] is JsonValue inner && inner.TryGetValue(out string? data))
         {
             try { planner = JsonNode.Parse(data ?? ""); }
@@ -250,14 +255,19 @@ public static partial class MaxrollImporter
         }
         bool exported = planner is JsonObject one && one["profiles"] is null
                         && (one["passives"] is JsonObject || one["skillTrees"] is JsonObject || one["items"] is JsonObject);
-        if (!exported && (planner is not JsonObject || planner["profiles"] is not JsonArray))
+        if (!exported && !leTools && (planner is not JsonObject || planner["profiles"] is not JsonArray))
             throw new InvalidDataException("That is JSON, but not a build: it has neither this overlay's trees nor a Maxroll planner's profiles.");
 
         // Icons are positions in the sheet, listed in the game data: the two must be of the same age.
         var (atlas, isNew) = await DownloadAtlasAsync(cacheDir, http);
         var game = await LoadGameDataAsync(cacheDir, http, refresh: isNew);
-        List<Result> Convert(JsonNode data) =>
-            ConvertAll(id.Length > 0 ? id : "pasted", title, exported ? FromExport((JsonObject)planner!, title, data) : planner!, data, preferred);
+        List<Result> Convert(JsonNode data)
+        {
+            if (!leTools)
+                return ConvertAll(id.Length > 0 ? id : "pasted", title, exported ? FromExport((JsonObject)planner!, title, data) : planner!, data, preferred);
+            string named = LeTools.Name(found, LeTools.IsSource(id) ? id[LeTools.SourcePrefix.Length..] : "", data);
+            return ConvertAll(id.Length > 0 ? id : LeTools.SourcePrefix, named, LeTools.ToPlanner(found, named, data), data);
+        }
         List<Result> results;
         try { results = Convert(game); }
         catch (InvalidDataException) when (GameDataAge(cacheDir) > TimeSpan.FromMinutes(5))
@@ -441,7 +451,9 @@ public static partial class MaxrollImporter
     /// <param name="Problem">Set when it is neither: a sentence for the player saying why.</param>
     /// <param name="Variant">The version the link points at (0-based): the "#2" on a shared planner link.</param>
     /// <param name="Json">Set when planner data itself was pasted (the planner's Export button).</param>
-    public sealed record Pasted(string? PlannerId = null, string? PageUrl = null, string? Problem = null, int? Variant = null, string? Json = null);
+    /// <param name="LeToolsId">Set when it is a Last Epoch Tools planner link: that planner's id.</param>
+    public sealed record Pasted(string? PlannerId = null, string? PageUrl = null, string? Problem = null, int? Variant = null, string? Json = null,
+        string? LeToolsId = null);
 
     [GeneratedRegex(@"last-epoch/planner/[a-z0-9]{6,12}#(\d{1,2})")]
     private static partial Regex LinkedVariant();
@@ -496,8 +508,9 @@ public static partial class MaxrollImporter
         // A path on this computer (the caller imports the file if it exists; this is for when it does not).
         if (text.Length > 2 && (text[1] == ':' || text.StartsWith(@"\\\\", StringComparison.Ordinal)) || lower.EndsWith(".json") || lower.EndsWith(".txt"))
             return new Pasted(Problem: "There is no file at that path. Use 'Import from file' to pick it.");
+        if (LeTools.PlannerId(text) is { } leTools) return new Pasted(LeToolsId: leTools);
         if (lower.Contains("lastepochtools.com"))
-            return new Pasted(Problem: "That is a Last Epoch Tools link. Its planners cannot be read by other programs, so only Maxroll builds can be imported - look for the same build on maxroll.gg, or rebuild it in Maxroll's planner and paste that link.");
+            return new Pasted(Problem: "Of Last Epoch Tools only planner links can be imported (lastepochtools.com/planner/...). Open the build in its planner and paste the link from the address bar.");
         if (lower.Contains("maxroll.gg/last-epoch/planner"))
             return new Pasted(Problem: "That is Maxroll's planner page, not one build. Open the build you want and paste the link from the address bar (it ends in a code like 3k9hk0gr).");
         if (lower.Contains("maxroll.gg/") && !lower.Contains("maxroll.gg/last-epoch"))
@@ -512,8 +525,8 @@ public static partial class MaxrollImporter
                 : new Pasted(Problem: "That does not look like a complete link. Copy it from the browser's address bar.");
         }
         if (AnyLink().IsMatch(text))
-            return new Pasted(Problem: "Only Maxroll builds can be imported. Paste a link to a Last Epoch planner or build guide on maxroll.gg.");
-        return new Pasted(Problem: "That does not look like a Maxroll Last Epoch planner or build guide link.");
+            return new Pasted(Problem: "Only builds from Maxroll and Last Epoch Tools can be imported. Paste a planner or build guide link from maxroll.gg, or a planner link from lastepochtools.com.");
+        return new Pasted(Problem: "That does not look like a Maxroll or Last Epoch Tools planner link, or a Maxroll build guide link.");
     }
 
     private static async Task<(string Id, int? Variant)> ResolveAsync(Pasted pasted, HttpClient http)
@@ -899,7 +912,8 @@ public static partial class MaxrollImporter
     {
         var text = new StringBuilder();
         text.Append("name: ").Append(name).Append('\n');
-        text.Append("# Imported from https://maxroll.gg/last-epoch/planner/").Append(id).Append('\n');
+        text.Append("# Imported from ").Append(LeTools.SourceUrl(id)).Append('\n');
+        if (LeTools.IsSource(id)) text.Append("# Build data by Last Epoch Tools (lastepochtools.com). Its gear and idols are not imported.\n");
         text.Append("# The order of points is exact. Levels are estimates: take the points in this order as you get them.\n");
 
         foreach (var level in steps.GroupBy(s => s.Level).OrderBy(g => g.Key))

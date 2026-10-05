@@ -150,6 +150,52 @@ public class MaxrollSurveyTests
     }
 
     /// <summary>
+    /// The same for saved Last Epoch Tools builds (LEH_LETOOLS_DIR, one build_data answer per file, named
+    /// by planner id), against saved Maxroll game data (LEH_MAXROLL_GAME). Every point placed there has to
+    /// arrive, except on nodes the game data does not know.
+    /// </summary>
+    [Fact]
+    public void EverySavedLeToolsBuild_ConvertsCleanly_WhenAskedTo()
+    {
+        string? dir = Environment.GetEnvironmentVariable("LEH_LETOOLS_DIR"), gameFile = Environment.GetEnvironmentVariable("LEH_MAXROLL_GAME"),
+            output = Environment.GetEnvironmentVariable("LEH_MAXROLL_OUT");
+        if (dir is null || gameFile is null || output is null) return;
+
+        var game = JsonNode.Parse(File.ReadAllText(gameFile))!;
+        var report = new List<string>();
+        int failures = 0, flawed = 0;
+        foreach (string file in Directory.GetFiles(dir, "*.json").Where(f => !f.EndsWith("maxroll_data.json")).OrderBy(f => f))
+        {
+            string id = Path.GetFileNameWithoutExtension(file);
+            try
+            {
+                if (JsonNode.Parse(File.ReadAllText(file)) is not JsonObject build || build["data"] is not JsonObject data) continue;
+                string name = LeTools.Name(build, id, game);
+                var result = Assert.Single(MaxrollImporter.ConvertAll(LeTools.SourcePrefix + id, name, LeTools.ToPlanner(build, name, game), game));
+                var problems = BuildChecks.Problems(result);
+                var stage = result.Tree.Stages[^1];
+                // Every point placed on a node the game knows is in the build.
+                var passiveIds = result.Tree.Trees.Where(t => t.Kind == TreeDef.PassiveKind).SelectMany(t => t.Nodes).ToDictionary(n => n.Id, n => n.Max);
+                int placed = (data["charTree"]?["selected"] as JsonObject ?? new JsonObject())
+                    .Sum(kv => int.TryParse(kv.Key, out int n) && passiveIds.TryGetValue(n, out int max) ? Math.Min(kv.Value.IntOrNull() ?? 0, max) : 0);
+                if (placed != stage.Passives.Count) problems.Add($"{placed} passive points placed, {stage.Passives.Count} imported");
+                if (problems.Count > 0) flawed++;
+                report.Add($"{id}: {result.Name} | L{stage.Level} {stage.Passives.Count}p, first {string.Join(",", stage.Passives.Take(6))} | "
+                           + string.Join(", ", stage.Skills.Select(kv => $"{kv.Key} {kv.Value.Count}")) + $" | {result.Steps} steps"
+                           + (problems.Count > 0 ? "\n      PROBLEMS: " + string.Join("; ", problems.Distinct().Take(8)) : ""));
+            }
+            catch (Exception e)
+            {
+                failures++;
+                report.Add($"{id}: FAILED {e.GetType().Name}: {e.Message}\n      {e.StackTrace?.Split('\n').FirstOrDefault(l => l.Contains("LastEpochHelper"))?.Trim()}");
+            }
+        }
+        File.WriteAllLines(output, report);
+        Assert.Equal(0, failures);
+        Assert.Equal(0, flawed);
+    }
+
+    /// <summary>
     /// Damages real planners in random ways (LEH_MAXROLL_FUZZ = number of damaged copies per planner) and
     /// imports each copy. Whatever is missing or wrong, the import may refuse with a message - it must
     /// not fail in any other way, and what it does produce must still pass every check.

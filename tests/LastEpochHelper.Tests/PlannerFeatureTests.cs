@@ -343,11 +343,11 @@ public class BuildSummaryTests
     [Theory]
     [InlineData("", "Paste a Maxroll")]
     [InlineData("   ", "Paste a Maxroll")]
-    [InlineData("https://www.lastepochtools.com/planner/AbCdEf12", "Last Epoch Tools")]
+    [InlineData("https://www.lastepochtools.com/profile/SomeOne/character/Two", "only planner links")]
     [InlineData("https://maxroll.gg/last-epoch/planner", "not one build")]
     [InlineData("https://maxroll.gg/last-epoch/planner/community-builds", "not one build")]
     [InlineData("https://maxroll.gg/d4/planner/ab12cd34", "another game")]
-    [InlineData("https://www.youtube.com/watch?v=abc", "Only Maxroll")]
+    [InlineData("https://www.youtube.com/watch?v=abc", "Only builds from Maxroll and Last Epoch Tools")]
     [InlineData("hello there", "does not look like")]
     [InlineData("community", "does not look like")]
     public void AnythingElse_IsRefusedWithTheReason(string pasted, string reason)

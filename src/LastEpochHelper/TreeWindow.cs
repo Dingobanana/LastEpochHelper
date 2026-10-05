@@ -63,7 +63,7 @@ internal sealed class TreeWindow : Window
     private readonly TextBlock _empty = new()
     {
         Foreground = Muted, TextWrapping = TextWrapping.Wrap, Width = 420, TextAlignment = TextAlignment.Center,
-        Text = "No build imported for this character.\n\nOpen settings (the gear on the overlay), paste a Maxroll planner or build guide link and press 'Import from Maxroll'.",
+        Text = "No build imported for this character.\n\nOpen settings (the gear on the overlay), paste a Maxroll or Last Epoch Tools build link and press 'Import build'.",
     };
 
     private BitmapSource? _atlas;

@@ -107,11 +107,12 @@ internal sealed class SettingsWindow : Window
         character.Children.Add(Indented(Buttons(("New profile", NewProfile), ("Delete profile", DeleteProfile))));
         character.Children.Add(Heading("Build"));
         character.Children.Add(Row("Build plan", _plan));
-        character.Children.Add(Row("Maxroll link", _importLink));
+        character.Children.Add(Row("Build link", _importLink));
         _importLink.ToolTip = "Any of: a Maxroll Last Epoch planner link (maxroll.gg/last-epoch/planner/...), a Maxroll build guide link, "
-                              + "the text the planner's Export button copies, or the path of a build file someone sent you.";
+                              + "a Last Epoch Tools planner link (lastepochtools.com/planner/...), "
+                              + "the text Maxroll's planner Export button copies, or the path of a build file someone sent you.";
         character.Children.Add(Indented(Buttons(
-            ("Import from Maxroll", Import), ("Import from file...", ImportFile), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
+            ("Import build", Import), ("Import from file...", ImportFile), ("New empty plan", NewPlan), ("Open plans folder", () => Open(_session.BuildsDir)))));
         character.Children.Add(Indented(Buttons(("Get the Weaver trees from Maxroll", () => GetWeaver(announce: true)))));
 
         // ---- Overlay: looks, and which parts it shows
@@ -429,7 +430,7 @@ internal sealed class SettingsWindow : Window
     {
         if (string.IsNullOrWhiteSpace(_importLink.Text))
         {
-            _message.Text = "Paste a Maxroll planner or build guide link first.";
+            _message.Text = "Paste a Maxroll or Last Epoch Tools planner link, or a Maxroll build guide link, first.";
             return;
         }
         ImportFrom(_importLink.Text);
@@ -529,7 +530,8 @@ internal sealed class SettingsWindow : Window
                     ? $" This guide has {results.Count} versions of the build ({string.Join(", ", result.Tree.Variants)}); switch between them at the bottom of the build tree."
                     : result.Tree.Stages.Count > 1 ? $" It has {result.Tree.Stages.Count} stages by level; the overlay follows your level, or pick one at the bottom of the build tree." : "")
                 // Some planners fill every node to show a tree off; a character has 113 passive points at most.
-                + (result.Tree.Stages.Any(s => s.Passives.Count > 120) ? " Note: this planner has more passive points placed than a character can have - it is a showcase, not a tree to follow point by point." : "");
+                + (result.Tree.Stages.Any(s => s.Passives.Count > 120) ? " Note: this planner has more passive points placed than a character can have - it is a showcase, not a tree to follow point by point." : "")
+                + (LeTools.IsSource(result.Tree.SourceId) ? " Build data by Last Epoch Tools; its gear and idols are not imported, only the trees." : "");
         }
         catch (InvalidDataException e)
         {
@@ -541,7 +543,7 @@ internal sealed class SettingsWindow : Window
         catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException)
         {
             LogImportFailure(link, e);
-            _message.Text = "Could not reach Maxroll (" + e.Message + "). Check your connection and try again.";
+            _message.Text = $"Could not reach {(MaxrollImporter.Understand(link).LeToolsId is null ? "Maxroll" : "Last Epoch Tools")} ({e.Message}). Check your connection and try again.";
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

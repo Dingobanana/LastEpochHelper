@@ -73,12 +73,14 @@ asking, and only zip files from this repository's own releases are downloaded. Y
 
 ### Your build
 
-- **Import.** Paste a Maxroll planner or build guide link in Settings → Character and press *Import from Maxroll*.
+- **Import.** Paste a Maxroll planner or build guide link in Settings → Character and press *Import build*.
   Leveling guides come in as stages by level; build guides as their versions (Starter, Endgame, Aspirational, ...).
   A link ending in `#2` opens on that version. The text the planner's *Export* button copies can be pasted in the
   same box, and *Import from file* takes a build file someone sent you (`name.tree.json` from their
-  `%APPDATA%\LastEpochHelper\builds` folder). Last Epoch Tools planners cannot be imported: that site does not
-  allow programs to read them.
+  `%APPDATA%\LastEpochHelper\builds` folder).
+- **Last Epoch Tools.** A planner link from lastepochtools.com (`lastepochtools.com/planner/...`) imports too, with
+  the order the points were placed in. Only the passive, skill and Weaver trees come along, not its gear or idols. The
+  site's owner allowed this overlay to read its public build data. It is fetched only when you press *Import build*.
 - **TL;DR.** Planner → TL;DR is the build in short: which mastery to choose and when, which passive trees get points in
   which order, which skills to specialize, and which stage or version you are on.
 - **Build tree.** Press the game's own keys for passives (`P`) or skills (`S`) - or open the panel with the mouse - and
@@ -125,7 +127,8 @@ to send to and saves the report as a zip file on your desktop instead.
 - The alternative routes were put together from the datamined exits and have not been played through; the quest
   log after a skip can differ from the list.
 - Monolith data: timelines and blessings from tunklab, recommendations from Maxroll (dated 1.4).
-- Builds, tree layouts and icons come from Maxroll's planner at import time and stay on your machine.
+- Builds, tree layouts and icons come from Maxroll's planner at import time and stay on your machine. Builds from
+  Last Epoch Tools are read from its public build data (with its owner's permission) and drawn with Maxroll's trees.
 - This is a fan project, not affiliated with Eleventh Hour Games or Maxroll.
 
 ## Building from source
@@ -167,5 +170,5 @@ The code and text in this repository are under the [MIT License](LICENSE): use, 
 keeping the copyright notice.
 
 That covers this project's own work only. Last Epoch, its name, artwork, icons and game data belong to Eleventh Hour
-Games; build planners and their icons belong to Maxroll; the datamined quest and zone data comes from
+Games; build planners and their icons belong to Maxroll, and Last Epoch Tools builds to that site; the datamined quest and zone data comes from
 <https://lastepoch.tunklab.com>. None of that is licensed here.
