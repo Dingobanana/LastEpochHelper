@@ -10,16 +10,19 @@ public partial class App : Application
     private const string WaitArgument = "--wait-pid";
     private static Mutex? _singleInstance;
 
+    /// <summary>Set once the overlay has started; until then an error means it never will.</summary>
+    public static bool OverlayUp { get; set; }
+
     public App()
     {
         // A UI glitch should never take the overlay down mid-session: log it and keep running.
-        // Before the overlay exists there is nothing to keep running: say so and quit, rather than
+        // Before the overlay is up there is nothing to keep running: say so and quit, rather than
         // linger in Task Manager with no window.
         DispatcherUnhandledException += (_, e) =>
         {
             LogError("UI", e.Exception);
             e.Handled = true;
-            if (MainWindow is null)
+            if (!OverlayUp)
             {
                 MessageBox.Show($"Last Epoch Helper could not start:\n{(e.Exception.InnerException ?? e.Exception).Message}\n\n"
                     + @"The details are in %AppData%\LastEpochHelper\errors.log. Please include that file if you report it.",

@@ -163,6 +163,7 @@ public partial class MainWindow : Window
                           + $"build '{_session.Profile.BuildPlan}', follow keys={Settings.FollowGameKeys} screen={Settings.FollowSkillOnScreen} points={Settings.ReadPointsFromScreen}");
 
         Render();
+        App.OverlayUp = true;
         var whatsNew = ShowWhatsNew();
         MentionNewErrors();
         WarnIfCannotRead();
