@@ -195,6 +195,16 @@ public partial class MainWindow : Window
         _session.ShowAlert(problem.Short, 45);
     }
 
+    /// <summary>Once per player: what does not work while the game is streamed from GeForce NOW.</summary>
+    private void WarnIfStreamed()
+    {
+        if (!_game.Streamed || Settings.ReadinessWarned.Contains(Readiness.StreamedKey)) return;
+        Settings.ReadinessWarned.Add(Readiness.StreamedKey);
+        SaveSettings();
+        ActivityLog.Write("game: streamed from GeForce NOW");
+        _session.ShowAlert(Readiness.StreamedShort, 45);
+    }
+
     /// <summary>What Settings → Following the game → Check shows: each condition for reading the game, met or not.</summary>
     public List<(bool Ok, string Text)> ReadinessReport()
     {
@@ -211,6 +221,7 @@ public partial class MainWindow : Window
         report.Add(width > 0
             ? (true, $"The game window is {width} x {height}.")
             : (false, "The game window was not found. Start Last Epoch (in Borderless Windowed mode) and check again."));
+        if (_game.Streamed) report.Add((false, Readiness.StreamedLong));
 
         string Seen(string what, DateTime? at) => at is { } time
             ? $"The {what} panel was recognised {Ago(time)}."
@@ -1140,6 +1151,7 @@ public partial class MainWindow : Window
         _game.Refresh();
         // A long gap means the machine slept; that is not play time.
         if (_game.Running && elapsed < 5) _session.Tick(elapsed);
+        WarnIfStreamed();
 
         UpdateVisibility();
         // Checked even while hidden, so the notice is waiting when the game gets focus again.

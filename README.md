@@ -21,6 +21,10 @@ in **English** and Windows' text recognition for English (it comes with the Engl
 settings). The overlay says so at start if either is missing, and Settings → Following the game → **Check** shows
 what it can see. The campaign guide works in any language.
 
+**GeForce NOW:** the overlay recognises the game's window ("Last Epoch on GeForce NOW"), so the build tree and the
+map counters work. The game's log stays on Nvidia's machine, though, so the campaign guide cannot follow your zones
+there (step through it with `Ctrl+Shift+Left/Right`), and loot filters cannot be written into the game.
+
 New here? The menu (`☰`) has **Take a tour**, a two-minute walk through everything below.
 
 | Hotkey | What it does |

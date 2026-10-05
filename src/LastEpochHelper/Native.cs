@@ -46,6 +46,35 @@ internal static class Native
     [DllImport("user32.dll")]
     public static extern bool DestroyIcon(IntPtr handle);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int max);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr param);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr param);
+
+    private static string TitleOf(IntPtr hwnd)
+    {
+        var text = new System.Text.StringBuilder(256);
+        return GetWindowText(hwnd, text, text.Capacity) > 0 ? text.ToString() : "";
+    }
+
+    /// <summary>Whether a visible top-level window has a title that passes <paramref name="wanted"/>.</summary>
+    public static bool AnyWindowTitled(Func<string, bool> wanted)
+    {
+        bool found = false;
+        EnumWindows((hwnd, _) =>
+        {
+            if (IsWindowVisible(hwnd) && wanted(TitleOf(hwnd))) found = true;
+            return !found;
+        }, IntPtr.Zero);
+        return found;
+    }
+
     /// <summary>Never take focus from the game, stay out of alt-tab, and optionally let clicks fall through.</summary>
     public static void ApplyOverlayStyle(IntPtr hwnd, bool clickThrough)
     {
@@ -58,14 +87,14 @@ internal static class Native
     public static void BringToTop(IntPtr hwnd) =>
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-    /// <summary>Process id and screen rectangle of the window that currently has focus.</summary>
-    public static (uint ProcessId, RECT Bounds) Foreground()
+    /// <summary>Process id, screen rectangle and title of the window that currently has focus.</summary>
+    public static (uint ProcessId, RECT Bounds, string Title) Foreground()
     {
         IntPtr hwnd = GetForegroundWindow();
-        if (hwnd == IntPtr.Zero) return (0, default);
+        if (hwnd == IntPtr.Zero) return (0, default, "");
         GetWindowThreadProcessId(hwnd, out uint pid);
         GetWindowRect(hwnd, out RECT rect);
-        return (pid, rect);
+        return (pid, rect, TitleOf(hwnd));
     }
 }
 
@@ -78,6 +107,11 @@ internal sealed class GameWatcher
     private DateTime _lastScan = DateTime.MinValue;
 
     public bool Running { get; private set; }
+    /// <summary>
+    /// The game is streamed from GeForce NOW: it runs on Nvidia's machine and is shown here in a window
+    /// of the GeForce NOW app. The screen can be read; its Player.log and filter folder are not on this PC.
+    /// </summary>
+    public bool Streamed { get; private set; }
     public bool GameFocused { get; private set; }
     public bool OwnFocused { get; private set; }
     public Native.RECT GameBounds { get; private set; }
@@ -91,13 +125,18 @@ internal sealed class GameWatcher
             var processes = Process.GetProcessesByName(ProcessName);
             _gamePids = processes.Select(p => (uint)p.Id).ToHashSet();
             foreach (var p in processes) p.Dispose();
-            Running = _gamePids.Count > 0;
+            Streamed = _gamePids.Count == 0 && Native.AnyWindowTitled(IsStreamedGame);
+            Running = _gamePids.Count > 0 || Streamed;
         }
-        var (pid, bounds) = Native.Foreground();
-        GameFocused = _gamePids.Contains(pid);
+        var (pid, bounds, title) = Native.Foreground();
+        GameFocused = _gamePids.Contains(pid) || IsStreamedGame(title);
         OwnFocused = pid == _ownPid;
         if (GameFocused) GameBounds = bounds;
     }
+
+    /// <summary>GeForce NOW titles its window after the game: "Last Epoch on GeForce NOW".</summary>
+    internal static bool IsStreamedGame(string title) =>
+        title.Contains("Last Epoch", StringComparison.OrdinalIgnoreCase) && title.Contains("GeForce NOW", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>

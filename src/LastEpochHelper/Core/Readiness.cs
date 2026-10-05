@@ -14,6 +14,13 @@ public static class Readiness
                                       + "(Or in PowerShell as administrator: Add-WindowsCapability -Online -Name \"Language.OCR~~~en-US~0.0.1.0\")";
     private const string NeedsReading = "the build tree cannot follow the game's panels, and the map counters cannot be read. The campaign guide works without it";
 
+    public const string StreamedKey = "geforce-now";
+    public const string StreamedShort = "Last Epoch is streamed from GeForce NOW: the build tree and map counters work, but the campaign guide cannot follow your zones. "
+                                        + "Step through it with Ctrl+Shift+Left/Right.";
+    public const string StreamedLong = "Last Epoch is streamed from GeForce NOW, so it runs on Nvidia's machine. The build tree and the map counters read the screen and work. "
+                                       + "The game's log stays on that machine, so the campaign guide cannot follow your zones (step through it with Ctrl+Shift+Left/Right), "
+                                       + "and a loot filter cannot be written into the game's folder.";
+
     /// <param name="ocrAvailable">Windows can recognise text at all.</param>
     /// <param name="ocrLanguage">The language it reads in ("en-US"), null when unknown.</param>
     /// <param name="gameLanguage">Last Epoch's language setting ("en"), null when unknown.</param>

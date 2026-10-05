@@ -1,9 +1,22 @@
+using LastEpochHelper;
 using LastEpochHelper.Core;
 
 namespace LastEpochHelper.Tests;
 
 public class ReadinessTests
 {
+    [Theory]
+    [InlineData("Last Epoch on GeForce NOW", true)]   // the title a player saw in the taskbar
+    [InlineData("LAST EPOCH on GeForce NOW", true)]
+    [InlineData("GeForce NOW", false)]                 // the app's library, not the game
+    [InlineData("Path of Exile 2 on GeForce NOW", false)]
+    [InlineData("Last Epoch", false)]                  // the game itself is found by its process
+    [InlineData("", false)]
+    public void AGameStreamedFromGeForceNow_IsKnownByItsWindowTitle(string title, bool streamed)
+    {
+        Assert.Equal(streamed, GameWatcher.IsStreamedGame(title));
+    }
+
     [Fact]
     public void TheGamesLanguage_IsReadFromItsSavedPreference()
     {
