@@ -71,16 +71,10 @@ public sealed class EndgameData
         return null;
     }
 
-    public static EndgameData Load(string path)
+    public static EndgameData LoadBundled()
     {
-        try
-        {
-            if (File.Exists(path))
-                return JsonSerializer.Deserialize<EndgameData>(File.ReadAllText(path), Guide.JsonOptions) ?? new EndgameData();
-        }
-        catch (JsonException) { }
-        catch (IOException) { }
-        return new EndgameData();
+        try { return JsonSerializer.Deserialize<EndgameData>(Bundled.Text(Bundled.Endgame), Guide.JsonOptions) ?? new EndgameData(); }
+        catch (JsonException) { return new EndgameData(); }
     }
 
     /// <summary>Which timeline a blessing belongs to; planner builds name the empowered version ("Grand ...").</summary>

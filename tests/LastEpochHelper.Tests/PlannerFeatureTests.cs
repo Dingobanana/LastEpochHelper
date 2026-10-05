@@ -205,7 +205,7 @@ public class EndgameDataTests
     [Fact]
     public void ShippedData_MapsItemTypesAndBlessingsToTimelines_AndHasTheReferencePages()
     {
-        var endgame = EndgameData.Load(Path.Combine(AppContext.BaseDirectory, "Data", "endgame.json"));
+        var endgame = EndgameData.LoadBundled();
 
         Assert.Equal(10, endgame.Timelines.Count);
         Assert.Equal(3, endgame.Dungeons.Count);

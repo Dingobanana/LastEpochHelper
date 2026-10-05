@@ -101,13 +101,23 @@ public class LogTests
 
 public class ShippedDataTests
 {
-    private static string DataDir => Path.Combine(AppContext.BaseDirectory, "Data");
+    [Theory]
+    [InlineData(Bundled.Guide)]
+    [InlineData(Bundled.Scenes)]
+    [InlineData(Bundled.Endgame)]
+    [InlineData(Bundled.Changelog)]
+    public void DataIsBuiltIntoTheProgram(string name)
+    {
+        // Players move the exe away from its folder; it must not need anything beside it.
+        Assert.False(string.IsNullOrWhiteSpace(Bundled.Text(name)));
+        Assert.False(File.Exists(Path.Combine(AppContext.BaseDirectory, "Data", name)), "copied beside the program again");
+    }
 
     internal static (Guide Guide, SceneMap Scenes) Load()
     {
-        var guide = Guide.Load(Path.Combine(DataDir, "guide.json"));
+        var guide = Guide.LoadBundled();
         var scenes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
-            File.ReadAllText(Path.Combine(DataDir, "scenes.json")), Guide.JsonOptions)!;
+            Bundled.Text(Bundled.Scenes), Guide.JsonOptions)!;
         return (guide, new SceneMap(scenes));
     }
 

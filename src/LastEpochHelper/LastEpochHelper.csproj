@@ -25,9 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Built into the exe (see Core/Bundled.cs): players move the exe away from its folder. -->
+    <EmbeddedResource Include="Data\**" LogicalName="Data/%(Filename)%(Extension)" />
     <!-- Shown in the app's "What's new" window. -->
-    <Content Include="..\..\CHANGELOG.md" Link="Data\CHANGELOG.md" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="Data/CHANGELOG.md" />
   </ItemGroup>
 
   <ItemGroup>

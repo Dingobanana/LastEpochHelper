@@ -45,7 +45,7 @@ public sealed class TreeRenderTests : IDisposable
                 Directory.CreateDirectory(filters);
                 File.WriteAllText(Path.Combine(filters, "Leveling.xml"), "");
                 File.WriteAllText(Path.Combine(filters, "Strict endgame.xml"), "");
-                var endgame = EndgameData.Load(Path.Combine(AppContext.BaseDirectory, "Data", "endgame.json"));
+                var endgame = EndgameData.LoadBundled();
                 var session = new Session(storage, new Guide { PassiveCap = 15, IdolCap = 8, Routes = { route } }, new SceneMap(), endgame, filters);
 
                 var build = sample is not null ? BuildTree.Load(sample)! : new BuildTree
@@ -172,7 +172,7 @@ public sealed class TreeRenderTests : IDisposable
             var game = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(gameFile))!;
             var files = dirs.Split(';', StringSplitOptions.RemoveEmptyEntries).SelectMany(d => Directory.GetFiles(d, "*.json")).OrderBy(f => f).ToList();
             int step = Math.Max(1, files.Count / Math.Max(1, limit));
-            var endgame = EndgameData.Load(Path.Combine(AppContext.BaseDirectory, "Data", "endgame.json"));
+            var endgame = EndgameData.LoadBundled();
             var route = TrackerTests.MakeRoute("A", "B");
             for (int f = 0; f < files.Count; f += step)
             {

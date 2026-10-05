@@ -98,13 +98,11 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        string dataDir = Path.Combine(AppContext.BaseDirectory, "Data");
         var storage = new Storage();
-        var guide = Guide.Load(Path.Combine(dataDir, "guide.json"));
         var scenes = new SceneMap(
-            ReadSceneFile(Path.Combine(dataDir, "scenes.json")),
+            ReadScenes(Bundled.Text(Bundled.Scenes)),
             ReadSceneFile(storage.PathOf(Session.LearnedScenesFile)));
-        _session = new Session(storage, guide, scenes, EndgameData.Load(Path.Combine(dataDir, "endgame.json")));
+        _session = new Session(storage, Guide.LoadBundled(), scenes, EndgameData.LoadBundled());
         _session.Changed += Render;
 
         Left = Settings.Left;
@@ -127,12 +125,16 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (File.Exists(path))
-                return JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path), Guide.JsonOptions) ?? new();
+            if (File.Exists(path)) return ReadScenes(File.ReadAllText(path));
         }
-        catch (JsonException) { }
         catch (IOException) { }
         return new();
+    }
+
+    private static Dictionary<string, string> ReadScenes(string json)
+    {
+        try { return JsonSerializer.Deserialize<Dictionary<string, string>>(json, Guide.JsonOptions) ?? new(); }
+        catch (JsonException) { return new(); }
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)

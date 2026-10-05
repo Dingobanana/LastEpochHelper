@@ -6,6 +6,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 - The overlay has its own icon instead of Windows' plain program icon: "LEH" in gold on the overlay's dark plate with its bronze edge. It shows on the program file, beside the clock, in the taskbar and in the title bar of the settings and the other windows.
 - Long lines in the settings (such as "Help me understand where Last Epoch Helper is used") now wrap onto a second line instead of being cut off.
+- Fixed: moving LastEpochHelper.exe out of its folder (to the desktop, say) made it run in Task Manager without ever showing up. Everything it needs is now built into the exe, so it starts wherever it is. If it ever cannot start, it now says why and closes instead of hiding in the background.
 
 ## 0.7.22 - Imports that take Maxroll's data as it comes
 

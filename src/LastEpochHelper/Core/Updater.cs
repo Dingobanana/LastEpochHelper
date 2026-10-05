@@ -76,11 +76,7 @@ public static partial class Updater
     public static List<ChangelogEntry> ChangesSince(IEnumerable<ChangelogEntry> entries, Version lastSeen, Version current) =>
         entries.Where(e => e.Version > lastSeen && e.Version <= current).OrderByDescending(e => e.Version).ToList();
 
-    public static string LoadBundledChangelog()
-    {
-        try { return File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Data", "CHANGELOG.md")); }
-        catch (IOException) { return ""; }
-    }
+    public static string LoadBundledChangelog() => Bundled.Text(Bundled.Changelog);
 
     // ------------------------------------------------------------------ checking
 

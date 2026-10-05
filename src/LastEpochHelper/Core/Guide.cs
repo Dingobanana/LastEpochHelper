@@ -91,7 +91,7 @@ public sealed class Guide
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
     };
 
-    public static Guide Load(string path) => Parse(File.ReadAllText(path));
+    public static Guide LoadBundled() => Parse(Bundled.Text(Bundled.Guide));
 
     public static Guide Parse(string json)
     {
