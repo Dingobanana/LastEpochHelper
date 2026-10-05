@@ -13,7 +13,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Drawn by tools/make_icon.py: the exe, every window's title bar and the taskbar. -->
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>0.7.23</Version>
+    <Version>0.7.24</Version>
     <!-- The manifest is how a WPF app declares DPI awareness; the WinForms analyzer does not apply. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>

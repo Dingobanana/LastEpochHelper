@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.24 - Points per mastery
+
+- The passive tabs in the build tree say how many points the build has in each of them by now (Primalist 20, Shaman 18, Druid 5, ...), so the class tree and the other masteries can be followed while one of them is showing. Hover a tab to see how many it gets by the end of the stage. Tabs that do not fit wrap onto a second row.
+
 ## 0.7.23 - Weaver tree, GeForce NOW, corrected tips and its own icon
 
 - The overlay has its own icon instead of Windows' plain program icon: "LEH" in gold on the overlay's dark plate with its bronze edge. It shows on the program file, beside the clock, in the taskbar and in the title bar of the settings and the other windows.

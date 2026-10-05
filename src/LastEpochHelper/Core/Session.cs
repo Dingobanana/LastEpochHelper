@@ -793,6 +793,16 @@ public sealed class Session
     }
 
     /// <summary>
+    /// How many points the plan puts in a passive tab (the class or one mastery) at the character's
+    /// points now, and by the end of the stage - so the other masteries can be kept an eye on too.
+    /// </summary>
+    public (int Now, int ByStageEnd, string Stage) PlannedInTab(TreeDef tab)
+    {
+        var state = Tree!.State(tab, RememberedPoints(tab), Profile.Level, pin: PinnedStage);
+        return (state.Allocated.Values.Sum(), state.Target.Values.Sum(), state.Stage);
+    }
+
+    /// <summary>
     /// How many points the tree is known to have: for a skill its level as last set or read off the
     /// game, for the passives what level and quest rewards give plus the player's own correction.
     /// </summary>

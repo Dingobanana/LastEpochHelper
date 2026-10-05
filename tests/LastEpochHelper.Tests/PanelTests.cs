@@ -367,6 +367,22 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void EveryPassiveTab_SaysHowManyPointsThePlanHasThere_NowAndByTheEndOfTheStage()
+    {
+        var session = Make();
+        // A second passive tab (a mastery), as imported builds have: the plan's points split between them.
+        var mastery = new TreeDef { Name = "Paladin", Nodes = { new TreeNode { Id = 9, Name = "Conviction", Max = 5 } } };
+        session.Tree!.Trees.Insert(1, mastery);
+        session.Tree.Stages[0].Passives.AddRange(new[] { 9, 9 });
+
+        // Level 5 = 3 points: A, A, B - all in the class tree so far.
+        Assert.Equal((3, 5, "Early"), session.PlannedInTab(session.Tree.Trees[0]));
+        Assert.Equal((0, 2, "Early"), session.PlannedInTab(mastery));
+        session.Handle(new CharacterLevelEvent(9, 2, 0), live: false); // 7 points: the whole stage
+        Assert.Equal((5, 2), (session.PlannedInTab(session.Tree.Trees[0]).Now, session.PlannedInTab(mastery).Now));
+    }
+
+    [Fact]
     public void ClickingANode_StartsFromThePlan_ThenTheHandSetPointsAreTheTruth()
     {
         var session = Make();

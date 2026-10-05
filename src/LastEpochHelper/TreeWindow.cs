@@ -42,7 +42,8 @@ internal sealed class TreeWindow : Window
     private static readonly Brush Plate = Frozen("#F00E0F14");
 
     private readonly Session _session;
-    private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal };
+    // Wraps onto a second row rather than widening the window when the tabs (with their counts) do not fit.
+    private readonly WrapPanel _tabs = new() { Orientation = Orientation.Horizontal, MaxWidth = CanvasWidth - 30 };
     private readonly Canvas _canvas = new() { Width = CanvasWidth, Height = CanvasHeight, ClipToBounds = true };
     private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(2, 10, 2, 0), LineHeight = 20 };
     private readonly TextBlock _check = new() { TextWrapping = TextWrapping.Wrap, Foreground = Muted, Margin = new Thickness(2, 8, 2, 0), FontSize = 12, MaxWidth = CanvasWidth, HorizontalAlignment = HorizontalAlignment.Left };
@@ -199,9 +200,11 @@ internal sealed class TreeWindow : Window
         return brush;
     }
 
-    private static Border HeaderButton(string text, Action onClick, bool selected = false)
+    private static Border HeaderButton(string text, Action onClick, bool selected = false, int? count = null)
     {
         var label = new TextBlock { Text = text, Foreground = selected ? Brushes.White : Muted, FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal };
+        // Points, in the same orange as the amounts on the nodes.
+        if (count is { } points) label.Inlines.Add(new Run($"  {points}") { Foreground = AmountOrange, FontWeight = FontWeights.SemiBold });
         var button = new Border
         {
             Child = label,
@@ -422,7 +425,18 @@ internal sealed class TreeWindow : Window
                 _tabs.Children.Add(new TextBlock { Text = "│", Foreground = Dim, Margin = new Thickness(2, 1, 5, 0) });
             previousKind = tab.Kind;
             var captured = tab;
-            _tabs.Children.Add(HeaderButton(tab.Name, () => Select(captured), tab == tree));
+            if (tab.Kind != TreeDef.PassiveKind)
+            {
+                _tabs.Children.Add(HeaderButton(tab.Name, () => Select(captured), tab == tree));
+                continue;
+            }
+            // Every passive tab says how many points the build has there by now, so the class tree and
+            // the other masteries can be followed while one of them is showing.
+            var (now, byEnd, stageName) = _session.PlannedInTab(tab);
+            var button = HeaderButton(tab.Name, () => Select(captured), tab == tree, now);
+            button.ToolTip = $"The build has {now} point{(now == 1 ? "" : "s")} in {tab.Name} by now"
+                             + (byEnd != now ? $", {byEnd} by the end of {(stageName.Length > 0 ? $"'{stageName}'" : "this stage")}." : ".");
+            _tabs.Children.Add(button);
         }
 
         _sliderRow.Visibility = Visibility.Visible;
