@@ -533,6 +533,14 @@ internal sealed class SettingsWindow : Window
                 + (result.Tree.Stages.Any(s => s.Passives.Count > 120) ? " Note: this planner has more passive points placed than a character can have - it is a showcase, not a tree to follow point by point." : "")
                 + (LeTools.IsSource(result.Tree.SourceId) ? " Build data by Last Epoch Tools; its gear and idols are not imported, only the trees." : "");
         }
+        catch (InvalidDataException e) when (LeTools.BlockedDataUrl(e) is { } dataUrl)
+        {
+            LogImportFailure(link, e);
+            _message.Text = e.Message + " ";
+            var open = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run("Open the build's data in your browser"));
+            open.Click += (_, _) => Open(dataUrl);
+            _message.Inlines.Add(open);
+        }
         catch (InvalidDataException e)
         {
             LogImportFailure(link, e);

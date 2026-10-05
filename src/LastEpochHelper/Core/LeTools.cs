@@ -26,6 +26,14 @@ public static partial class LeTools
     /// <summary>The planner id in a Last Epoch Tools planner link, or null.</summary>
     public static string? PlannerId(string text) => PlannerLink().Match(text) is { Success: true } link ? link.Groups[1].Value : null;
 
+    private const string BlockedKey = "LeToolsDataUrl";
+
+    /// <summary>
+    /// When the site's bot check stopped the overlay: the build's data address. The player's own browser
+    /// gets through the check, and what it shows there can be pasted into the import box instead.
+    /// </summary>
+    public static string? BlockedDataUrl(Exception error) => error.Data[BlockedKey] as string;
+
     public static bool IsSource(string? sourceId) => sourceId?.StartsWith(SourcePrefix, StringComparison.Ordinal) == true;
 
     /// <summary>The address to show for a build's source id: its Last Epoch Tools or its Maxroll planner.</summary>
@@ -43,8 +51,13 @@ public static partial class LeTools
             throw new InvalidDataException($"Last Epoch Tools has no planner '{id}' - it may have been deleted, or the link is cut short.");
         // The site sits behind Cloudflare, whose bot check can stop a program even where the site allows it.
         if (answer.StatusCode == System.Net.HttpStatusCode.Forbidden)
-            throw new InvalidDataException("Last Epoch Tools' protection turned the overlay away this time. Try again later; if it keeps happening, "
-                                           + "Menu (☰) → Report a bug tells us, so we can sort it out with the site.");
+        {
+            var blocked = new InvalidDataException("Last Epoch Tools' protection turned the overlay away (we are sorting that out with the site). "
+                                              + "Meanwhile your browser can fetch the build: open the link below, select all (Ctrl+A), copy (Ctrl+C), "
+                                              + "paste it into the Build link box here and press Import build. In Firefox, choose 'Raw Data' first.");
+            blocked.Data[BlockedKey] = BuildDataUrl + Uri.EscapeDataString(id);
+            throw blocked;
+        }
         answer.EnsureSuccessStatusCode();
         JsonNode? found;
         try { found = JsonNode.Parse(await answer.Content.ReadAsStringAsync()); }

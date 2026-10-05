@@ -166,6 +166,24 @@ public sealed class ImportFlowTests : IDisposable
         maxroll.Pages["https://www.lastepochtools.com/api/public/build_data/Wall1234"] = (HttpStatusCode.Forbidden, "<html>Just a moment...</html>");
         var walled = await Assert.ThrowsAsync<InvalidDataException>(() => MaxrollImporter.ImportAsync("https://www.lastepochtools.com/planner/Wall1234", _dir, http));
         Assert.Contains("turned the overlay away", walled.Message);
+        Assert.Equal("https://www.lastepochtools.com/api/public/build_data/Wall1234", LeTools.BlockedDataUrl(walled));
+    }
+
+    [Fact]
+    public async Task WhatTheBrowserShowsAtALastEpochToolsBuildsAddress_CanBePasted()
+    {
+        // The way round the site's bot check: the player's browser fetches the build, the text is pasted.
+        var maxroll = Maxroll();
+        using var http = new HttpClient(maxroll);
+        string pasted = string.Join(" ", LeToolsBuild.Split('\n', StringSplitOptions.TrimEntries)); // one line, as the browser shows it
+
+        var result = Assert.Single(await MaxrollImporter.ImportAsync(pasted, _dir, http));
+
+        Assert.Equal("Paladin - Last Epoch Tools", result.Name);
+        Assert.Equal(new[] { 1, 2, 1, 2, 1, 9 }, result.Tree.Stages[0].Passives);
+        Assert.Equal(new[] { 4, 5, 4 }, result.Tree.Stages[0].Skills["Rive"]);
+        Assert.DoesNotContain(maxroll.Asked, url => url.Contains("lastepochtools"));
+        Assert.Empty(BuildChecks.Problems(result));
     }
 
     [Fact]

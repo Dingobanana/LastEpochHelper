@@ -5,6 +5,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 ## 0.7.24 - Points per mastery
 
 - The passive tabs in the build tree say how many points the build has in each of them by now (Primalist 20, Shaman 18, Druid 5, ...), so the class tree and the other masteries can be followed while one of them is showing. Hover a tab to see how many it gets by the end of the stage. Tabs that do not fit wrap onto a second row.
+- When Last Epoch Tools' protection turns the overlay away, the message now has a link that opens the build's data in your browser, which gets through. Select all, copy, and paste it into the Build link box to import the build.
 
 ## 0.7.23 - Weaver tree, GeForce NOW, corrected tips and its own icon
 
