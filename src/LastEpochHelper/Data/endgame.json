@@ -794,7 +794,7 @@
    "reward": "Vaults of Uncertain Fate - spend gold for chests with chosen modifiers",
    "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
    "skip": "Alternate exit behind the boss leads to The End of Time (datamine; older guides say The Risen Lake)",
-   "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5); Monolith timeline bosses"
+   "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"
   },
   {
    "name": "Soulfire Bastion",
@@ -805,7 +805,7 @@
    "reward": "Soul Gambler - spend Soul Embers from kills on items",
    "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
    "skip": "Alternate exit leads to Kolheim Pass (Chapter 7)",
-   "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5); Monolith timeline bosses"
+   "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"
   },
   {
    "name": "Temporal Sanctum",
@@ -816,7 +816,7 @@
    "reward": "Eternity Cache - seal a unique with Legendary Potential and an exalted item into a Legendary",
    "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
    "skip": "Alternate exit leads to The Radiant Dunes (Chapter 9)",
-   "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"
+   "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"
   }
  ],
  "reference": [

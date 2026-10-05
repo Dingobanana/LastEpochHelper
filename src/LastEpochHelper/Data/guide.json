@@ -361,7 +361,7 @@
         },
         {
          "type": "tip",
-         "text": "Waypoint back to The Council Chambers to turn in, then return here"
+         "text": "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there"
         }
        ]
       },
@@ -454,10 +454,6 @@
         {
          "type": "boss",
          "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
-        },
-        {
-         "type": "boss",
-         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -476,7 +472,7 @@
         },
         {
          "type": "boss",
-         "text": "Step out of the void circles and the falling stalactite markers"
+         "text": "Step out of the void circles"
         }
        ]
       },
@@ -491,7 +487,7 @@
         },
         {
          "type": "tip",
-         "text": "Pick your Mastery here - the choice is permanent"
+         "text": "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives"
         }
        ]
       }
@@ -562,7 +558,7 @@
         },
         {
          "type": "tip",
-         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5"
+         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -892,10 +888,6 @@
         {
          "type": "res",
          "text": "Imperial Era: undead deal necrotic and poison damage"
-        },
-        {
-         "type": "tip",
-         "text": "Crafting (the Forge) unlocks here"
         }
        ]
       },
@@ -956,7 +948,7 @@
         },
         {
          "type": "tip",
-         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"
+         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"
         }
        ]
       },
@@ -1258,7 +1250,7 @@
         },
         {
          "type": "tip",
-         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5"
+         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -1693,7 +1685,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; it makes a mirrored copy of itself"
         }
        ]
       },
@@ -2003,7 +1995,7 @@
         },
         {
          "type": "boss",
-         "text": "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"
+         "text": "Phase 2: you are pulled to the middle - kill the tentacles to reach phase 3; the tidal waves are hard to dodge, so bring cold resistance"
         }
        ]
       },
@@ -3336,7 +3328,7 @@
         },
         {
          "type": "tip",
-         "text": "Waypoint back to The Council Chambers to turn in, then return here"
+         "text": "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there"
         }
        ]
       },
@@ -3429,10 +3421,6 @@
         {
          "type": "boss",
          "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
-        },
-        {
-         "type": "boss",
-         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -3451,7 +3439,7 @@
         },
         {
          "type": "boss",
-         "text": "Step out of the void circles and the falling stalactite markers"
+         "text": "Step out of the void circles"
         }
        ]
       },
@@ -3466,7 +3454,7 @@
         },
         {
          "type": "tip",
-         "text": "Pick your Mastery here - the choice is permanent"
+         "text": "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives"
         }
        ]
       }
@@ -3537,7 +3525,7 @@
         },
         {
          "type": "tip",
-         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5"
+         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -3867,10 +3855,6 @@
         {
          "type": "res",
          "text": "Imperial Era: undead deal necrotic and poison damage"
-        },
-        {
-         "type": "tip",
-         "text": "Crafting (the Forge) unlocks here"
         }
        ]
       },
@@ -3931,7 +3915,7 @@
         },
         {
          "type": "tip",
-         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"
+         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"
         }
        ]
       },
@@ -4233,7 +4217,7 @@
         },
         {
          "type": "tip",
-         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5"
+         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -4668,7 +4652,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; it makes a mirrored copy of itself"
         }
        ]
       },
@@ -5517,7 +5501,7 @@
         },
         {
          "type": "tip",
-         "text": "Waypoint back to The Council Chambers to turn in, then return here"
+         "text": "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there"
         }
        ]
       },
@@ -5610,10 +5594,6 @@
         {
          "type": "boss",
          "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
-        },
-        {
-         "type": "boss",
-         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -5632,7 +5612,7 @@
         },
         {
          "type": "boss",
-         "text": "Step out of the void circles and the falling stalactite markers"
+         "text": "Step out of the void circles"
         }
        ]
       },
@@ -5647,7 +5627,7 @@
         },
         {
          "type": "tip",
-         "text": "Pick your Mastery here - the choice is permanent"
+         "text": "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives"
         }
        ]
       }
@@ -5703,7 +5683,7 @@
         },
         {
          "type": "tip",
-         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5"
+         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -5724,7 +5704,7 @@
        "tasks": [
         {
          "type": "tip",
-         "text": "Lightless Arbor entrance - needs a Lightless Arbor Key (free one in the Forsaken Trail cache)"
+         "text": "Lightless Arbor entrance - needs a Lightless Arbor Key (a free one in the Forsaken Trail cache on your first character of a season, or a solo character)"
         },
         {
          "type": "tip",
@@ -5831,10 +5811,6 @@
         {
          "type": "res",
          "text": "Imperial Era: undead deal necrotic and poison damage"
-        },
-        {
-         "type": "tip",
-         "text": "Crafting (the Forge) unlocks here"
         }
        ]
       },
@@ -5895,7 +5871,7 @@
         },
         {
          "type": "tip",
-         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"
+         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"
         }
        ]
       },
@@ -5949,7 +5925,7 @@
        "tasks": [
         {
          "type": "tip",
-         "text": "Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"
+         "text": "Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -6147,7 +6123,7 @@
         },
         {
          "type": "boss",
-         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam"
+         "text": "Spreading Frost - keep it in the middle and strafe in a circle around it; it makes a mirrored copy of itself"
         }
        ]
       },
@@ -6451,7 +6427,7 @@
         },
         {
          "type": "boss",
-         "text": "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"
+         "text": "Phase 2: you are pulled to the middle - kill the tentacles to reach phase 3; the tidal waves are hard to dodge, so bring cold resistance"
         }
        ]
       },
@@ -7824,7 +7800,7 @@
         },
         {
          "type": "tip",
-         "text": "Waypoint back to The Council Chambers to turn in, then return here"
+         "text": "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there"
         }
        ]
       },
@@ -7917,10 +7893,6 @@
         {
          "type": "boss",
          "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
-        },
-        {
-         "type": "boss",
-         "text": "It also summons voidlings - clear them when they pile up"
         }
        ]
       },
@@ -7939,7 +7911,7 @@
         },
         {
          "type": "boss",
-         "text": "Step out of the void circles and the falling stalactite markers"
+         "text": "Step out of the void circles"
         }
        ]
       },
@@ -7954,7 +7926,7 @@
         },
         {
          "type": "tip",
-         "text": "Pick your Mastery here - the choice is permanent"
+         "text": "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives"
         }
        ]
       }
@@ -8010,7 +7982,7 @@
         },
         {
          "type": "tip",
-         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5"
+         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },
@@ -8031,7 +8003,7 @@
        "tasks": [
         {
          "type": "tip",
-         "text": "Lightless Arbor entrance - needs a Lightless Arbor Key (free one in the Forsaken Trail cache)"
+         "text": "Lightless Arbor entrance - needs a Lightless Arbor Key (a free one in the Forsaken Trail cache on your first character of a season, or a solo character)"
         },
         {
          "type": "tip",
@@ -8138,10 +8110,6 @@
         {
          "type": "res",
          "text": "Imperial Era: undead deal necrotic and poison damage"
-        },
-        {
-         "type": "tip",
-         "text": "Crafting (the Forge) unlocks here"
         }
        ]
       },
@@ -8202,7 +8170,7 @@
         },
         {
          "type": "tip",
-         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"
+         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"
         }
        ]
       },
@@ -8504,7 +8472,7 @@
         },
         {
          "type": "tip",
-         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5"
+         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5; only on your first character of a season, or a solo character"
         }
        ]
       },

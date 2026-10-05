@@ -193,26 +193,25 @@ TIPS = {
     (1, "The Fortress Walls", 1): [("tip", "The Storerooms entrance is off the main path - do it before the Vault")],
     (1, "The Summit", 1): [("boss", "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath")],
     (2, "The Council Chambers", 1): [("tip", "Hub: vendor, gambler and respec NPC are here")],
-    (2, "Pannion's Study", 1): [("tip", "Waypoint back to The Council Chambers to turn in, then return here")],
+    (2, "Pannion's Study", 1): [("tip", "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there")],
     (2, "The Precipice", 1): [("boss", "Idol of Loathing, then take the Time Rift")],
     (2, "The Armory", 1): [
         ("boss", "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"),
-        ("boss", "It also summons voidlings - clear them when they pile up"),
     ],
     (2, "The Lower District", 1): [
         ("boss", "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"),
-        ("boss", "Step out of the void circles and the falling stalactite markers"),
+        ("boss", "Step out of the void circles"),
     ],
-    (2, "The End of Time", 1): [("tip", "Pick your Mastery here - the choice is permanent")],
+    (2, "The End of Time", 1): [("tip", "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives")],
     (3, "The Surface", 1): [("tip", "Dungeon entrance (Lightless Arbor) is north in The Shrouded Ridge - optional")],
-    (3, "The Forsaken Trail", 1): [("tip", "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5")],
-    (3, "The Shrouded Ridge", 1): [("tip", "Lightless Arbor entrance - needs a Lightless Arbor Key (free one in the Forsaken Trail cache)")],
+    (3, "The Forsaken Trail", 1): [("tip", "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character")],
+    (3, "The Shrouded Ridge", 1): [("tip", "Lightless Arbor entrance - needs a Lightless Arbor Key (a free one in the Forsaken Trail cache on your first character of a season, or a solo character)")],
     (3, "Titan's Rest", 1): [
         ("boss", "The Mountain Beneath - immune at first: destroy the Root Walls and light both Pyres with Burning Amber"),
         ("boss", "The shockwave one-shots: it is a double slam, left side first. Phase 2: kill the Heart, dodge the split Spore Beam"),
         ("tip", "Leave through the ALTERNATE exit behind the boss to skip ahead (datamine: leads to The End of Time)"),
     ],
-    (4, "The Ruins of Etendell", 1): [("tip", "Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5")],
+    (4, "The Ruins of Etendell", 1): [("tip", "Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5; only on your first character of a season, or a solo character")],
     (4, "The Felled Wood", 1): [("tip", "Soulfire Bastion entrance - needs a Soulfire Bastion Key")],
     (4, "The Soul Furnace", 1): [
         ("boss", "Fire Lich Cremorus - stay off the lit floor; once it covers the arena, swap Soulfire Shield to the floor's type"),
@@ -236,10 +235,9 @@ TIPS = {
         ("boss", "Emperor's Remains - kill the Omen eyes as soon as they appear; stay out of the purple mist"),
         ("boss", "Below half health the void beams and exploding orbs get much deadlier"),
     ],
-    (4, "The Outcast Camp", 1): [("tip", "Crafting (the Forge) unlocks here")],
     (4, "The Risen Lake", 1): [
         ("tip", "Take the Time Rift north to The Corrupted Lake before moving on"),
-        ("tip", "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5"),
+        ("tip", "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"),
     ],
     (4, "The Corrupted Lake", 1): [
         ("boss", "Prophet of Ruin - do not stand in the big purple circle on the ground"),
@@ -249,7 +247,7 @@ TIPS = {
         ("boss", "Admiral Harton - stay very close: at range he keeps casting lightning at you"),
         ("boss", "Kill the Storm Wisps first when he summons them"),
     ],
-    (5, "The Maj'elkan Catacombs", 1): [("tip", "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5")],
+    (5, "The Maj'elkan Catacombs", 1): [("tip", "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5; only on your first character of a season, or a solo character")],
     (5, "Titan's Canyon", 1): [
         ("boss", "Spymaster Zerrick - he only takes hits while his head is out: stand in melee range so he attacks"),
         ("boss", "Stay out of every poison pool, especially the ones under his body"),
@@ -261,7 +259,7 @@ TIPS = {
         ("boss", "The arena shrinks with each kill; Zerrick still needs someone in melee to expose his head"),
     ],
     (7, "The Wengari Fortress", 1): [("boss", "Wengari Patriarch + Matriarch - kill the Patriarch first (the one with the staff; cold boulder avalanches)")],
-    (7, "The Temple of Heorot", 1): [("boss", "Spreading Frost - keep it in the middle and strafe in a circle around it; stay out of the cold beam")],
+    (7, "The Temple of Heorot", 1): [("boss", "Spreading Frost - keep it in the middle and strafe in a circle around it; it makes a mirrored copy of itself")],
     (7, "The Tomb of Morditas", 1): [("boss", "Frostroot Warden - when it lifts its two front roots, step back until the frontal attack ends")],
     (8, "Moonlit Shrine", 1): [("tip", "If the pool needs moon fragments: west = The Strand of Storms, east = The Coral Pools")],
     (8, "Sanctum of the Architect", 1): [
@@ -270,7 +268,7 @@ TIPS = {
     ],
     (8, "Seafloor Colosseum", 1): [
         ("boss", "Lagon - phases 1 and 3: hit the tentacles, not Lagon; dodge the arm slams and the sweeping beam"),
-        ("boss", "Phase 2: survive tentacles, adds and tidal waves - go up the stairs to avoid the waves"),
+        ("boss", "Phase 2: you are pulled to the middle - kill the tentacles to reach phase 3; the tidal waves are hard to dodge, so bring cold resistance"),
     ],
     (9, "Maj'elka Lower District", 1): [("tip", "Scalebane Bodyguard: refuse to pay and fight him (paying costs up to 100,000 gold)")],
     (9, "Maj'elka Upper District", 1): [("tip", "Item factions unlock here: Circle of Fortune (find loot) or Merchant's Guild (trade)")],
@@ -298,26 +296,27 @@ RESIST = {
 }
 
 # The three dungeons: static facts for the planner window. Levels and exits are from the 1.5
-# datamine; the key caches are inferred from it (the patch notes do not name the zones).
+# datamine; so are the keys in the caches (item 104, subtypes 5, 6 and 4). The patch notes add that a cache's
+# key is only there on a season's first character or a solo character.
 DUNGEONS = [
     {"name": "Lightless Arbor", "entrance": "The Shrouded Ridge (north of The Surface, Chapter 3)", "level": 22,
      "boss": "The Mountain Beneath", "mechanic": "Carry light: stay near fire or the darkness kills you",
      "reward": "Vaults of Uncertain Fate - spend gold for chests with chosen modifiers",
      "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
      "skip": "Alternate exit behind the boss leads to The End of Time (datamine; older guides say The Risen Lake)",
-     "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5); Monolith timeline bosses"},
+     "keys": "Spriggan Tender's Cache in The Forsaken Trail (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"},
     {"name": "Soulfire Bastion", "entrance": "The Felled Wood (off The Risen Lake, Chapter 4)", "level": 37,
      "boss": "Fire Lich Cremorus", "mechanic": "Swap your shield between fire and necrotic to match incoming damage",
      "reward": "Soul Gambler - spend Soul Embers from kills on items",
      "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
      "skip": "Alternate exit leads to Kolheim Pass (Chapter 7)",
-     "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5); Monolith timeline bosses"},
+     "keys": "Excavator Thrall's Cache in The Ruins of Etendell (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"},
     {"name": "Temporal Sanctum", "entrance": "The Ruined Coast (Time Rift in The Shining Cove, Chapter 5)", "level": 55,
      "boss": "Chronomancer Julra", "mechanic": "Shift between the two eras to get past obstacles and dodge her big attacks",
      "reward": "Eternity Cache - seal a unique with Legendary Potential and an exalted item into a Legendary",
      "firstClear": "+2 passive points and +1 idol slot (counts towards the quest caps)",
      "skip": "Alternate exit leads to The Radiant Dunes (Chapter 9)",
-     "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5); Monolith timeline bosses"},
+     "keys": "Sapphire Nagasa's Cache in The Maj'elkan Catacombs (one-shot, new in 1.5; first character of a season or solo only); Monolith timeline bosses"},
 ]
 
 # Reference pages for the planner window. Lines starting with "!" are highlighted.
