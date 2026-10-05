@@ -1,12 +1,14 @@
 namespace LastEpochHelper.Core;
 
-public enum GamePanel { None, Passives, Skills }
+public enum GamePanel { None, Passives, Skills, Weaver }
 
 /// <param name="Skill">The skill whose tree is open, when one is.</param>
 /// <param name="Anchor">A line that proves the panel is there; watching just that spot is cheap.</param>
 /// <param name="Tab">The passive tab (class or mastery) that is showing, when its title could be read.</param>
 /// <param name="Level">The level printed under an open skill tree's heading ("LEVEL 7"): the points that skill has.</param>
-public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null, int? Level = null);
+/// <param name="Completion">The Weaver tree's "COMPLETION 2/53" at the bottom of its panel: the points placed in it.</param>
+public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null, int? Level = null,
+    int? Completion = null);
 
 /// <summary>
 /// Works out from the text on screen whether the game is showing its passive tree or its skill
@@ -32,6 +34,13 @@ public static class PanelDetector
             return key.Length < 4 ? null : text.Where(t => t.Letters.Contains(key, StringComparison.Ordinal))
                 .OrderByDescending(t => t.Line.Height).Select(t => t.Line).FirstOrDefault();
         }
+
+        // The Weaver tree (endgame) has BACK and RESPEC buttons like an open skill tree, so it would be
+        // taken for one; its heading "WEAVER TREE" tells it apart, and nothing else on screen counts then.
+        var weaverHeading = text.Where(t => t.Letters.Contains("weavertree", StringComparison.Ordinal) && t.Letters.Length <= 14)
+            .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
+        if (weaverHeading is not null && !text.Any(t => t.Letters == "passives"))
+            return new PanelReading(GamePanel.Weaver, Anchor: weaverHeading, Completion: WeaverCompletion(lines));
 
         // The game's own headings are the best evidence (1.5): "PASSIVES" on the passive panel,
         // "SKILLS & SPECIALIZATIONS" on the skill overview. ("N UNSPENT POINTS" is no evidence: a
@@ -149,6 +158,20 @@ public static class PanelDetector
             return hint == GamePanel.Skills ? skillPanel : hint == GamePanel.Passives ? passives
                 : skillPanel.Skill is not null ? skillPanel : passives;
         return passives ?? skillPanel ?? new PanelReading(GamePanel.None);
+    }
+
+    /// <summary>"COMPLETION" with "2/53" on its line or just under it: the points placed in the Weaver tree.</summary>
+    private static int? WeaverCompletion(IReadOnlyList<ScreenLine> lines)
+    {
+        var label = lines.FirstOrDefault(l => Letters(l.Text).Contains("completion", StringComparison.Ordinal));
+        if (label is null) return null;
+        foreach (var line in lines.Where(l => l == label || (l.Y >= label.Y && l.Y - label.Y < Math.Max(label.Height, 12) * 4
+                                                                   && Math.Abs(l.X + l.Width / 2 - (label.X + label.Width / 2)) < Math.Max(label.Width, 60))))
+        {
+            var count = System.Text.RegularExpressions.Regex.Match(line.Text, @"(\d{1,3})\s*/\s*(\d{1,3})");
+            if (count.Success && int.Parse(count.Groups[1].Value) is var placed && placed <= int.Parse(count.Groups[2].Value)) return placed;
+        }
+        return null;
     }
 
     private static string Letters(string text) => new(text.Where(char.IsLetter).Select(char.ToLowerInvariant).ToArray());

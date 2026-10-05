@@ -238,7 +238,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>When the game's passive / skill panel was last recognised on screen, for the check in the settings.</summary>
-    private DateTime? _passivesSeenAt, _skillsSeenAt;
+    private DateTime? _passivesSeenAt, _skillsSeenAt, _weaverSeenAt;
 
     private CountryQuestionWindow? _countryWindow;
 
@@ -703,15 +703,31 @@ public partial class MainWindow : Window
                 ActivityLog.Change(quick ? "panel-quick" : "panel", $"game shows {reading.Panel}{(reading.Skill ?? reading.Tab) switch { null => "", var what => " / " + what }} ({(quick ? "quick look" : "full look")})");
             if (!quick && verifying) WritePanelDiagnostics(lines, reading);
 
+            // The game's Weaver tree: its tab, when this build shows one; otherwise there is nothing to show
+            // (and a skill tree would be wrong).
+            var weaverTab = reading.Panel == GamePanel.Weaver ? WeaverTab() : null;
+            if (reading.Panel == GamePanel.Weaver && weaverTab is null)
+            {
+                _panelRegion = null;
+                if (shown && !_treePinned)
+                {
+                    ActivityLog.Write("tree closed: the game shows its Weaver tree, and this build has no Weaver tab");
+                    ShowTree(false);
+                }
+                return;
+            }
+
             if (reading.Panel != GamePanel.None)
             {
                 _panelMisses = 0;
-                if (reading.Panel == GamePanel.Passives) _passivesSeenAt = DateTime.UtcNow; else _skillsSeenAt = DateTime.UtcNow;
+                if (reading.Panel == GamePanel.Passives) _passivesSeenAt = DateTime.UtcNow;
+                else if (reading.Panel == GamePanel.Weaver) _weaverSeenAt = DateTime.UtcNow;
+                else _skillsSeenAt = DateTime.UtcNow;
                 if (reading.Panel == GamePanel.Passives && !Settings.PanelSeenPassives) { Settings.PanelSeenPassives = true; SaveSettings(); }
                 if (reading.Panel == GamePanel.Skills && !Settings.PanelSeenSkills) { Settings.PanelSeenSkills = true; SaveSettings(); }
                 if (!quick) _panelRegion = reading.Anchor is { } anchor ? RegionAround(anchor) : null;
 
-                string kind = reading.Panel == GamePanel.Passives ? TreeDef.PassiveKind : TreeDef.SkillKind;
+                string kind = KindOf(reading.Panel);
                 // Follow the game when it changes what it shows - not on every look, or a tab the
                 // player picked here by hand would be taken away again a moment later.
                 // (A quick look sees the heading only, so "no skill / no tab named" there is not a change.)
@@ -750,7 +766,10 @@ public partial class MainWindow : Window
                             _treeWindow?.SelectTab(tabTree);
                     }
                 }
-                if (!quick) ReadNodePoints(words, reading);
+                // The Weaver panel's nodes carry no names, so its labels are not read; its total is.
+                if (kind == _gameKind && reading.Completion is { } placed && weaverTab is not null && _stableReads.Twice("weaver", placed.ToString()))
+                    _session.SetReadPoints(weaverTab, placed);
+                if (!quick && reading.Panel != GamePanel.Weaver) ReadNodePoints(words, reading);
             }
             else if (quick)
             {
@@ -830,15 +849,24 @@ public partial class MainWindow : Window
             }
             // Closed here by hand while the game's panel stays open: leave it closed.
             if (_dismissed || _treeWanted) return;
+            if (reading.Panel == GamePanel.Weaver && WeaverTab() is null) return;
 
             ActivityLog.Write($"noticed {reading.Panel}{(reading.Skill is null ? "" : " / " + reading.Skill)} without a key press: opening the tree");
             _expectedPanel = reading.Panel;
             _verifyUntil = DateTime.UtcNow.AddSeconds(2.5);
             _forceFullRead = true;
-            ShowTree(true, reading.Panel == GamePanel.Passives ? TreeDef.PassiveKind : TreeDef.SkillKind);
+            ShowTree(true, KindOf(reading.Panel));
         }
         finally { _reading = false; }
     }
+
+    private static string KindOf(GamePanel panel) =>
+        panel == GamePanel.Passives ? TreeDef.PassiveKind : panel == GamePanel.Weaver ? TreeDef.WeaverKind : TreeDef.SkillKind;
+
+    /// <summary>The build's Weaver tab, while it is offered (it is an endgame tree).</summary>
+    private TreeDef? WeaverTab() =>
+        _session.InEndgame || _treeWindow?.CurrentKind == TreeDef.WeaverKind
+            ? _session.Tree?.Trees.FirstOrDefault(t => t.Kind == TreeDef.WeaverKind) : null;
 
     /// <summary>
     /// Takes the "2/6" labels under the game's nodes and stores them as the character's real points.
@@ -1009,7 +1037,9 @@ public partial class MainWindow : Window
 
     /// <summary>Has the game's panel for this kind of tree ever been recognised here?</summary>
     private bool SeenOnScreen(string? kind) =>
-        kind == TreeDef.PassiveKind ? Settings.PanelSeenPassives : kind == TreeDef.SkillKind && Settings.PanelSeenSkills;
+        kind == TreeDef.PassiveKind ? Settings.PanelSeenPassives
+        : kind == TreeDef.WeaverKind ? _weaverSeenAt is not null
+        : kind == TreeDef.SkillKind && Settings.PanelSeenSkills;
 
     private static IEnumerable<string> PassiveTabNamesOf(BuildTree build) =>
         build.PassiveTabNames.Count > 0 ? build.PassiveTabNames : build.Trees.Where(t => t.Kind == TreeDef.PassiveKind).Select(t => t.Name);

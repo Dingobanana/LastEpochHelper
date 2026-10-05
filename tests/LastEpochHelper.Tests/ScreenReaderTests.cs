@@ -43,7 +43,7 @@ public class ScreenReaderTests
             var skillNames = shownBuild.Trees.Where(t => t.Kind == LastEpochHelper.Core.TreeDef.SkillKind).Select(t => t.Name).ToList();
             var seen = LastEpochHelper.Core.PanelDetector.Detect(read, shownBuild.PassiveTabNames, skillNames);
             var strict = LastEpochHelper.Core.PanelDetector.Detect(read, shownBuild.PassiveTabNames, skillNames, strict: true);
-            File.WriteAllLines(output, new[] { $"panel={seen.Panel} skill={seen.Skill} tab={seen.Tab} | strict: panel={strict.Panel} skill={strict.Skill} tab={strict.Tab} | {read.Count} lines read" });
+            File.WriteAllLines(output, new[] { $"panel={seen.Panel} skill={seen.Skill} tab={seen.Tab} completion={seen.Completion} | strict: panel={strict.Panel} skill={strict.Skill} tab={strict.Tab} | {read.Count} lines read" });
             return;
         }
 

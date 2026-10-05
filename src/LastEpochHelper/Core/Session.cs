@@ -818,6 +818,15 @@ public sealed class Session
         Changed?.Invoke();
     }
 
+    /// <summary>A skill or Weaver tree's points as the game prints them (the Weaver tree's "COMPLETION 2/53"), remembered for next time.</summary>
+    public void SetReadPoints(TreeDef tree, int points)
+    {
+        if (tree.Kind == TreeDef.PassiveKind || points is < 0 or > 200 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == points) return;
+        Profile.SkillPoints[tree.Name] = points;
+        Save();
+        Changed?.Invoke();
+    }
+
     public void AdjustTreePoints(TreeDef tree, int delta)
     {
         if (tree.Kind == TreeDef.PassiveKind)

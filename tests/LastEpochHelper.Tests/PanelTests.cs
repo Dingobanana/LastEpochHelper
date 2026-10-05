@@ -27,6 +27,33 @@ public class PanelDetectorTests
     }
 
     [Fact]
+    public void TheWeaverTree_IsItsOwnPanel_NotASkillTree_AndSaysHowManyPointsItHas()
+    {
+        // As read from a real 1.5 screen (5120 wide): BACK and RESPEC are there as on an open skill tree.
+        var weaver = new[]
+        {
+            new ScreenLine("BACK", 15, 139, 103, 61), new ScreenLine("746 MEMORY AMBER", 24, 342, 98, 290),
+            new ScreenLine("WEAVER TREE", 31, 2415, 13, 284), new ScreenLine("2 UNSPENT POINTS", 18, 2418, 100, 278),
+            new ScreenLine("RESPEC", 16, 4530, 104, 86), new ScreenLine("Search Nodes...", 17, 4688, 101, 136),
+            new ScreenLine("0/3", 12, 1700, 400, 30), new ScreenLine("0/5", 12, 1280, 830, 30),
+            new ScreenLine("RESET POS.", 15, 81, 1374, 122), new ScreenLine("COMPLETION", 11, 2499, 1367, 117), new ScreenLine("2/53", 19, 2526, 1388, 64),
+        };
+        foreach (bool strict in new[] { false, true })
+        {
+            var reading = PanelDetector.Detect(weaver, Tabs, Skills, strict: strict);
+            Assert.Equal(GamePanel.Weaver, reading.Panel);
+            Assert.Equal("WEAVER TREE", reading.Anchor!.Text);
+            Assert.Equal(2, reading.Completion);
+        }
+        // Just the heading band (the quick look): the panel, without its total.
+        var band = PanelDetector.Detect(weaver.Where(l => l.Y < 200).ToList(), Tabs, Skills, strict: true);
+        Assert.Equal((GamePanel.Weaver, (int?)null), (band.Panel, band.Completion));
+        // A tooltip that mentions the tree is not the panel.
+        var tip = new[] { new ScreenLine("Unlocks a node in the Weaver Tree", 14), new ScreenLine("BACK", 15), new ScreenLine("RESPEC", 16) };
+        Assert.NotEqual(GamePanel.Weaver, PanelDetector.Detect(tip, Tabs, Skills).Panel);
+    }
+
+    [Fact]
     public void SkillPanel_GivesTheOpenSkill_OrJustThePanelWhenSeveralAreListed()
     {
         var tree = new[] { new ScreenLine("GATHERING STORM", 34, 2000, 140, 380), new ScreenLine("Level 6", 18), new ScreenLine("Minimum Specialized Level: 4", 19, 2000, 240, 300) };
