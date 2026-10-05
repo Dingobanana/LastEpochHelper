@@ -2,10 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.23 - An icon of its own
+## 0.7.23 - Weaver tree, GeForce NOW, corrected tips and its own icon
 
 - The overlay has its own icon instead of Windows' plain program icon: "LEH" in gold on the overlay's dark plate with its bronze edge. It shows on the program file, beside the clock, in the taskbar and in the title bar of the settings and the other windows.
-- Long lines in the settings (such as "Help me understand where Last Epoch Helper is used") now wrap onto a second line instead of being cut off.
+- Long lines in the settings (such as "Help me understand where Last Epoch Helper is used") now wrap onto a second line instead of being cut off. The import button is now called "Import build".
 - Fixed: moving LastEpochHelper.exe out of its folder (to the desktop, say) made it run in Task Manager without ever showing up. Everything it needs is now built into the exe, so it starts wherever it is. If it ever cannot start, it now says why and closes instead of hiding in the background.
 - The game's Weaver tree no longer brings up a skill tree: the overlay took it for one, since it has the same Back and Respec buttons. When the build shows a Weaver tab (endgame), opening the Weaver tree in the game opens that tab, and its points are worked out from the panel: the points unlocked ("Completion") less those still unspent.
 - GeForce NOW: the overlay now finds the game in the GeForce NOW window, so the build tree and the map counters can follow it. It also says once what cannot work when the game is streamed: the campaign guide cannot follow zones, because the game's log stays on Nvidia's machine.
