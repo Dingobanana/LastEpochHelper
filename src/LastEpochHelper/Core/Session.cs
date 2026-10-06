@@ -629,6 +629,8 @@ public sealed class Session
     {
         if (Tree is null || read.Count == 0) return false;
         var actual = Profile.Actual ??= new ActualTrees { Fetched = DateTime.Now, Level = Profile.Level };
+        // A passive tab placed on the tree is read, even when nothing in it changed: it may show its points now.
+        bool newTab = tree.Kind == TreeDef.PassiveKind && _passiveTabsRead.Add(tree.Name);
         Dictionary<int, int> points;
         if (tree.Kind == TreeDef.PassiveKind) { points = actual.Passives; _passivesTaken = true; }
         else if (!actual.Skills.TryGetValue(BuildTree.SkillKey(tree), out points!))
@@ -643,7 +645,7 @@ public sealed class Session
             return false;
         }
 
-        bool changed = false;
+        bool changed = newTab;
         foreach (var (node, have) in read)
         {
             if (points.GetValueOrDefault(node) == have) continue;
@@ -845,7 +847,31 @@ public sealed class Session
         // as the tree is known to have. Reading misses nodes (a tooltip in the way, small print), and a
         // tree drawn from half of its points would look as if the character had gone backwards.
         if (ShowsActual(tree) && ActualPoints(tree) >= points && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
-        return Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
+        var plan = Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
+        // The game shows the passives one tab at a time, so all of them are rarely read together. A tab
+        // that has been read shows its own points; the next steps still come from the plan, since they
+        // depend on the tabs not read yet.
+        if (tree.Kind == TreeDef.PassiveKind && Tree.Trees.Count(t => t.Kind == TreeDef.PassiveKind) > 1 && ShowsActual(tree) && TabRead(tree))
+        {
+            var mine = tree.Nodes.Select(n => n.Id).ToHashSet();
+            var allocated = Profile.Actual!.Passives.Where(kv => kv.Value > 0 && mine.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var offPlan = allocated.Where(kv => kv.Value > plan.Target.GetValueOrDefault(kv.Key)).Select(kv => kv.Key).ToHashSet();
+            return plan with { Allocated = allocated, FromGame = true, OffPlan = offPlan };
+        }
+        return plan;
+    }
+
+    /// <summary>Passive tabs read off the game's panel (this session, or points stored in them from before).</summary>
+    private readonly HashSet<string> _passiveTabsRead = new();
+    private bool TabRead(TreeDef tree) => _passiveTabsRead.Contains(tree.Name) || ActualPointsInTab(tree) > 0;
+
+    /// <summary>The points read off the game in this one tree (for passives: this tab only).</summary>
+    public int ActualPointsInTab(TreeDef tree)
+    {
+        if (tree.Kind != TreeDef.PassiveKind) return ActualPoints(tree);
+        if (Profile.Actual is not { } actual) return 0;
+        var mine = tree.Nodes.Select(n => n.Id).ToHashSet();
+        return actual.Passives.Where(kv => mine.Contains(kv.Key)).Sum(kv => kv.Value);
     }
 
     /// <summary>

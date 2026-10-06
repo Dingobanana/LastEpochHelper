@@ -2,8 +2,9 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.28 - Toggle Slider
+## 0.7.28 - Your own passive points, tab by tab
 
+- Fixed: the passive tree only showed your own points once every passive tab had been opened in the game, so it mostly showed the guide's plan. Now each tab you have open shows your points there ("Your character: 10 points in Beastmaster"), with nodes the build does not take ringed red. The next points still follow the guide.
 - The build tree's "Look ahead" button is now called "Toggle Slider": it shows or hides the slider for seeing the plan at any number of points.
 
 ## 0.7.27 - A clearer build tree, and WASD movement

@@ -530,7 +530,7 @@ internal sealed class TreeWindow : Window
         else if (state.FromGame)
         {
             _status.Inlines.Add(new Run("● Your character: ") { Foreground = Green, FontWeight = FontWeights.SemiBold });
-            _status.Inlines.Add(new Run($"{_session.ActualPoints(tree)} {what}, read from the game"
+            _status.Inlines.Add(new Run((passive ? $"{_session.ActualPointsInTab(tree)} points in {tree.Name}" : $"{_session.ActualPoints(tree)} {what}") + ", read from the game"
                                         + (_session.ActualUpdated is { } when ? $" {Age(when)}" : "") + "."));
             if (state.OffPlan.Count > 0)
                 _status.Inlines.Add(new Run($"  {state.OffPlan.Count} outside the build, ringed red.") { Foreground = Red });

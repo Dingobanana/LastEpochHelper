@@ -383,6 +383,27 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void AReadPassiveTab_ShowsTheCharactersPointsThere_BeforeTheOtherTabsAreRead()
+    {
+        var session = Make();
+        var mastery = new TreeDef { Name = "Paladin", Nodes = { new TreeNode { Id = 9, Name = "Conviction", Max = 5 }, new TreeNode { Id = 10, Name = "Zeal", Max = 3 } } };
+        session.Tree!.Trees.Insert(1, mastery);
+        session.Tree.Stages[0].Passives.AddRange(new[] { 9, 9 });
+        session.Handle(new CharacterLevelEvent(9, 2, 0), live: false); // 7 passive points, in two tabs
+
+        // Only the mastery tab was open in the game (screenshot 2026-10-07): 3 points, one of them off the plan.
+        session.SetReadPoints(mastery, new Dictionary<int, int> { [9] = 2, [10] = 1 });
+        var read = session.TreeState(mastery);
+        Assert.True(read.FromGame);
+        Assert.Equal(2, read.Allocated[9]);
+        Assert.Contains(10, read.OffPlan);
+        Assert.Equal(3, session.ActualPointsInTab(mastery));
+        // The tab not read yet still shows the plan, and the next steps come from the plan.
+        Assert.False(session.TreeState(session.Tree.Trees[0]).FromGame);
+        Assert.Equal(session.TreeState(session.Tree.Trees[0]).Next, read.Next);
+    }
+
+    [Fact]
     public void EveryPassiveTab_SaysHowManyPointsThePlanHasThere_NowAndByTheEndOfTheStage()
     {
         var session = Make();
