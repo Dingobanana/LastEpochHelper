@@ -46,6 +46,8 @@ public partial class MainWindow : Window
     private MapWindow? _mapWindow;
     private BlessingWindow? _blessingWindow;
     private DateTime _lastBlessingLook = DateTime.MinValue;
+    /// <summary>Looks in a row that did not find the blessing choice; one alone is often just a poor read.</summary>
+    private int _blessingMisses;
     private SettingsWindow? _settingsWindow;
     private TreeWindow? _treeWindow;
     private PlannerWindow? _plannerWindow;
@@ -1121,10 +1123,12 @@ public partial class MainWindow : Window
             var heading = BlessingAdvice.FindOffer(lines);
             if (heading is null || BlessingAdvice.For(_session.Endgame, wanted, timeline) is not { } advice)
             {
+                if (++_blessingMisses < 2) return;
                 if (_blessingWindow is { IsVisible: true }) _blessingWindow.Hide();
                 ActivityLog.Change("blessing", "no blessing choice on screen");
                 return;
             }
+            _blessingMisses = 0;
             ActivityLog.Change("blessing", $"blessing choice in {timeline}: suggesting {(advice.Wanted.Count == 0 ? "none (the build takes none here)" : string.Join(", ", advice.Wanted.Select(w => w.Name)))}");
 
             // Beside the game's window: it reaches about 1.4 widths of "TIMELINE STABILIZED" (or 2.3 of

@@ -39,13 +39,21 @@ internal sealed class BlessingWindow : Window
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: true);
     }
 
-    /// <summary>Fills the note in and shows it with its top-left corner at <paramref name="at"/> (device-independent units).</summary>
+    private string? _filledWith;
+
+    /// <summary>
+    /// Fills the note in and shows it with its top-left corner at <paramref name="at"/> (device-independent
+    /// units). While it is showing it stays put: each read of the screen places the game's heading a few
+    /// pixels differently, and a note that followed would never sit still.
+    /// </summary>
     public void Display(BlessingAdvice advice, Point at)
     {
-        Fill(advice);
+        string key = advice.Timeline + "|" + string.Join("|", advice.Wanted.Select(w => w.Name));
+        if (key != _filledWith) { Fill(advice); _filledWith = key; }
+        if (IsVisible) return;
         Left = at.X;
         Top = at.Y;
-        if (!IsVisible) Show();
+        Show();
     }
 
     public void Fill(BlessingAdvice advice)
