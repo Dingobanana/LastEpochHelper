@@ -138,9 +138,10 @@ to send to and saves the report as a zip file on your desktop instead.
   The rewards agree with EHG's official support article for chapters 1-9.
 - The 15 / 8 caps are not officially confirmed for 1.5. The three dungeon key caches new in 1.5 are inferred from
   the datamine; the patch notes do not name the zones.
-- The alternative routes were put together from the datamined exits and have not been played through; the quest
-  log after a skip can differ from the list. The speedleveling route follows keban666's order, but its steps come
-  from the same game data as the others; keban666's "Monolith from level 30" is the guide's claim, not tested here.
+- The alternative routes were put together from the datamined exits, and players have played them through. After a
+  skip the game's quest log can still differ a little from the list - follow the in-game marker there. The
+  speedleveling route follows keban666's order with steps from the same game data as the others; "Monolith from
+  level 30" is keban666's advice for a strong build.
 - Monolith data: timelines and blessings from tunklab, recommendations from Maxroll (dated 1.4).
 - Builds, tree layouts and icons come from Maxroll's planner at import time and stay on your machine. Builds from
   Last Epoch Tools are read from its public build data (with its owner's permission) and drawn with Maxroll's trees.
