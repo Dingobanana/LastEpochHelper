@@ -2,6 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.25 - Speedleveling route
+
+- New route "Speedleveling (keban666)", after keban666's speedleveling guide. Chapters 1-5 with no dungeon key needed, the Monolith until about level 65, then the Temporal Sanctum's alternate exit to Chapter 9, where both quest caps (15 passives, 8 idol slots) are reached. It needs one Temporal Sanctum Key. Pick it under Route in the settings.
+- The Lotus Halls (Chapter 3) say where the bridge part is: follow the left wall to a statue room; the statue's portal holds it.
+
 ## 0.7.24 - Points per mastery
 
 - The passive tabs in the build tree say how many points the build has in each of them by now (Primalist 20, Shaman 18, Druid 5, ...), so the class tree and the other masteries can be followed while one of them is showing. Hover a tab to see how many it gets by the end of the stage. Tabs that do not fit wrap onto a second row.

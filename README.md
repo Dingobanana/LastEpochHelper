@@ -60,8 +60,10 @@ asking, and only zip files from this repository's own releases are downloaded. Y
 
 - **Follows you.** The game logs every zone change; the overlay jumps to the nearest step in that zone.
   Unknown zones (new in a patch) are learned automatically.
-- **Routes.** The full campaign, a shorter leveling route, or two routes that skip chapters through dungeons
-  (Lightless Arbor + Soulfire Bastion, or Lightless Arbor + Temporal Sanctum).
+- **Routes.** The full campaign, a shorter leveling route, two routes that skip chapters through dungeons
+  (Lightless Arbor + Soulfire Bastion, or Lightless Arbor + Temporal Sanctum), and a speedleveling route after
+  [keban666's guide](https://keban666.github.io/Last-Epoch-Speedleveling-Guide/): Chapters 1-5, the Monolith,
+  then the Temporal Sanctum to Chapter 9.
 - **Quest rewards.** "x/15 passives · x/8 idol slots" counts your quest rewards. Open the game's map (`M`) and the
   overlay reads the real numbers from the corner of the map. Side quests with a reward that you walked past stay
   listed until you click (done) or right-click (skipped) them.
@@ -129,7 +131,8 @@ to send to and saves the report as a zip file on your desktop instead.
 - The 15 / 8 caps are not officially confirmed for 1.5. The three dungeon key caches new in 1.5 are inferred from
   the datamine; the patch notes do not name the zones.
 - The alternative routes were put together from the datamined exits and have not been played through; the quest
-  log after a skip can differ from the list.
+  log after a skip can differ from the list. The speedleveling route follows keban666's order, but its steps come
+  from the same game data as the others; keban666's "Monolith from level 30" is the guide's claim, not tested here.
 - Monolith data: timelines and blessings from tunklab, recommendations from Maxroll (dated 1.4).
 - Builds, tree layouts and icons come from Maxroll's planner at import time and stay on your machine. Builds from
   Last Epoch Tools are read from its public build data (with its owner's permission) and drawn with Maxroll's trees.

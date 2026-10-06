@@ -787,6 +787,10 @@
          "text": "Examine the bridge to the lowest level → Find one of the missing parts of the bridge device so it can be reactivated → Reactivate the bridge device"
         },
         {
+         "type": "go",
+         "text": "Hug the left wall to a statue room: the statue's portal holds a part (keban666)"
+        },
+        {
          "type": "tip",
          "text": "You only need ONE of the two orbs"
         }
@@ -3752,6 +3756,10 @@
          "type": "main",
          "quest": "The Ruined Temple",
          "text": "Examine the bridge to the lowest level → Find one of the missing parts of the bridge device so it can be reactivated → Reactivate the bridge device"
+        },
+        {
+         "type": "go",
+         "text": "Hug the left wall to a statue room: the statue's portal holds a part (keban666)"
         },
         {
          "type": "tip",
@@ -9031,6 +9039,2039 @@
         {
          "type": "boss",
          "text": "The Observer - final campaign boss"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "title": "Monolith of Fate",
+     "era": "Endgame",
+     "steps": [
+      {
+       "zone": "The End of Time",
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Enter the Monolith of Fate - the seven timelines below level 90 are all open"
+        },
+        {
+         "type": "main",
+         "text": "Goal: 5 Knowledge of Orobyss to open the level 90 timelines (Chapter 9 and 10 give 1 each)"
+        },
+        {
+         "type": "tip",
+         "text": "Order: Fall of the Outcasts, The Stolen Lance, The Black Sun, Reign of Dragons, then one level 90 timeline"
+        },
+        {
+         "type": "tip",
+         "text": "Each timeline: run echoes for stability, do the 3 quest echoes in order - the third is the boss"
+        },
+        {
+         "type": "tip",
+         "text": "A boss kill offers blessings; one slot per timeline. Re-pick discovered blessings at Chronomancer Nyx"
+        },
+        {
+         "type": "tip",
+         "text": "Not joined an item faction yet? Maj'elka Upper District (Chapter 9), talk to Zerrick"
+        },
+        {
+         "type": "tip",
+         "text": "Join the Woven: finish a Cemetery echo in any timeline and talk to Masque in the Haven of Silk"
+        },
+        {
+         "type": "tip",
+         "text": "Loot filter: the leveling (Regular) tier is right for all of the normal Monolith"
+        }
+       ]
+      },
+      {
+       "zone": "Fall of the Outcasts",
+       "level": 62,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): The Ransacked Camp 80/200; Maj'elka Streets 160/400; The Altar of Flesh 240/800"
+        },
+        {
+         "type": "boss",
+         "text": "Abomination - destroy the 4 Soul Vessels first; the boss is immune until then"
+        },
+        {
+         "type": "boss",
+         "text": "Keep moving from the 4 chasing necrotic circles; stand between the blue waves or behind the boss"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +1 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Winds of Fortune - (10% to 15%) Increased Unique Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Strength of Mind - (4% to 6%) Increased Experience"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Scales of Greed - (25% to 40%) Increased Gold Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Bows or Quiver"
+        }
+       ]
+      },
+      {
+       "zone": "The Stolen Lance",
+       "level": 66,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Wengari Stronghold 50/150; The Siege of Farwood 150/400; Argentum Spire 250/800"
+        },
+        {
+         "type": "boss",
+         "text": "God Hunter Argentus - run out of the Ice Nova circle; stand ON him for the Fire Bomb spiral; strafe the turret shots"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 2: he leaves - kill the Osprix adds, Lightmages first. Phase 3: leave the Flame Leap circle"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +1 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Binds of Sanctuary - (15% to 30%) Increased Shield Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Slumber of Morditas - (12% to 25%) Increased Relic Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Staff or Sceptre, Wand or Catalyst"
+        }
+       ]
+      },
+      {
+       "zone": "The Black Sun",
+       "level": 70,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): The Fall of Ledria 50/150; The Dark Ascent 150/450; The Ruins of Solarum 250/800"
+        },
+        {
+         "type": "boss",
+         "text": "Rahyeh - Void Flare: he goes to the centre and fires cones - stand between the cones"
+        },
+        {
+         "type": "boss",
+         "text": "Move from the Dive Bomb landing spot; sidestep the Wave Dash late and stay off its void trail"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +1 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Helmet, Shield"
+        }
+       ]
+      },
+      {
+       "zone": "Reign of Dragons",
+       "level": 85,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Heorot's Sanctum 50/150; Dragons' Grotto 250/450; The Rotting Hoard 400/850"
+        },
+        {
+         "type": "boss",
+         "text": "Emperor of Corpses - when he rears up, run out of the huge Soul Bomb circle and come back after it explodes"
+        },
+        {
+         "type": "boss",
+         "text": "Go to his side or back for Spirit Breath; stay out of the blood pools at the arena's edge"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +2 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Survival of Might - +(30% to 45%) Critical Strike Avoidance; +(30 to 50) Dodge Rating"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Sword or Dagger, Axe Mace or Polearm"
+        }
+       ]
+      },
+      {
+       "zone": "The Age of Winter",
+       "level": 90,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): The Frozen Fortress 50/150; The Frozen Harbor 250/550; The Frozen Citadel 400/900"
+        },
+        {
+         "type": "boss",
+         "text": "Heorot - Blizzard: stay right next to Heorot, only the area near him is safe; hide behind pillars from the orb"
+        },
+        {
+         "type": "boss",
+         "text": "Immune (Ice Guard) at 55% and 35%: kill the two adds, then the ice wolf waves"
+        },
+        {
+         "type": "tip",
+         "text": "Needs the Knowledge of Orobyss quest (5 Knowledge, shared across your characters)"
+        },
+        {
+         "type": "main",
+         "text": "Beat the Harbinger in the boss echo, then open the chest on the centre island: unlocks Empowered (level 100) timelines"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Resolve of Grael - +(25% to 40%) Physical Resistance"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Protection of Heorot - +(25% to 40%) Cold Resistance"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Bulwark of the Tundra - +(12% to 24%) increased Armor"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Ring, Amulet"
+        }
+       ]
+      },
+      {
+       "zone": "Spirits of Fire",
+       "level": 90,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Ash Covered Maj'elka 50/150; The Magma Caverns 220/450; The Caldera of Souls 400/900"
+        },
+        {
+         "type": "boss",
+         "text": "Bhuldar, Herkir and Logi (the Shamans) - kill all three at about the same time; a dead one comes back as a Spirit Form dealing necrotic damage"
+        },
+        {
+         "type": "boss",
+         "text": "Get out of the channelled Torch Flame; Lava Plume hits hardest far out, so stay close"
+        },
+        {
+         "type": "tip",
+         "text": "Needs the Knowledge of Orobyss quest (5 Knowledge, shared across your characters)"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Heart of the Caldera - +(25% to 40%) Fire Resistance"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Body of Obsidian - +(120 to 180) Armor"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Embers of Immortality - +(10% to 14%) Endurance"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Boots"
+        }
+       ]
+      },
+      {
+       "zone": "The Last Ruin",
+       "level": 90,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): The Defiled Wood 50/150; The Voidscarred Archive 200/500; The Chambers of Ruin 400/900"
+        },
+        {
+         "type": "boss",
+         "text": "The Husk of Elder Gaspar - when he teleports to the centre the tri-beam rotates: walk with its rotation; kill his totems"
+        },
+        {
+         "type": "boss",
+         "text": "Doom Blast: stay near the centre, the whirlwind at the edge ramps up. Clear the lightning balls in calm moments"
+        },
+        {
+         "type": "tip",
+         "text": "Needs the Knowledge of Orobyss quest (5 Knowledge, shared across your characters)"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Relic"
+        }
+       ]
+      },
+      {
+       "zone": "Blood, Frost, and Death",
+       "level": 74,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Wengari Battleground 50/150; Occupied Heoborea 150/450; The Lair of Formosus 300/800"
+        },
+        {
+         "type": "boss",
+         "text": "Formosus the Undying - get out of the Spirit Beam and away from the Ice Vortex tornadoes; both ramp up the longer you stay"
+        },
+        {
+         "type": "boss",
+         "text": "He resurrects his 4 undead Wengari; ice patches slow you - keep a movement skill for the beam"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +1 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Body Armour"
+        }
+       ]
+      },
+      {
+       "zone": "Ending the Storm",
+       "level": 78,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Drowned Thetima 50/150; Island Battlefield 180/500; Eye of the Storm 320/850"
+        },
+        {
+         "type": "boss",
+         "text": "Lagon - eye glows red = Moon Beam sweep: run to the opposite side of the platform; leave the big ground circle"
+        },
+        {
+         "type": "boss",
+         "text": "Phase 1: hit the tentacles (Lagon is immune). At 50%: kill tentacles and adds while cold waves sweep"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +1 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Gloves"
+        }
+       ]
+      },
+      {
+       "zone": "Fall of the Empire",
+       "level": 82,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Quest echoes (stability normal/empowered): Voidscarred Necropolis 50/150; Path of Despair 160/500; Dreadnought's Wreckage 320/850"
+        },
+        {
+         "type": "boss",
+         "text": "Harton's Husk - step out of the Oblivion Spike lines and the Idols' Barrage of Ruin; both ramp up over time"
+        },
+        {
+         "type": "boss",
+         "text": "Ignore the two Idols of Ruin (as much health as the boss); more spikes below 65%"
+        },
+        {
+         "type": "main",
+         "text": "First completion: +2 Knowledge of Orobyss"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Hope of the Beginning - (7% to 14%) Increased Prefix Shard Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Safety of the Labyrinth - (10% to 20%) Increased Amulet Shard Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Blessing: Shadows of Infinity - (10% to 20%) Increased Relic Shard Drop Rate"
+        },
+        {
+         "type": "tip",
+         "text": "Echo reward exclusive to this timeline: unique/set Belt"
+        }
+       ]
+      },
+      {
+       "zone": "Before Empowered",
+       "tasks": [
+        {
+         "type": "main",
+         "text": "5 Knowledge of Orobyss, one level 90 timeline beaten, Harbinger killed, centre chest opened"
+        },
+        {
+         "type": "res",
+         "text": "75% in every resistance and 100% critical strike avoidance before you step in"
+        },
+        {
+         "type": "main",
+         "text": "Switch your loot filter to a Strict tier - level 100 zones drop far too much for a leveling filter"
+        },
+        {
+         "type": "tip",
+         "text": "Item faction joined and ranked up; Woven joined"
+        },
+        {
+         "type": "tip",
+         "text": "Pick the blessings your build wants before pushing corruption (planner: Targets)"
+        }
+       ]
+      },
+      {
+       "zone": "Empowered Monolith",
+       "level": 100,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Re-run timelines at level 100 for Grand blessings (same stat, higher roll)"
+        },
+        {
+         "type": "main",
+         "text": "Raise corruption: kill the Shade of Orobyss echo; boss kills add Gaze of Orobyss for a bigger step"
+        },
+        {
+         "type": "tip",
+         "text": "Cap resistances at 75%; Grand Survival of Might (Reign of Dragons) is a top source of crit avoidance"
+        },
+        {
+         "type": "tip",
+         "text": "1.5: Blood Crystal encounters count kills - woven echoes at 750 / 2,000 / 4,000 lead to Morditas"
+        },
+        {
+         "type": "tip",
+         "text": "Aberroth: kill all 10 Harbingers in empowered timelines, then use a Harbinger Eye at the Shattered Road"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "speed",
+   "name": "Speedleveling (keban666)",
+   "description": "After keban666's speedleveling guide: Chapters 1-5 with no dungeon key needed, the Monolith until about level 65, then the Temporal Sanctum's alternate exit to Chapter 9. Needs one Temporal Sanctum Key. Both quest caps are reached in Chapter 9.",
+   "chapters": [
+    {
+     "id": 1,
+     "title": "Chapter 1",
+     "era": "Divine Era",
+     "steps": [
+      {
+       "zone": "The Old Road",
+       "level": 1,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "To Keeper's Camp",
+         "text": "Follow the Old Road → Inspect the Fallen Messenger → Find the Keeper who sent the letter"
+        }
+       ]
+      },
+      {
+       "zone": "The Burning Forest",
+       "level": 2,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "To Keeper's Camp",
+         "text": "Fight through the Osprix forces → Talk: Heoborean Man → Fight through the Burning Forest → Kill Forged Soldier"
+        }
+       ]
+      },
+      {
+       "zone": "The Keepers' Camp",
+       "level": 3,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "To Keeper's Camp",
+         "text": "Enter the Keeper's Camp → Talk: Grael → Talk: Keeper Leena"
+        },
+        {
+         "type": "tip",
+         "text": "Buy a weapon / gear upgrade at the vendor if you have gold"
+        }
+       ]
+      },
+      {
+       "zone": "The Fortress Gardens",
+       "level": 3,
+       "tasks": [
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Fortress Walls",
+       "level": 4,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Keepers",
+         "text": "Fight past the Osprix invaders → Kill Sturiax the Burning Sky → Find Keeper Vault"
+        },
+        {
+         "type": "side",
+         "text": "Accept: Storeroom Saboteurs",
+         "quest": "Storeroom Saboteurs"
+        },
+        {
+         "type": "go",
+         "text": "Kill the miniboss, then north-west"
+        },
+        {
+         "type": "tip",
+         "text": "The Storerooms entrance is off the main path - do it before the Vault"
+        }
+       ]
+      },
+      {
+       "zone": "The Storerooms",
+       "level": 5,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "Storeroom Saboteurs",
+         "text": "Storeroom Saboteurs: Find Siege Engineers → Kill Siege Engineers and the Forged Soldier → Sabotage Siege Golem"
+        }
+       ]
+      },
+      {
+       "zone": "The Fortress Walls",
+       "level": 4,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "Storeroom Saboteurs: Back to Heoborean Soldier",
+         "quest": "Storeroom Saboteurs",
+         "passive": 1
+        }
+       ]
+      },
+      {
+       "zone": "The Keepers' Vault",
+       "level": 5,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Enter the Keeper Vault (completes The Keepers)",
+         "quest": "The Keepers",
+         "passive": 1
+        },
+        {
+         "type": "main",
+         "quest": "The Keepers' Vault",
+         "text": "Enter the Shard Chamber → Talk: Keeper Balthas → Survive Osprix assault → Talk: Balthas (again)"
+        },
+        {
+         "type": "main",
+         "quest": "The Keepers' Vault",
+         "text": "Escape the Keeper Vault"
+        },
+        {
+         "type": "skip",
+         "text": "Skip: Missing in the Highlands (xp/gold only)"
+        },
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Northern Road",
+       "level": 5,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Keepers' Vault",
+         "text": "Talk: Keeper Guard"
+        }
+       ]
+      },
+      {
+       "zone": "The Keepers' Camp",
+       "level": 3,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Back to Keeper's Camp and speak with Keeper Leena (completes The Keepers' Vault)",
+         "quest": "The Keepers' Vault",
+         "passive": 1
+        }
+       ]
+      },
+      {
+       "zone": "Ulatri Highlands",
+       "level": 6,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Shard",
+         "text": "Enter the Highlands"
+        },
+        {
+         "type": "go",
+         "text": "North-east to The Osprix Warcamp"
+        },
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Osprix Warcamp",
+       "level": 7,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Forging Basics I",
+         "text": "Talk: Master Forger Henrik → Get Henrik's Old Silver Ring → Get Affix Shards → Open the Forge"
+        },
+        {
+         "type": "main",
+         "quest": "Forging Basics I",
+         "text": "Add and upgrade an affix to an item → Talk: Master Forger Henrik"
+        },
+        {
+         "type": "go",
+         "text": "North to The Summit"
+        },
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Summit",
+       "level": 8,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Shard",
+         "text": "Confront Haruspex Orian → Kill Haruspex Orian → Find Keeper Balthas → Talk: Keeper Balthas"
+        },
+        {
+         "type": "boss",
+         "text": "Haruspex Orian - when he flies up, run out of the landing zone; sidestep the fire breath"
+        }
+       ]
+      },
+      {
+       "zone": "The Keepers' Camp",
+       "level": 3,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Shard",
+         "text": "Back to Keeper's Camp → Talk: Leena → Talk: Keeper Balthas"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "title": "Chapter 2",
+     "era": "Ruined Era",
+     "steps": [
+      {
+       "zone": "The Crumbling Ruins",
+       "level": 9,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Last Refuge",
+         "text": "Inspect the shard of the Epoch → Explore your surroundings → Talk: Guardsman Willem → Travel with Guardsman Willem"
+        },
+        {
+         "type": "main",
+         "quest": "The Last Refuge",
+         "text": "Talk: Elder Burron"
+        },
+        {
+         "type": "res",
+         "text": "Ruined Era: almost everything deals void damage - void resistance is the one to pick up"
+        }
+       ]
+      },
+      {
+       "zone": "Last Refuge Outskirts",
+       "level": 10,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Last Refuge",
+         "text": "Enter Last Refuge → Find Guard Captain Bravon → Talk: Guard Captain Bravon → Head north east towards the Council Chambers"
+        },
+        {
+         "type": "main",
+         "quest": "The Void Assault",
+         "text": "Help Elder Erza repel the voidforms → Get elevator to the Council Chambers"
+        },
+        {
+         "type": "side",
+         "text": "Accept: Evacuation",
+         "quest": "Evacuation"
+        },
+        {
+         "type": "side",
+         "quest": "Evacuation",
+         "text": "Evacuation: Find Guardsman Wick and the other trapped guards → Find Grund the Grole farmer → Find Elder Mossbern"
+        }
+       ]
+      },
+      {
+       "zone": "The Council Chambers",
+       "level": 10,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Talk: Elder Gaspar (completes The Void Assault)",
+         "quest": "The Void Assault",
+         "idol": 1
+        },
+        {
+         "type": "side",
+         "text": "Accept: Erza's Ledger",
+         "quest": "Erza's Ledger"
+        },
+        {
+         "type": "side",
+         "text": "Evacuation: Report successful evacuation to Captain Leora",
+         "quest": "Evacuation",
+         "passive": 1
+        },
+        {
+         "type": "skip",
+         "text": "Skip: Armory Aid (xp/gold only)"
+        },
+        {
+         "type": "tip",
+         "text": "Hub: vendor, gambler and respec NPC are here"
+        }
+       ]
+      },
+      {
+       "zone": "The Last Archive",
+       "level": 12,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Pass through to the next zone"
+        }
+       ]
+      },
+      {
+       "zone": "Erza's Library",
+       "level": 11,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "Erza's Ledger",
+         "text": "Erza's Ledger: Find Elder Erza's Ledger"
+        },
+        {
+         "type": "go",
+         "text": "Chest at the north end"
+        }
+       ]
+      },
+      {
+       "zone": "Pannion's Study",
+       "level": 13,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Finding Pannion",
+         "text": "Talk: one of Elder Pannion's students → Kill Pannion's Void corrupted students"
+        },
+        {
+         "type": "tip",
+         "text": "A dead end: waypoint back to The Council Chambers to turn in; the way on to The Precipice starts there"
+        }
+       ]
+      },
+      {
+       "zone": "The Council Chambers",
+       "level": 10,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Back to Elder Gaspar and tell him that Elder Pannion is missing (completes Finding Pannion)",
+         "quest": "Finding Pannion",
+         "passive": 1
+        },
+        {
+         "type": "side",
+         "text": "Erza's Ledger: Back to Elder Erza",
+         "quest": "Erza's Ledger",
+         "passive": 1
+        }
+       ]
+      },
+      {
+       "zone": "The Precipice",
+       "level": 13,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "skip",
+         "text": "Skip: An Ancient Path (xp/gold only)"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Loathing, then take the Time Rift"
+        }
+       ]
+      },
+      {
+       "zone": "The Ancient Cavern",
+       "level": 14,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Pass through to the next zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Upper District",
+       "level": 14,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "Accept: The Upper District",
+         "quest": "The Upper District"
+        },
+        {
+         "type": "side",
+         "quest": "The Upper District",
+         "text": "The Upper District: Search for signs of Last Refuge civilians in the Upper District → Kill Devoured Husks"
+        },
+        {
+         "type": "side",
+         "text": "The Upper District: Kill Uulikos the Betrayer",
+         "quest": "The Upper District",
+         "passive": 1
+        },
+        {
+         "type": "skip",
+         "text": "Skip: Artem's Stash (xp/gold only)"
+        },
+        {
+         "type": "go",
+         "text": "Cross the bridge, kill the pack by the statue"
+        }
+       ]
+      },
+      {
+       "zone": "The Armory",
+       "level": 15,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Saving Last Refuge",
+         "text": "Reach the Lower District located beyond the Armoury"
+        },
+        {
+         "type": "boss",
+         "text": "Voidfused Forge - appears after the last wave; never stand in the lava pools under it"
+        }
+       ]
+      },
+      {
+       "zone": "The Lower District",
+       "level": 16,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Saving Last Refuge",
+         "text": "Find Elder Pannion → Drive back the Void → Get Shard"
+        },
+        {
+         "type": "boss",
+         "text": "Husk of Elder Pannion - the fire beam rotates: walk with it; get out of the lightning bubble"
+        },
+        {
+         "type": "boss",
+         "text": "Step out of the void circles"
+        }
+       ]
+      },
+      {
+       "zone": "The End of Time",
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Saving Last Refuge",
+         "text": "Enter the Time Rift and unlock your mastery"
+        },
+        {
+         "type": "tip",
+         "text": "Pick your Mastery here. It can be changed later at Chronomancer Lerinne here, for gold, and that resets your passives"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "title": "Chapter 3",
+     "era": "Ruined Era",
+     "steps": [
+      {
+       "zone": "The Council Chambers",
+       "level": 10,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Saving Last Refuge",
+         "text": "Back to Elder Gaspar"
+        },
+        {
+         "type": "side",
+         "text": "Accept: The Lesser Refuge",
+         "quest": "The Lesser Refuge"
+        },
+        {
+         "type": "side",
+         "text": "Accept: An Ancient Hunt",
+         "quest": "An Ancient Hunt"
+        }
+       ]
+      },
+      {
+       "zone": "The Sheltered Wood",
+       "level": 16,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Northernmost path to The Surface"
+        }
+       ]
+      },
+      {
+       "zone": "The Surface",
+       "level": 17,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined World",
+         "text": "Reach the Surface beyond the Sheltered Wood"
+        },
+        {
+         "type": "tip",
+         "text": "Dungeon entrance (Lightless Arbor) is north in The Shrouded Ridge - optional"
+        }
+       ]
+      },
+      {
+       "zone": "The Forsaken Trail",
+       "level": 17,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "North-east to Cultist Camp"
+        },
+        {
+         "type": "tip",
+         "text": "Spriggan Tender's Cache (one-shot) holds a Lightless Arbor Key - new in 1.5; only on your first character of a season, or a solo character"
+        }
+       ]
+      },
+      {
+       "zone": "Cultist Camp",
+       "level": 17,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Sanity in the Darkness",
+         "text": "Talk: Maceth and Leyda → Back to Cultist Camp"
+        },
+        {
+         "type": "skip",
+         "text": "Skip: Clearing the Ruins (xp/gold only)"
+        }
+       ]
+      },
+      {
+       "zone": "The Ruins of Welryn",
+       "level": 18,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined World",
+         "text": "Find the city of Welryn"
+        },
+        {
+         "type": "go",
+         "text": "South-west to Welryn Undercity (Docks is a side exit)"
+        }
+       ]
+      },
+      {
+       "zone": "Welryn Docks",
+       "level": 18,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Symbol of Hope",
+         "text": "Search for the Symbol of Hope → Kill Void Centipede → Get Symbol of Hope"
+        },
+        {
+         "type": "boss",
+         "text": "Void Centipede spawns when you approach the chest"
+        }
+       ]
+      },
+      {
+       "zone": "Welryn Undercity",
+       "level": 19,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Last Imperial",
+         "text": "Talk: Last Imperial → Kill Soul Repositories → Back to Last Imperial"
+        },
+        {
+         "type": "go",
+         "text": "Destroy all 3 Soul Repositories"
+        }
+       ]
+      },
+      {
+       "zone": "Cultist Camp",
+       "level": 17,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined World",
+         "text": "Assist Welryn's denizens"
+        }
+       ]
+      },
+      {
+       "zone": "The Ritual Site",
+       "level": 19,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Sanity in the Darkness",
+         "text": "Talk: Maceth and Leyda at the ritual grounds → Observe the ritual → Kill Void Amalgamation"
+        },
+        {
+         "type": "boss",
+         "text": "Void Amalgamation - kill the summoned monsters first; they deal most of the damage"
+        }
+       ]
+      },
+      {
+       "zone": "The Shattered Valley",
+       "level": 20,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined World",
+         "text": "Travel east beyond the Ruins of Welryn"
+        },
+        {
+         "type": "side",
+         "quest": "The Lesser Refuge",
+         "text": "The Lesser Refuge: Find signs of the Lesser Refuge in the Shattered Valley"
+        },
+        {
+         "type": "side",
+         "quest": "An Ancient Hunt",
+         "text": "An Ancient Hunt: Search for other Time Rifts → Enter the Time Rift"
+        },
+        {
+         "type": "go",
+         "text": "North: The Abandoned Tunnel. Time Rift: The Ancient Forest"
+        }
+       ]
+      },
+      {
+       "zone": "The Abandoned Tunnel",
+       "level": 20,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "S-shaped path north-east to The Lost Refuge"
+        }
+       ]
+      },
+      {
+       "zone": "The Lost Refuge",
+       "level": 21,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "The Lesser Refuge",
+         "text": "The Lesser Refuge: Explore the caves under the Shattered Valley"
+        },
+        {
+         "type": "side",
+         "text": "The Lesser Refuge: Investigate the ruined building",
+         "quest": "The Lesser Refuge",
+         "passive": 2
+        }
+       ]
+      },
+      {
+       "zone": "The Ancient Forest",
+       "level": 20,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "An Ancient Hunt",
+         "text": "An Ancient Hunt: Explore the Ancient Forest → You heard a piercing roar nearby. Investigate → Kill dragon"
+        },
+        {
+         "type": "go",
+         "text": "Dragon is in the top-right corner"
+        },
+        {
+         "type": "boss",
+         "text": "Primeval Dragon in the far corner of the zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Council Chambers",
+       "level": 10,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "An Ancient Hunt: Back to Chronomancer",
+         "quest": "An Ancient Hunt",
+         "idol": 1
+        }
+       ]
+      },
+      {
+       "zone": "The Courtyard",
+       "level": 21,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined World",
+         "text": "Find the Temple of Eterra → Kill Temple's Guardian"
+        },
+        {
+         "type": "go",
+         "text": "North-east to the Temple Guardian"
+        },
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Temple of Eterra",
+       "level": 22,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined Temple",
+         "text": "Explore the Temple of Eterra and find the Lotus Halls"
+        },
+        {
+         "type": "go",
+         "text": "North: kill 4 voidwing nests + the miniboss to drop the purple wall"
+        }
+       ]
+      },
+      {
+       "zone": "The Lotus Halls",
+       "level": 22,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined Temple",
+         "text": "Examine the bridge to the lowest level → Find one of the missing parts of the bridge device so it can be reactivated → Reactivate the bridge device"
+        },
+        {
+         "type": "go",
+         "text": "Hug the left wall to a statue room: the statue's portal holds a part (keban666)"
+        },
+        {
+         "type": "tip",
+         "text": "You only need ONE of the two orbs"
+        }
+       ]
+      },
+      {
+       "zone": "The Sanctum Bastille",
+       "level": 23,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined Temple",
+         "text": "Search the Sanctum Bastille for the last shard of the Epoch"
+        },
+        {
+         "type": "go",
+         "text": "North, then east to the Time Rift"
+        },
+        {
+         "type": "res",
+         "text": "Emperor's Remains next: void damage"
+        }
+       ]
+      },
+      {
+       "zone": "The End of Ruin",
+       "level": 23,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined Temple",
+         "text": "Kill Emperor's Remains → Form the Epoch and enter the Time Rift"
+        },
+        {
+         "type": "boss",
+         "text": "Emperor's Remains - kill the Omen eyes as soon as they appear; stay out of the purple mist"
+        },
+        {
+         "type": "boss",
+         "text": "Below half health the void beams and exploding orbs get much deadlier"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "title": "Chapter 4",
+     "era": "Imperial Era",
+     "steps": [
+      {
+       "zone": "The End of Time",
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Ruined Temple",
+         "text": "Talk: Elder Gaspar in the upper terrace → Talk: Forgotten Knight → Walk upstairs and speak with Elder Gaspar → Talk: Gaspar"
+        },
+        {
+         "type": "main",
+         "text": "Talk: Elder Gaspar (again) (completes The Power of Mastery)",
+         "quest": "The Power of Mastery",
+         "passive": 1
+        },
+        {
+         "type": "main",
+         "quest": "The Immortal Empire",
+         "text": "Use the Time Rift to travel to the Imperial Era"
+        },
+        {
+         "type": "go",
+         "text": "Stairs on the left, Gaspar upstairs, then the Time Rift"
+        }
+       ]
+      },
+      {
+       "zone": "The Outcast Camp",
+       "level": 23,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Immortal Empire",
+         "text": "Talk: Outcast Queen"
+        },
+        {
+         "type": "skip",
+         "text": "Skip: An Introduction to Crafting (xp/gold only)"
+        },
+        {
+         "type": "skip",
+         "text": "Skip: A Study in Time (+1 Passive, but long - you reach the cap without it)"
+        },
+        {
+         "type": "go",
+         "text": "West to Welryn Outskirts"
+        },
+        {
+         "type": "res",
+         "text": "Imperial Era: undead deal necrotic and poison damage"
+        }
+       ]
+      },
+      {
+       "zone": "Welryn Outskirts",
+       "level": 23,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "West. Skip the optional boss (Flame Guard Sulla)"
+        },
+        {
+         "type": "tip",
+         "text": "A one-shot loot cache is hidden in this zone"
+        }
+       ]
+      },
+      {
+       "zone": "Imperial Welryn",
+       "level": 24,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Immortal Empire",
+         "text": "Travel west to Welryn → Search Welryn for signs of the Outcast Mage → Kill Imperial Commander → Talk: Outcast Prisoner in Welryn"
+        },
+        {
+         "type": "go",
+         "text": "North-west. Skip the optional boss (Siege Captain Caliga)"
+        }
+       ]
+      },
+      {
+       "zone": "The Soul Wardens' Road",
+       "level": 25,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "West to The Risen Lake"
+        }
+       ]
+      },
+      {
+       "zone": "The Risen Lake",
+       "level": 26,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Immortal Empire",
+         "text": "Find the Outcast Hideout → Show Alric's ring to the Outcast Seer → Defend the Seer → Back to Seer"
+        },
+        {
+         "type": "tip",
+         "text": "Take the Time Rift north to The Corrupted Lake before moving on"
+        },
+        {
+         "type": "tip",
+         "text": "Side zone The Ruins of Etendell: Excavator Thrall's Cache holds a Soulfire Bastion Key - new in 1.5 (first character of a season, or solo)"
+        }
+       ]
+      },
+      {
+       "zone": "The Corrupted Lake",
+       "level": 26,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "Accept: The Corrupted Lake",
+         "quest": "The Corrupted Lake"
+        },
+        {
+         "type": "side",
+         "quest": "The Corrupted Lake",
+         "text": "The Corrupted Lake: Explore the Corrupted Lake → Kill Prophet of Ruin"
+        },
+        {
+         "type": "side",
+         "text": "The Corrupted Lake: Kill Idol of Ruin",
+         "quest": "The Corrupted Lake",
+         "passive": 1,
+         "idol": 1
+        },
+        {
+         "type": "boss",
+         "text": "Prophet of Ruin - do not stand in the big purple circle on the ground"
+        },
+        {
+         "type": "boss",
+         "text": "Idol of Ruin spawns when the Prophet dies: same circle, telegraphed attacks, void damage"
+        }
+       ]
+      },
+      {
+       "zone": "The Risen Lake",
+       "level": 26,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "West to The Fallen Tower"
+        }
+       ]
+      },
+      {
+       "zone": "The Fallen Tower",
+       "level": 27,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "North to Imperial Thetima"
+        }
+       ]
+      },
+      {
+       "zone": "Imperial Thetima",
+       "level": 28,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Admiral's Dreadnought",
+         "text": "Travel west to Thetima → Find a way into Harton's Dreadnought"
+        },
+        {
+         "type": "go",
+         "text": "South-west to The Darkling Pier"
+        }
+       ]
+      },
+      {
+       "zone": "The Darkling Pier",
+       "level": 28,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Pass through to the next zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Imperial Dreadnought",
+       "level": 29,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "East to the Deck"
+        }
+       ]
+      },
+      {
+       "zone": "The Dreadnought's Deck",
+       "level": 30,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Admiral's Dreadnought",
+         "text": "Search Harton's Dreadnought → Kill Admiral Harton → Talk: Alric"
+        },
+        {
+         "type": "main",
+         "text": "Jump off the deck (completes The Admiral's Dreadnought)",
+         "quest": "The Admiral's Dreadnought",
+         "idol": 1
+        },
+        {
+         "type": "go",
+         "text": "North to the edge, then east"
+        },
+        {
+         "type": "boss",
+         "text": "Admiral Harton - stay very close: at range he keeps casting lightning at you"
+        },
+        {
+         "type": "boss",
+         "text": "Kill the Storm Wisps first when he summons them"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "title": "Chapter 5",
+     "era": "Imperial Era",
+     "steps": [
+      {
+       "zone": "The Shining Cove",
+       "level": 31,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Oracle's Aid",
+         "text": "Talk: Alric"
+        }
+       ]
+      },
+      {
+       "zone": "The Majasan Desert",
+       "level": 31,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "Accept: Hidden Gems",
+         "quest": "Hidden Gems"
+        },
+        {
+         "type": "go",
+         "text": "Rouj Zabat gives Hidden Gems. North-east to The Wraith Dunes"
+        }
+       ]
+      },
+      {
+       "zone": "The Wraith Dunes",
+       "level": 32,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "Hidden Gems",
+         "text": "Hidden Gems: Search the Wraith Dunes for signs of the lost Nagasa gems → Kill Argolos The Blessed → Inspect the pile of gems"
+        },
+        {
+         "type": "go",
+         "text": "East to Maj'elka"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka",
+       "level": 33,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Oracle's Aid",
+         "text": "Talk: Alric → Kill Imperial forces and find the Emerald Sigil → Kill Imperial forces and find the Ruby Sigil"
+        },
+        {
+         "type": "side",
+         "quest": "Hidden Gems",
+         "text": "Hidden Gems: Talk: Rouj Zabat in Maj'elka to relay your findings → Defend yourself from the Imperial Assassins"
+        },
+        {
+         "type": "side",
+         "text": "Hidden Gems: Talk: Rouj Zabat",
+         "quest": "Hidden Gems",
+         "passive": 1
+        },
+        {
+         "type": "go",
+         "text": "Sigils: south path, then east, then north. Talk to Alric between each"
+        }
+       ]
+      },
+      {
+       "zone": "The Sapphire Quarter",
+       "level": 34,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Oracle's Aid",
+         "text": "Kill Imperial forces and find the Sapphire Sigil → Kill Imperial forces and find the Diamond Sigil"
+        },
+        {
+         "type": "go",
+         "text": "North; miniboss at the end, portal back to Maj'elka"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka",
+       "level": 33,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "East: remove the rune to The Oracle's Abode"
+        }
+       ]
+      },
+      {
+       "zone": "The Oracle's Abode",
+       "level": 35,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Talk: Oracle (completes The Oracle's Aid)",
+         "quest": "The Oracle's Aid",
+         "passive": 1
+        },
+        {
+         "type": "side",
+         "text": "Accept: The Sapphire Tablet",
+         "quest": "The Sapphire Tablet"
+        },
+        {
+         "type": "tip",
+         "text": "Waypoint to The Shining Cove for The Sapphire Tablet, then come back"
+        }
+       ]
+      },
+      {
+       "zone": "The Shining Cove",
+       "level": 31,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "The Sapphire Tablet",
+         "text": "The Sapphire Tablet: Back to Shining Cove → Search for the Sapphire Shrine → Investigate Time Rift for a way past the rubble"
+        },
+        {
+         "type": "go",
+         "text": "North-west then south; bridge on the right leads to the Time Rift"
+        }
+       ]
+      },
+      {
+       "zone": "The Ruined Coast",
+       "level": 35,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "quest": "The Sapphire Tablet",
+         "text": "The Sapphire Tablet: Search for the missing tablet → Kill Ortra'ek the Survivor → Get Sapphire Tablet"
+        }
+       ]
+      },
+      {
+       "zone": "The Oracle's Abode",
+       "level": 35,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "The Sapphire Tablet: Back to Shrine Maiden",
+         "quest": "The Sapphire Tablet",
+         "passive": 1,
+         "idol": 1
+        }
+       ]
+      },
+      {
+       "zone": "The Maj'elkan Catacombs",
+       "level": 35,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "V-shape: south-east, then north-east"
+        },
+        {
+         "type": "tip",
+         "text": "Sapphire Nagasa's Cache (one-shot) holds a Temporal Sanctum Key - new in 1.5; only on your first character of a season, or a solo character"
+        }
+       ]
+      },
+      {
+       "zone": "The End of Time",
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "text": "Monolith of Fate now: run the normal timelines, Fall of the Outcasts first"
+        },
+        {
+         "type": "main",
+         "text": "Come back for the Temporal Sanctum at about level 65 - the dungeon is level 55"
+        },
+        {
+         "type": "tip",
+         "text": "keban666 starts the Monolith at level 30-31; that takes a strong build"
+        },
+        {
+         "type": "tip",
+         "text": "No key from the Catacombs cache? Monolith timeline bosses drop Temporal Sanctum Keys"
+        },
+        {
+         "type": "tip",
+         "text": "Back: waypoint to The Ruined Coast (Imperial Era) - the dungeon entrance is there"
+        }
+       ]
+      },
+      {
+       "zone": "The Ruined Coast",
+       "level": 35,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "tip",
+         "text": "Temporal Sanctum entrance - needs a Temporal Sanctum Key (from the Catacombs cache)"
+        }
+       ]
+      },
+      {
+       "zone": "The Temporal Sanctum",
+       "level": 55,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Pass through to the next zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Sanctum Cloisters",
+       "level": 55,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "Pass through to the next zone"
+        }
+       ]
+      },
+      {
+       "zone": "The Sanctum Archive",
+       "level": 55,
+       "tasks": [
+        {
+         "type": "side",
+         "text": "Temporal Sanctum: Kill Chronomancer Julra",
+         "quest": "Temporal Sanctum",
+         "passive": 1,
+         "idol": 1
+        },
+        {
+         "type": "boss",
+         "text": "Chronomancer Julra - switch era before the big clock reaches 12: the implosion hits everything and applies Doom"
+        },
+        {
+         "type": "boss",
+         "text": "Drop the void puddles at the room's edge; destroy her Healing Fountain; stand in the gaps of the 4 beams"
+        },
+        {
+         "type": "tip",
+         "text": "Leave through the ALTERNATE exit - it leads to The Radiant Dunes (Chapter 9)"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 9,
+     "title": "Chapter 9",
+     "era": "Divine Era",
+     "steps": [
+      {
+       "zone": "The Radiant Dunes",
+       "level": 54,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Journey to Maj'elka",
+         "text": "Cross the Majasan Desert → Find a way around the barriers → Kill Scalebane Raiders → Talk: man in the cage"
+        },
+        {
+         "type": "main",
+         "quest": "Journey to Maj'elka",
+         "text": "Get past the Scalebane barricade"
+        },
+        {
+         "type": "side",
+         "text": "Accept: Desert Treasure",
+         "quest": "Desert Treasure"
+        },
+        {
+         "type": "side",
+         "quest": "Desert Treasure",
+         "text": "Desert Treasure: Enter the tomb hidden among the Dunes → Explore the desert tomb → Kill enraged Wealth Elemental → Inspect the relic unearthed during the battle"
+        },
+        {
+         "type": "go",
+         "text": "South-east: Swarmkeeper. Then east"
+        },
+        {
+         "type": "tip",
+         "text": "Arriving from the Temporal Sanctum? Quest steps may differ - follow the in-game marker"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka Upper District",
+       "level": 54,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Journey to Maj'elka",
+         "text": "Travel the Majasan Desert with Zerrick → Talk: Nagasa Guards → Talk: Yulia → Talk: Zerrick"
+        },
+        {
+         "type": "side",
+         "text": "Accept: Arjani, the Ruby Commander",
+         "quest": "Arjani, the Ruby Commander"
+        },
+        {
+         "type": "side",
+         "text": "Accept: Merchants and Fortune Tellers",
+         "quest": "Merchants and Fortune Tellers"
+        },
+        {
+         "type": "side",
+         "quest": "Desert Treasure",
+         "text": "Desert Treasure: Find someone who might know more about the relic"
+        },
+        {
+         "type": "side",
+         "quest": "Arjani, the Ruby Commander",
+         "text": "Arjani, the Ruby Commander: Ask Zerrick about the job offer"
+        },
+        {
+         "type": "side",
+         "quest": "Merchants and Fortune Tellers",
+         "text": "Merchants and Fortune Tellers: Zerrick wishes to speak with you about potential allies → Become a member of either the Circle of Fortune or the Merchant's Guild"
+        },
+        {
+         "type": "skip",
+         "text": "Optional: Oasis Hunt (+1 Passive - only counts if you are below the cap)"
+        },
+        {
+         "type": "go",
+         "text": "North-east; right-hand entrance to the Lower District"
+        },
+        {
+         "type": "tip",
+         "text": "Item factions unlock here: Circle of Fortune (find loot) or Merchant's Guild (trade)"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka Lower District",
+       "level": 54,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Scalebane",
+         "text": "Enter the Maj'elka Slums → Find the Scalebane Hideout → Get past the Scalebane Bodyguard"
+        },
+        {
+         "type": "side",
+         "quest": "Arjani, the Ruby Commander",
+         "text": "Arjani, the Ruby Commander: Find Arjani the Ruby Commander → Kill Arjani, the Ruby Commander"
+        },
+        {
+         "type": "go",
+         "text": "South-east"
+        },
+        {
+         "type": "tip",
+         "text": "Scalebane Bodyguard: refuse to pay and fight him (paying costs up to 100,000 gold)"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka Slums",
+       "level": 54,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Scalebane",
+         "text": "Enter the Scalebane Hideout → Find the Scalebane Guildleader's hideout → Kill Scalebane Guildleader"
+        },
+        {
+         "type": "side",
+         "quest": "Desert Treasure",
+         "text": "Desert Treasure: Search for the contact hidden"
+        },
+        {
+         "type": "side",
+         "text": "Desert Treasure: Talk: Fence",
+         "quest": "Desert Treasure",
+         "idol": 1
+        },
+        {
+         "type": "go",
+         "text": "Hideout is farthest east"
+        }
+       ]
+      },
+      {
+       "zone": "Maj'elka Upper District",
+       "level": 54,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "The Scalebane",
+         "text": "Back to Zerrick"
+        },
+        {
+         "type": "side",
+         "text": "Arjani, the Ruby Commander: Back to Zerrick with Arjani's head",
+         "quest": "Arjani, the Ruby Commander",
+         "idol": 1
+        }
+       ]
+      },
+      {
+       "zone": "The Oasis",
+       "level": 55,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "skip",
+         "text": "Optional: Too Greedily, Too Deep (+1 Idol slot - only counts if you are below the cap)"
+        },
+        {
+         "type": "go",
+         "text": "North to The Crystal Mines"
+        }
+       ]
+      },
+      {
+       "zone": "The Crystal Mines",
+       "level": 55,
+       "tasks": [
+        {
+         "type": "go",
+         "text": "North-east"
+        }
+       ]
+      },
+      {
+       "zone": "The Aerie",
+       "level": 55,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Grand Theft Eagle",
+         "text": "Find the Crystal Mines elevator → Talk: Zerrick → Enter the Ulatri Warcamp → Find a suitable Giant Eagle"
+        },
+        {
+         "type": "main",
+         "quest": "Grand Theft Eagle",
+         "text": "Kill Osprix defenses → Talk: Zerrick before boarding the Giant Eagle → Climb aboard the Giant Eagle"
+        }
+       ]
+      },
+      {
+       "zone": "Majasan Heights",
+       "level": 56,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Grand Theft Eagle",
+         "text": "Fly to the Temple of Majasa → Kill Osprix"
+        }
+       ]
+      },
+      {
+       "zone": "The Temple Rooftops",
+       "level": 56,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Grand Theft Eagle",
+         "text": "Land safely"
+        }
+       ]
+      },
+      {
+       "zone": "The Upper Temple",
+       "level": 56,
+       "waypoint": true,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Apophis and Majasa",
+         "text": "Enter Majasa's Temple through one of the roof entrances → Search for Apophis and Majasa → Kill Diamond Matron guarding the Lower Temple"
+        },
+        {
+         "type": "go",
+         "text": "North-east: Diamond Matron unlocks the way down"
+        }
+       ]
+      },
+      {
+       "zone": "The Lower Temple",
+       "level": 57,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Apophis and Majasa",
+         "text": "Survive Apophis' minions → Pursue Apophis"
+        }
+       ]
+      },
+      {
+       "zone": "The Chamber of Vessels",
+       "level": 57,
+       "tasks": [
+        {
+         "type": "main",
+         "quest": "Apophis and Majasa",
+         "text": "Confront Majasa → Subdue Majasa → Confront Apophis → Enter the Time Rift"
+        },
+        {
+         "type": "boss",
+         "text": "Majasa - get out of the giant red circle (Siege Bolt can one-shot); 4 Stone Stare stacks petrify you"
+        },
+        {
+         "type": "boss",
+         "text": "At 66% and 33% kill the 3 Essences, the Fire one first. Phase 2: avoid the blood pools; she heals at 50%"
         }
        ]
       }

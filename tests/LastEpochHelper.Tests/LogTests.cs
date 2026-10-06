@@ -167,4 +167,28 @@ public class ShippedDataTests
         Assert.Equal("The Radiant Dunes", tracker.Step.Zone);
         Assert.Equal(9, tracker.Chapter.Id);
     }
+
+    [Fact]
+    public void SpeedRoute_WaitsOnTheMonolithStop_UntilTheSanctumEntrance()
+    {
+        var (guide, scenes) = Load();
+        var route = guide.Route("speed");
+        int catacombs = route.Flat.ToList().FindIndex(f => f.Step.Zone == "The Maj'elkan Catacombs");
+        var tracker = new Tracker(route, scenes, catacombs);
+
+        tracker.OnSceneLoaded("EoT");
+        int stop = tracker.Index;
+        Assert.Equal(("The End of Time", 5), (tracker.Step.Zone, tracker.Chapter.Id));
+
+        // Echoes - a known timeline and an unknown scene - neither move nor teach the route.
+        tracker.OnSceneLoaded("R1Q10");
+        tracker.OnSceneLoaded("M_Echo_Unknown");
+        tracker.OnSceneLoaded("EoT");
+        Assert.Equal(stop, tracker.Index);
+        Assert.False(scenes.TryGetZone("M_Echo_Unknown", out _));
+
+        tracker.OnSceneLoaded("D05TR");
+        Assert.Equal("The Ruined Coast", tracker.Step.Zone);
+        Assert.Equal(stop + 1, tracker.Index);
+    }
 }

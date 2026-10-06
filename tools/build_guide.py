@@ -154,6 +154,14 @@ ROUTES = [
          5: until(chapter(5), "The Maj'elkan Catacombs") + ["The Ruined Coast", "The Temporal Sanctum", "The Sanctum Cloisters", "The Sanctum Archive"],
          9: since(chapter(9), "The Radiant Dunes"),
      }, drop=(6, 7, 8))},
+    # After keban666's speedleveling guide (keban666.github.io/Last-Epoch-Speedleveling-Guide, Season 5):
+    # no Lightless Arbor, a Monolith stop to out-level the Temporal Sanctum, then its exit to Chapter 9.
+    {"id": "speed", "name": "Speedleveling (keban666)",
+     "description": "After keban666's speedleveling guide: Chapters 1-5 with no dungeon key needed, the Monolith until about level 65, then the Temporal Sanctum's alternate exit to Chapter 9. Needs one Temporal Sanctum Key. Both quest caps are reached in Chapter 9.",
+     "route": with_chapters({
+         5: until(chapter(5), "The Maj'elkan Catacombs") + ["The End of Time", "The Ruined Coast", "The Temporal Sanctum", "The Sanctum Cloisters", "The Sanctum Archive"],
+         9: since(chapter(9), "The Radiant Dunes"),
+     }, drop=(6, 7, 8, 10))},
 ]
 
 # The site tags a few objectives with the zone they are *given* in rather than where they happen.
@@ -217,6 +225,13 @@ TIPS = {
         ("boss", "Fire Lich Cremorus - stay off the lit floor; once it covers the arena, swap Soulfire Shield to the floor's type"),
         ("boss", "Run from the chasing Thrall before it bursts; leave the Incendiary Torrent fire line"),
         ("tip", "Leave through the ALTERNATE exit - it leads to Kolheim Pass (Chapter 7)"),
+    ],
+    (5, "The End of Time", 1): [
+        ("main", "Monolith of Fate now: run the normal timelines, Fall of the Outcasts first"),
+        ("main", "Come back for the Temporal Sanctum at about level 65 - the dungeon is level 55"),
+        ("tip", "keban666 starts the Monolith at level 30-31; that takes a strong build"),
+        ("tip", "No key from the Catacombs cache? Monolith timeline bosses drop Temporal Sanctum Keys"),
+        ("tip", "Back: waypoint to The Ruined Coast (Imperial Era) - the dungeon entrance is there"),
     ],
     (5, "The Ruined Coast", 2): [("tip", "Temporal Sanctum entrance - needs a Temporal Sanctum Key (from the Catacombs cache)")],
     (5, "The Sanctum Archive", 1): [
@@ -375,6 +390,7 @@ GO = {
     (3, "The Ancient Forest", 1): "Dragon is in the top-right corner",
     (3, "The Courtyard", 1): "North-east to the Temple Guardian",
     (3, "The Temple of Eterra", 1): "North: kill 4 voidwing nests + the miniboss to drop the purple wall",
+    (3, "The Lotus Halls", 1): "Hug the left wall to a statue room: the statue's portal holds a part (keban666)",
     (3, "The Sanctum Bastille", 1): "North, then east to the Time Rift",
     (4, "The End of Time", 1): "Stairs on the left, Gaspar upstairs, then the Time Rift",
     (4, "The Outcast Camp", 1): "West to Welryn Outskirts",
