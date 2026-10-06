@@ -6,6 +6,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 - keban666's speedleveling guide is now a choice under Route in the settings: "Speedleveling (keban666)".
 - Builds from Last Epoch Tools import directly now: paste the planner link into the Build link box and press Import build. Thanks to Dammitt, who runs Last Epoch Tools, for letting the overlay in.
+- Fixed: opening the Weaver tree in the game could bring up one of the build's skill trees (Warcry, say) instead of the Weaver tab.
 
 ## 0.7.24 - Points per mastery
 

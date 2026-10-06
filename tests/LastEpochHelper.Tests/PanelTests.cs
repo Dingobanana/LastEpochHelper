@@ -57,6 +57,22 @@ public class PanelDetectorTests
         // A tooltip that mentions the tree is not the panel.
         var tip = new[] { new ScreenLine("Unlocks a node in the Weaver Tree", 14), new ScreenLine("BACK", 15), new ScreenLine("RESPEC", 16) };
         Assert.NotEqual(GamePanel.Weaver, PanelDetector.Detect(tip, Tabs, Skills).Panel);
+
+        // The heading read as two lines (activity.log 2026-10-06: 24px 'WEAVER' | 23px 'TREE'), with a
+        // node naming one of the build's skills: still the Weaver tree, not that skill's tree.
+        var split = weaver.Where(l => l.Text != "WEAVER TREE")
+            .Concat(new[] { new ScreenLine("WEAVER", 24, 2415, 16, 150), new ScreenLine("TREE", 23, 2590, 17, 100),
+                            new ScreenLine("Gathering Storm", 16, 2000, 700, 160) }).ToList();
+        foreach (bool strict in new[] { false, true })
+        {
+            var reading = PanelDetector.Detect(split, Tabs, Skills, strict: strict);
+            Assert.Equal(GamePanel.Weaver, reading.Panel);
+            Assert.Equal((2415.0, 2690.0), (reading.Anchor!.X, reading.Anchor.X + reading.Anchor.Width));
+            Assert.Equal(0, reading.WeaverPlaced);
+        }
+        // Each word on its own somewhere else on screen is no heading.
+        var apart = new[] { new ScreenLine("WEAVER", 24, 400, 16, 150), new ScreenLine("TREE", 23, 2590, 700, 100), new ScreenLine("BACK", 15), new ScreenLine("RESPEC", 16) };
+        Assert.NotEqual(GamePanel.Weaver, PanelDetector.Detect(apart, Tabs, Skills).Panel);
     }
 
     [Fact]

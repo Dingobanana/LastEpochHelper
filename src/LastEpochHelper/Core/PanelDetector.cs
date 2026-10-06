@@ -41,7 +41,7 @@ public static class PanelDetector
         // The Weaver tree (endgame) has BACK and RESPEC buttons like an open skill tree, so it would be
         // taken for one; its heading "WEAVER TREE" tells it apart, and nothing else on screen counts then.
         var weaverHeading = text.Where(t => t.Letters.Contains("weavertree", StringComparison.Ordinal) && t.Letters.Length <= 14)
-            .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault();
+            .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault() ?? SplitWeaverHeading(text);
         if (weaverHeading is not null && !text.Any(t => t.Letters == "passives"))
             return new PanelReading(GamePanel.Weaver, Anchor: weaverHeading,
                 WeaverPlaced: WeaverUnlocked(lines) is { } unlocked && (Unspent(lines) ?? 0) is var unspent && unspent <= unlocked ? unlocked - unspent : null);
@@ -162,6 +162,31 @@ public static class PanelDetector
             return hint == GamePanel.Skills ? skillPanel : hint == GamePanel.Passives ? passives
                 : skillPanel.Skill is not null ? skillPanel : passives;
         return passives ?? skillPanel ?? new PanelReading(GamePanel.None);
+    }
+
+    /// <summary>
+    /// "WEAVER TREE" read as two lines, "WEAVER" and "TREE" (as a full read of a wide screen often
+    /// does): the two words close together, at about one size. The anchor covers both, so a quick
+    /// look at that spot sees them both again.
+    /// </summary>
+    private static ScreenLine? SplitWeaverHeading(List<(ScreenLine Line, string Letters)> text)
+    {
+        foreach (var weaver in text.Where(t => t.Letters == "weaver").Select(t => t.Line))
+        {
+            double size = Math.Max(weaver.Height, 12);
+            var tree = text.Where(t => t.Letters == "tree").Select(t => t.Line)
+                .Where(l => Math.Abs(l.Height - weaver.Height) <= size * 0.35
+                            && Math.Abs(l.Y - weaver.Y) <= size * 2.5
+                            && Math.Abs(l.X - (weaver.X + weaver.Width)) <= size * 8)
+                .OrderBy(l => Math.Abs(l.Y - weaver.Y) + Math.Abs(l.X - weaver.X))
+                .FirstOrDefault();
+            if (tree is null) continue;
+            double left = Math.Min(weaver.X, tree.X), top = Math.Min(weaver.Y, tree.Y);
+            double right = Math.Max(weaver.X + weaver.Width, tree.X + tree.Width);
+            double bottom = Math.Max(weaver.Y + weaver.Height, tree.Y + tree.Height);
+            return new ScreenLine("WEAVER TREE", bottom - top, left, top, right - left);
+        }
+        return null;
     }
 
     /// <summary>"N UNSPENT POINTS"; null when there is no such line (the game shows none when every point is spent).</summary>
