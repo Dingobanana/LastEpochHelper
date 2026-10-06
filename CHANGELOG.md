@@ -2,10 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.25 - Speedleveling route
+## 0.7.25 - Speedleveling route and Last Epoch Tools builds
 
-- New route "Speedleveling (keban666)", after keban666's speedleveling guide. Chapters 1-5 with no dungeon key needed, the Monolith until about level 65, then the Temporal Sanctum's alternate exit to Chapter 9, where both quest caps (15 passives, 8 idol slots) are reached. It needs one Temporal Sanctum Key. Pick it under Route in the settings.
-- The Lotus Halls (Chapter 3) say where the bridge part is: follow the left wall to a statue room; the statue's portal holds it.
+- keban666's speedleveling guide is now a choice under Route in the settings: "Speedleveling (keban666)". Credit and thanks to keban666 for the route: https://keban666.github.io/Last-Epoch-Speedleveling-Guide/
+- Builds from Last Epoch Tools import directly now: paste the planner link into the Build link box and press Import build. Thanks to Dammitt, who runs Last Epoch Tools, for letting the overlay in.
 
 ## 0.7.24 - Points per mastery
 
