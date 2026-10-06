@@ -54,6 +54,7 @@ public sealed class LogWatcher : IDisposable
         CharacterLevelEvent? level = null;
         CharacterCreatedEvent? created = null;
         AccountEvent? account = null;
+        GameVersionEvent? version = null;
         bool any = false;
         try
         {
@@ -67,6 +68,7 @@ public sealed class LogWatcher : IDisposable
                     case CharacterLevelEvent l: level = l; break;
                     case CharacterCreatedEvent c: created = c; break;
                     case AccountEvent a: account = a; break;
+                    case GameVersionEvent v: version = v; break;
                     case CharacterSelectEvent: scene = null; echo = null; level = null; created = null; break;
                 }
             });
@@ -74,6 +76,7 @@ public sealed class LogWatcher : IDisposable
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
         // Same order the game logs them in when a character enters the world.
+        if (version is not null) Raise(version, false);
         if (account is not null) Raise(account, false);
         if (any) Raise(new CharacterSelectEvent(), false);
         if (created is not null) Raise(created, false);

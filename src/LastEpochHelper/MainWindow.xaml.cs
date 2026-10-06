@@ -226,6 +226,10 @@ public partial class MainWindow : Window
             ? (true, $"The game window is {width} x {height}.")
             : (false, "The game window was not found. Start Last Epoch (in Borderless Windowed mode) and check again."));
         if (_game.Streamed) report.Add((false, Readiness.StreamedLong));
+        if (_session.GameVersion is { } version)
+            report.Add(Readiness.GuideBehind(version, _session.Guide.GameVersion) is { } behind
+                ? (false, behind.Long)
+                : (true, $"Last Epoch {version}: the campaign guide's data is for {_session.Guide.GameVersion}."));
 
         string Seen(string what, DateTime? at) => at is { } time
             ? $"The {what} panel was recognised {Ago(time)}."

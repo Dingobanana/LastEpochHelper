@@ -13,7 +13,9 @@ to the game.
 1. Set the game to **Borderless Windowed** (nothing can draw over exclusive fullscreen).
 2. Download the latest `LastEpochHelper-x.y.z.zip` under [Releases](https://github.com/Dingobanana/LastEpochHelper/releases),
    unpack the whole folder somewhere permanent and start `LastEpochHelper.exe`. An "LE" icon appears by the clock.
-   The first time, Windows shows "Windows protected your PC" (the program is not signed): **More info** → **Run anyway**.
+   The first time, Windows shows "Windows protected your PC": **More info** → **Run anyway**. Windows says this about
+   programs that are not signed with a paid certificate and that few people have run yet. The source is public, each
+   release is built from it, and your antivirus can scan the exe like any other.
 3. Play. The overlay moves to the right step when you enter a new zone, and hides when the game does not have focus.
 
 The build tree and the map counters read the game's text off the screen, so they need the game
@@ -164,7 +166,11 @@ python tools/build_guide.py --refresh    # fetches the pages again and writes Da
 dotnet test
 ```
 
-The script prints a `WARNING` if a quest step cannot be placed on the full route.
+The script prints a `WARNING` if a quest step cannot be placed on the full route. After a major or minor patch, also set
+`GAME_VERSION` at the top of the script to the new version: the overlay reads the game's version from its log
+("game version: 1.5.1.2") and, once per version, tells players when the game is newer than the guide's data
+(1.6 against 1.5; a 1.5.x patch says nothing). Zones the overlay meets but does not know are listed in
+`%APPDATA%\LastEpochHelper\unknown_scenes.txt`.
 `tools/monolith.json` is the source of the Monolith chapter.
 
 ### Releasing a version

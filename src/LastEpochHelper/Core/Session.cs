@@ -35,6 +35,8 @@ public sealed class Session
     public BuildTree? Tree { get; private set; }
     /// <summary>True between entering the world and returning to character select.</summary>
     public bool InGame { get; private set; }
+    /// <summary>Last Epoch's version as the log gives it ("1.5.1.2"); null until it has been read.</summary>
+    public string? GameVersion { get; private set; }
     /// <summary>The scene last loaded on top of the zone (a Monolith echo, say); null after a zone load.</summary>
     public string? Echo { get; private set; }
 
@@ -303,6 +305,18 @@ public sealed class Session
                 {
                     FlushPendingScene();
                     ApplyScene(scene.Scene, live);
+                }
+                break;
+
+            case GameVersionEvent version:
+                GameVersion = version.Version;
+                // Once per game version: the guide may be out of date after a big patch.
+                if (Readiness.GuideBehind(version.Version, Guide.GameVersion) is { } behind && !Settings.ReadinessWarned.Contains(behind.Key))
+                {
+                    Settings.ReadinessWarned.Add(behind.Key);
+                    SaveSettings();
+                    ActivityLog.Write($"game version {version.Version}, guide data {Guide.GameVersion}: said so");
+                    ShowAlert(behind.Short, 45);
                 }
                 break;
 

@@ -1,3 +1,4 @@
+using System.IO;
 using LastEpochHelper;
 using LastEpochHelper.Core;
 
@@ -56,5 +57,37 @@ public class ReadinessTests
         Assert.Contains("any language", german.Long); // the campaign guide still works
 
         Assert.Equal(2, Readiness.Problems(false, null, "pl").Count);
+    }
+
+    [Fact]
+    public void ANewerGameThanTheGuide_IsSaidOnce_APatchWithinTheVersionIsNot()
+    {
+        Assert.Null(Readiness.GuideBehind("1.5.1.2", "1.5"));
+        Assert.Null(Readiness.GuideBehind("1.4.3", "1.5"));
+        Assert.Null(Readiness.GuideBehind(null, "1.5"));
+        Assert.Null(Readiness.GuideBehind("garbage", "1.5"));
+        var behind = Readiness.GuideBehind("1.6.0.1", "1.5")!;
+        Assert.Equal("guide-for-1.6", behind.Key);
+        Assert.Contains("1.6", behind.Short);
+        Assert.NotNull(Readiness.GuideBehind("2.0", "1.5"));
+
+        // The real start-up line, through the parser and a session: one alert per game version.
+        string line = "2026-10-06T08:40:26.3599716+00:00	Log	game version: 1.6.0.1. internal version: 1.6.0.3";
+        Assert.Equal(new GameVersionEvent("1.6.0.1"), LogParser.Parse(line));
+        var (guide, scenes) = ShippedDataTests.Load();
+        var dir = Path.Combine(Path.GetTempPath(), $"leh-version-{Guid.NewGuid():N}");
+        try
+        {
+            var session = new Session(new Storage(dir), guide, scenes);
+            session.Handle(LogParser.Parse(line)!, false);
+            Assert.Equal("1.6.0.1", session.GameVersion);
+            Assert.Contains("1.6", session.Alert);
+            Assert.Contains("guide-for-1.6", session.Settings.ReadinessWarned);
+
+            var again = new Session(new Storage(dir), guide, scenes);
+            again.Handle(LogParser.Parse(line)!, false);
+            Assert.Null(again.Alert);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
     }
 }

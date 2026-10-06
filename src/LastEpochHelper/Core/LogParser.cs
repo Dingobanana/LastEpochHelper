@@ -19,6 +19,8 @@ public sealed record CharacterCreatedEvent(string Name, int ClassId) : LogEvent;
 /// </summary>
 public sealed record QuestTriggerEvent(string Name) : LogEvent;
 public sealed record PlayerDiedEvent : LogEvent;
+/// <summary>The game's version, logged at every start ("game version: 1.5.1.2. internal version: 1.5.1.4").</summary>
+public sealed record GameVersionEvent(string Version) : LogEvent;
 /// <summary>The account name, as the chat service reports it on login.</summary>
 public sealed record AccountEvent(string Name) : LogEvent;
 
@@ -40,6 +42,9 @@ public static partial class LogParser
 
     [GeneratedRegex(@"update the condition handler in (.+?)\s*$")]
     private static partial Regex QuestTrigger();
+
+    [GeneratedRegex(@"\tgame version: (\d+(?:\.\d+)+)")]
+    private static partial Regex GameVersion();
 
     [GeneratedRegex(@"\tConnected to chat as '([^']+)'")]
     private static partial Regex ChatAccount();
@@ -76,6 +81,12 @@ public static partial class LogParser
 
         if (line.Contains("Player died: -IsLocalPlayer: True", StringComparison.Ordinal))
             return new PlayerDiedEvent();
+
+        if (line.Contains("	game version: ", StringComparison.Ordinal))
+        {
+            m = GameVersion().Match(line);
+            if (m.Success) return new GameVersionEvent(m.Groups[1].Value);
+        }
 
         if (line.Contains("Connected to chat as ", StringComparison.Ordinal))
         {

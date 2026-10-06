@@ -21,6 +21,26 @@ public static class Readiness
                                        + "The game's log stays on that machine, so the campaign guide cannot follow your zones (step through it with Ctrl+Shift+Left/Right), "
                                        + "and a loot filter cannot be written into the game's folder.";
 
+    /// <summary>
+    /// The game is a newer major or minor version than the campaign data (1.6 against 1.5): zones,
+    /// quests and rewards may have moved, so the guide may lead astray until the overlay is updated.
+    /// A patch within the version (1.5.1 against 1.5) is no reason to say anything. Null when fine or unknown.
+    /// </summary>
+    public static ReadinessProblem? GuideBehind(string? gameVersion, string guideVersion)
+    {
+        if (MajorMinor(gameVersion) is not { } game || MajorMinor(guideVersion) is not { } guide || game.CompareTo(guide) <= 0) return null;
+        string shown = $"{game.Major}.{game.Minor}";
+        return new("guide-for-" + shown,
+            $"Last Epoch is now {shown}, but the campaign guide was made for {guideVersion}: zones, quests and rewards may have changed. The overlay updates itself once new data is out.",
+            $"Last Epoch is version {gameVersion}, and the campaign guide's data is from {guideVersion}. Zones, quests and rewards may have changed, so the guide can be wrong in places until the overlay has new data; it updates itself when that is released.");
+    }
+
+    private static (int Major, int Minor)? MajorMinor(string? version)
+    {
+        var parts = (version ?? "").Split('.');
+        return parts.Length >= 2 && int.TryParse(parts[0], out int major) && int.TryParse(parts[1], out int minor) ? (major, minor) : null;
+    }
+
     /// <param name="ocrAvailable">Windows can recognise text at all.</param>
     /// <param name="ocrLanguage">The language it reads in ("en-US"), null when unknown.</param>
     /// <param name="gameLanguage">Last Epoch's language setting ("en"), null when unknown.</param>

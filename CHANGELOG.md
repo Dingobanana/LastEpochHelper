@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.26 - Ready for the next patch
+
+- When Last Epoch gets a big patch (1.6, say) before the overlay has the new campaign data, the overlay says so once: zones, quests and rewards may have changed until it updates itself. Settings → Following the game → Check shows the game's version next to the guide's.
+
 ## 0.7.25 - Blessing advice, speedleveling route and Last Epoch Tools builds
 
 - After a timeline boss, when the game asks you to choose a blessing, a note beside it names the blessing your build takes from that timeline, with its normal and Grand rolls. The game shows the blessings as icons only, so hover them to find it. If the build takes none from that timeline, the note says so and lists Maxroll's general picks for it, marked as not from your build. It needs an imported build that lists blessings.
