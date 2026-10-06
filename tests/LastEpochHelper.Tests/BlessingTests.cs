@@ -50,6 +50,12 @@ public class BlessingTests
         Assert.Equal(new[] { "Resolve of Grael", "Protection of Heorot" }, winter.Wanted.Select(w => w.Name));
         Assert.Empty(lance.Wanted);
         Assert.Equal("The Stolen Lance", lance.Timeline);
+        // Nothing from the build there: Maxroll's general picks for that timeline instead, and only then.
+        Assert.Equal(endgame.Timelines.First(t => t.Name == "The Stolen Lance").Blessings.Where(b => b.Recommended).Select(b => b.Name),
+            lance.General.Select(g => g.Name));
+        Assert.NotEmpty(lance.General);
+        Assert.Empty(outcasts.General);
+        Assert.Empty(unknown.General);
         Assert.Equal(3, unknown.Wanted.Count);
         Assert.Null(unknown.Timeline);
         Assert.Null(BlessingAdvice.For(endgame, Array.Empty<string>(), "Fall of the Outcasts"));

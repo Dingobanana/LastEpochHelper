@@ -7,8 +7,10 @@ public sealed record WantedBlessing(string Name, string Timeline, string Effect,
 /// What to pick when the game offers blessings after a timeline boss ("TIMELINE STABILIZED -
 /// ACTIVATE BLESSING - Choose a Blessing:"). The offer names no blessings until each icon is
 /// hovered, so the advice is the build's own choice for the timeline the boss echo belongs to.
+/// When the build takes none from that timeline, <see cref="General"/> holds Maxroll's general picks
+/// for it - generic advice, not the build's, and shown as such.
 /// </summary>
-public sealed record BlessingAdvice(string? Timeline, IReadOnlyList<WantedBlessing> Wanted)
+public sealed record BlessingAdvice(string? Timeline, IReadOnlyList<WantedBlessing> Wanted, IReadOnlyList<WantedBlessing> General)
 {
     /// <summary>
     /// The offer's heading, when the screen shows the blessing choice: "TIMELINE STABILIZED" with
@@ -52,7 +54,10 @@ public sealed record BlessingAdvice(string? Timeline, IReadOnlyList<WantedBlessi
             var data = owner?.Blessings.FirstOrDefault(b => b.Name.Equals(plain, StringComparison.OrdinalIgnoreCase));
             wanted.Add(new WantedBlessing(plain, owner?.Name ?? "", data?.Effect ?? "", data?.Grand ?? ""));
         }
-        return new BlessingAdvice(known?.Name, wanted.DistinctBy(w => w.Name).ToList());
+        var general = known is not null && wanted.Count == 0
+            ? known.Blessings.Where(b => b.Recommended).Select(b => new WantedBlessing(b.Name, known.Name, b.Effect, b.Grand)).ToList()
+            : new List<WantedBlessing>();
+        return new BlessingAdvice(known?.Name, wanted.DistinctBy(w => w.Name).ToList(), general);
     }
 
     private static string Letters(string text) => new(text.Where(char.IsLetter).Select(char.ToLowerInvariant).ToArray());

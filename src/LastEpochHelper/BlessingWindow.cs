@@ -48,7 +48,7 @@ internal sealed class BlessingWindow : Window
     /// </summary>
     public void Display(BlessingAdvice advice, Point at)
     {
-        string key = advice.Timeline + "|" + string.Join("|", advice.Wanted.Select(w => w.Name));
+        string key = advice.Timeline + "|" + string.Join("|", advice.Wanted.Concat(advice.General).Select(w => w.Name));
         if (key != _filledWith) { Fill(advice); _filledWith = key; }
         if (IsVisible) return;
         Left = at.X;
@@ -64,7 +64,22 @@ internal sealed class BlessingWindow : Window
         _body.Children.Add(heading);
 
         if (advice.Wanted.Count == 0)
-            _body.Children.Add(Line($"The build takes no blessing from {advice.Timeline}: pick what you like.", Theme.Muted));
+            _body.Children.Add(Line($"Your build takes no blessing from {advice.Timeline}." + (advice.General.Count == 0 ? " Pick what you like." : ""), Theme.Text));
+        if (advice.General.Count > 0)
+        {
+            var general = Line("General picks from Maxroll - not from your build:", Theme.Muted);
+            general.Margin = new Thickness(0, 8, 0, 0);
+            general.FontStyle = FontStyles.Italic;
+            _body.Children.Add(general);
+            foreach (var pick in advice.General)
+            {
+                var row = Line("", Theme.Muted);
+                row.Margin = new Thickness(0, 3, 0, 0);
+                row.Inlines.Add(new Run(pick.Name) { Foreground = Theme.Text, FontWeight = FontWeights.SemiBold });
+                if (pick.Effect.Length > 0) row.Inlines.Add(new Run($"   {pick.Effect}") { FontSize = 12 });
+                _body.Children.Add(row);
+            }
+        }
         foreach (var wanted in advice.Wanted)
         {
             var row = Line("", Theme.Text);
