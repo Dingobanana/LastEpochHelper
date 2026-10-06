@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.27 - WASD movement
+
+- Moving with WASD no longer pops the skill tree up with every step down. If S (or the passives key) does not open its panel in the game three times in a row, the overlay stops reacting to that key and says where to enter the game's own key. It still notices the panel when it opens. In Settings → Following the game, a key can also be left empty to not follow it.
+
 ## 0.7.26 - Ready for the next patch
 
 - When Last Epoch gets a new major version before the overlay has campaign data for it, the overlay says so once: zones, quests and rewards may have changed until it updates itself. Settings → Following the game → Check shows the game's version next to the guide's.

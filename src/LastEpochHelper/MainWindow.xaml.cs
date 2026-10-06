@@ -89,6 +89,7 @@ public partial class MainWindow : Window
     public ReleaseInfo? AvailableUpdate { get; private set; }
     private bool _reading;
     private bool _chatting;
+    private readonly PanelKeyCheck _keyCheck = new();
     private IntPtr _hwnd;
     private bool _userHidden;
     private bool _capturing;
@@ -728,6 +729,7 @@ public partial class MainWindow : Window
             if (reading.Panel != GamePanel.None)
             {
                 _panelMisses = 0;
+                _keyCheck.Seen(KindOf(reading.Panel));
                 if (reading.Panel == GamePanel.Passives) _passivesSeenAt = DateTime.UtcNow;
                 else if (reading.Panel == GamePanel.Weaver) _weaverSeenAt = DateTime.UtcNow;
                 else _skillsSeenAt = DateTime.UtcNow;
@@ -855,6 +857,7 @@ public partial class MainWindow : Window
                 _dismissed = false; // the panel that was closed by hand here is gone in the game too
                 return;
             }
+            _keyCheck.Seen(KindOf(reading.Panel));
             // Closed here by hand while the game's panel stays open: leave it closed.
             if (_dismissed || _treeWanted) return;
             if (reading.Panel == GamePanel.Weaver && WeaverTab() is null) return;
@@ -1205,11 +1208,36 @@ public partial class MainWindow : Window
         _panelMisses = 0;
         // While typing in chat the key is just a letter - unless the screen later shows a panel.
         if (_chatting) return;
+        // Only the screen can say whether the key opened the panel - and only on a machine where it has
+        // recognised a panel before; where reading fails altogether, trust the key.
+        bool readingWorks = Settings.FollowSkillOnScreen && _screenReader is { Available: true } && (Settings.PanelSeenPassives || Settings.PanelSeenSkills);
+        if (readingWorks && _keyCheck.Pressed(kind))
+        {
+            IgnorePanelKey(kind);
+            return;
+        }
 
         _treePinned = false;
         // Pressing the same panel's key again closes it in the game, so close here too.
         if (_treeWanted && _treeWindow?.CurrentKind == kind) ShowTree(false);
         else ShowTree(true, kind);
+    }
+
+    /// <summary>
+    /// The key for this panel has not opened it in the game several times in a row (WASD movement, a
+    /// rebound key): stop following it, and say where the game's own key can be entered.
+    /// </summary>
+    private void IgnorePanelKey(string kind)
+    {
+        bool passives = kind == TreeDef.PassiveKind;
+        string key = passives ? Settings.GameKeyPassives : Settings.GameKeySkills;
+        if (passives) Settings.GameKeyPassives = ""; else Settings.GameKeySkills = "";
+        SaveSettings();
+        ActivityLog.Write($"key {key} for {kind} never opened that panel {PanelKeyCheck.Limit} times in a row: no longer followed");
+        if (_treeWanted && !_treePinned) ShowTree(false);
+        string panel = passives ? "passive" : "skill";
+        _session.ShowAlert($"{key} did not open the game's {panel} panel the last few times (moving with WASD?), so the overlay no longer reacts to {key}. "
+                           + $"It still notices the {panel} panel when it opens. If the game uses another key for it, enter that key under Settings → Following the game → The game's own keys.", 40);
     }
 
     /// <summary>Screenshots the game (open the in-game map first) and files it under the current zone.</summary>

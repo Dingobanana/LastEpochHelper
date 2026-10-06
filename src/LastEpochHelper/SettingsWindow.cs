@@ -170,7 +170,7 @@ internal sealed class SettingsWindow : Window
         gameTab.Children.Add(Row("Map", _keyMap));
         gameTab.Children.Add(Indented(new TextBlock
         {
-            Text = "Set these to the keys you use in Last Epoch, if you changed them there. The overlay only listens for them; it never presses keys.",
+            Text = "Set these to the keys you use in Last Epoch, if you changed them there (moving with WASD moves the skills key off S). Leave one empty to not follow it. The overlay only listens for them; it never presses keys.",
             TextWrapping = TextWrapping.Wrap, Opacity = 0.7,
         }));
 
@@ -404,8 +404,9 @@ internal sealed class SettingsWindow : Window
         settings.ReadCountersFromMap = _readMap.IsChecked == true;
         settings.ShowAmountSkills = _amountSkills.IsChecked == true;
         settings.ShowBuildLines = _buildLines.IsChecked == true;
-        if (KeyboardWatcher.VirtualKey(_keyPassives.Text) != 0) settings.GameKeyPassives = _keyPassives.Text.Trim();
-        if (KeyboardWatcher.VirtualKey(_keySkills.Text) != 0) settings.GameKeySkills = _keySkills.Text.Trim();
+        // An empty box means: do not follow that key (WASD movement uses S).
+        if (_keyPassives.Text.Trim().Length == 0 || KeyboardWatcher.VirtualKey(_keyPassives.Text) != 0) settings.GameKeyPassives = _keyPassives.Text.Trim();
+        if (_keySkills.Text.Trim().Length == 0 || KeyboardWatcher.VirtualKey(_keySkills.Text) != 0) settings.GameKeySkills = _keySkills.Text.Trim();
         if (KeyboardWatcher.VirtualKey(_keyMap.Text) != 0) settings.GameKeyMap = _keyMap.Text.Trim();
         profile.HideGuide = _hideGuide.IsChecked == true;
         settings.BoxMode = Math.Max(0, _boxMode.SelectedIndex);

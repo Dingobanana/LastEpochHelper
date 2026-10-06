@@ -100,6 +100,8 @@ asking, and only zip files from this repository's own releases are downloaded. Y
   character really has, read off the game's panel; the slider previews the plan at any number of points. The gold box
   at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to fit, and *Mini*
   leaves just the tabs and the next points. The game's keys are only listened to - they still reach the game.
+  Moving with WASD? Enter your skills key under Settings → Following the game, or leave it empty. If a key does
+  not open its panel three times in a row, the overlay stops following it by itself and says so.
 - **Reminders.** The green lines are reminders for your level: new specialization slots, a loot filter, resistances.
   Click to tick one, right-click to tick it and all earlier ones.
 - **Planner (`▤`).** *Gear* and *Idols* (what the build wears at your stage and which affixes to look for),
