@@ -2,8 +2,11 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.27 - WASD movement and a steady slider
+## 0.7.27 - A clearer build tree, and WASD movement
 
+- The build tree says at the top what it shows: "Your character" with the points read off the game's panel, or "The guide's plan". If your points on a tree cannot be read, it says so and what to check, instead of quietly showing the plan.
+- The next points carry one tag each, such as "1 · +2" (step 1 puts 2 points here), instead of two separate markers.
+- The slider is put away until you need it: *Look ahead* at the bottom takes it out to see the plan at any number of points, and *Back to my character* ends it. The bottom row is down to the guide's stage, Look ahead and Mini; the step and point markers can still be switched off in the settings.
 - Fixed: moving the points slider in the build tree (to see the plan at 14 points, say) jumped straight back to the number read off the game's panel. While the tree is open, the slider now keeps the number you chose. Close the tree and it follows the game again.
 - Moving with WASD no longer pops the skill tree up with every step down. If S (or the passives key) does not open its panel in the game three times in a row, the overlay stops reacting to that key and says where to enter the game's own key. It still notices the panel when it opens. In Settings → Following the game, a key can also be left empty to not follow it.
 

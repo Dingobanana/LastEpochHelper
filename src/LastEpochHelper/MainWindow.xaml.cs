@@ -638,6 +638,7 @@ public partial class MainWindow : Window
             _stableReads.ForgetAnswers();
             // A plan preview (the slider) lasts while the tree is open; next time it mirrors the game again.
             _session.ClearPlanViews();
+            _treeWindow?.ResetView();
         }
         if (show)
         {
@@ -901,6 +902,7 @@ public partial class MainWindow : Window
             ActivityLog.Change("passive-read", fitted is { } f
                 ? $"passive labels: {tokens.Count} read, fit {f.Tree.Name}, {f.Points.Count} of {f.Tree.Nodes.Count(n => n.Max >= 1)} nodes, {f.Points.Values.Sum()} points"
                 : $"passive labels: {tokens.Count} read, no fit{(reading.Tab is null ? "" : " for " + reading.Tab)}");
+            if ((fitted?.Tree.Name ?? reading.Tab ?? _gameTab) is { } readTab) _treeWindow?.ReadResult(readTab, fitted is not null);
             if (fitted is { } fit)
             {
                 // Two looks have to agree before a node changes - except the very first time, when
@@ -956,6 +958,7 @@ public partial class MainWindow : Window
             if (_pendingSkillRead is { } now && now != skill) return;
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
             var points = TreeReader.Read(tokens, skill);
+            _treeWindow?.ReadResult(skill.Name, points is not null);
             if (points is not null)
             {
                 var agreed = _stableReads.Confirm("skill:" + skill.Name, points);

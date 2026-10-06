@@ -96,9 +96,10 @@ asking, and only zip files from this repository's own releases are downloaded. Y
   which order, which skills to specialize, and which stage or version you are on.
 - **Build tree.** Press the game's own keys for passives (`P`) or skills (`S`) - or open the panel with the mouse - and
   the build's tree opens beside the game's panel, drawn as in the game, and follows the tab or skill you open.
-  A blue number is the order of the next points, an orange `+N` how many go into the node. It shows the points your
-  character really has, read off the game's panel; the slider previews the plan at any number of points. The gold box
-  at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to fit, and *Mini*
+  The line at the top says what the picture is: your character's points, read off the game's panel, or the guide's
+  plan when they cannot be read (with what to check). The next nodes carry a tag like `1 · +2` - the first step puts 2
+  points there. *Look ahead* takes out a slider to see the plan at any number of points; *Back to my character* ends
+  it. The gold box at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to fit, and *Mini*
   leaves just the tabs and the next points. The game's keys are only listened to - they still reach the game.
   Moving with WASD? Enter your skills key under Settings → Following the game, or leave it empty. If a key does
   not open its panel three times in a row, the overlay stops following it by itself and says so.

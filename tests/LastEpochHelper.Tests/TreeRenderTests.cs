@@ -88,6 +88,39 @@ public sealed class TreeRenderTests : IDisposable
                     encoder.Save(file);
                 }
 
+                // What the line at the top says, on a skill tree: the plan, unreadable, the character, a look ahead.
+                void Snap(string name)
+                {
+                    window.Render();
+                    var root = (FrameworkElement)window.Content;
+                    root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    root.Arrange(new Rect(root.DesiredSize));
+                    root.UpdateLayout();
+                    var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth), (int)Math.Ceiling(root.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(root);
+                    rendered++;
+                    if (output is null) return;
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                    using var file = File.Create(Path.Combine(output, $"state-{name}.png"));
+                    encoder.Save(file);
+                }
+                var skillTree = session.Tree.Trees.Where(t => t.Kind == TreeDef.SkillKind).OrderByDescending(t => t.Nodes.Count).First();
+                session.Profile.TreeTab = skillTree.Name;
+                session.Profile.SkillPoints[skillTree.Name] = 3;
+                Snap("1-plan");
+                for (int i = 0; i < 3; i++) window.ReadResult(skillTree.Name, fit: false);
+                Snap("2-unreadable");
+                window.ReadResult(skillTree.Name, fit: true);
+                session.SetReadPoints(skillTree, new Dictionary<int, int>(session.TreeState(skillTree).Allocated));
+                Snap("3-character");
+                session.SetTreePoints(skillTree, 6);
+                Snap("4-look-ahead");
+                Assert.True(session.IsPreviewing(skillTree));
+                session.BackToCharacter(skillTree);
+                Assert.False(session.IsPreviewing(skillTree));
+                Assert.Equal(3, session.Profile.SkillPoints[skillTree.Name]);
+
                 // The planner pages, with some state so every kind of row is drawn.
                 session.SetFilterLevel("Strict endgame", 60);
                 session.UpdateTimeline("Fall of the Outcasts", p => { p.Normal = true; p.Blessing = "Winds of Fortune"; p.Corruption = 30; });

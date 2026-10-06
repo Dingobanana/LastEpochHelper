@@ -678,6 +678,7 @@ public sealed class Session
     /// </summary>
     public void ClearPlanViews()
     {
+        _beforePreview.Clear();
         if (Profile.PlanViewTrees.Count == 0) return;
         Profile.PlanViewTrees.Clear();
         Save();
@@ -688,6 +689,8 @@ public sealed class Session
     public void SetTreePoints(TreeDef tree, int points)
     {
         points = Math.Max(0, points);
+        // The number before the first move of the slider, for "Back to my character".
+        if (!Previewing(tree)) _beforePreview[ViewKey(tree)] = tree.Kind == TreeDef.PassiveKind ? Profile.PassiveOffset : Profile.SkillPoints.GetValueOrDefault(tree.Name);
         // Choosing a number is asking for the plan at that many points, whatever the game shows.
         Profile.PlanViewTrees.Add(ViewKey(tree));
         if (tree.Kind == TreeDef.PassiveKind)
@@ -710,6 +713,25 @@ public sealed class Session
     /// 2026-10-06: "from 13 to 14 ... reverts immediately back to 13"). Closing the tree ends it.
     /// </summary>
     private bool Previewing(TreeDef tree) => Profile.PlanViewTrees.Contains(ViewKey(tree));
+    public bool IsPreviewing(TreeDef tree) => Previewing(tree);
+    private readonly Dictionary<string, int> _beforePreview = new();
+
+    /// <summary>
+    /// Ends a look ahead with the slider: the tree shows the character again - the points read from
+    /// the game, or the number it had before the slider was moved.
+    /// </summary>
+    public void BackToCharacter(TreeDef tree)
+    {
+        string key = ViewKey(tree);
+        if (!Profile.PlanViewTrees.Remove(key)) return;
+        if (_beforePreview.Remove(key, out int before))
+        {
+            if (tree.Kind == TreeDef.PassiveKind) Profile.PassiveOffset = before;
+            else Profile.SkillPoints[tree.Name] = before;
+        }
+        Save();
+        Changed?.Invoke();
+    }
 
     private static string ViewKey(TreeDef tree) => tree.Kind == TreeDef.PassiveKind ? "passives" : BuildTree.SkillKey(tree);
 

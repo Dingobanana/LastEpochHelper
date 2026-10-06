@@ -35,9 +35,7 @@ internal sealed class TreeWindow : Window
     private static readonly Brush Muted = Frozen("#A9A493");
     // The two markers on a "next" node have their own colours, so they can be told apart at a glance.
     private static readonly Brush OrderBlue = Frozen("#5BB8FF");
-    private static readonly Brush OrderTint = Frozen("#335BB8FF");
     private static readonly Brush AmountOrange = Frozen("#FF9A3D");
-    private static readonly Brush AmountTint = Frozen("#33FF9A3D");
     private static readonly Brush Amber = Frozen("#FFC857");
     private static readonly Brush Plate = Frozen("#F00E0F14");
 
@@ -46,11 +44,16 @@ internal sealed class TreeWindow : Window
     private readonly WrapPanel _tabs = new() { Orientation = Orientation.Horizontal, MaxWidth = CanvasWidth - 30 };
     private readonly Canvas _canvas = new() { Width = CanvasWidth, Height = CanvasHeight, ClipToBounds = true };
     private readonly TextBlock _next = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, Margin = new Thickness(2, 10, 2, 0), LineHeight = 20 };
-    private readonly TextBlock _check = new() { TextWrapping = TextWrapping.Wrap, Foreground = Muted, Margin = new Thickness(2, 8, 2, 0), FontSize = 12, MaxWidth = CanvasWidth, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock _points = new() { Foreground = Muted, VerticalAlignment = VerticalAlignment.Center };
-    private Border _markers = null!;
-    private Border _amounts = null!;
-    private Border _reset = null!;
+    // One line at the top saying what the picture is: the character's own points, the guide's plan, or a look ahead.
+    private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Foreground = Text, VerticalAlignment = VerticalAlignment.Center, MaxWidth = CanvasWidth - 200 };
+    private Border _back = null!;
+    private Border _lookChip = null!;
+    /// <summary>The slider is out (for looking at the plan at another number of points).</summary>
+    private bool _lookAhead;
+    /// <summary>Reads of each tree's points in a row that could not be placed on the tree.</summary>
+    private readonly Dictionary<string, int> _readMisses = new();
+    private const int ReadTroubleAfter = 3;
     private Border _stage = null!;
     private Border _mini = null!;
     private Border _canvasFrame = null!;
@@ -110,19 +113,14 @@ internal sealed class TreeWindow : Window
         var plus = _plus = HeaderButton("+", () => Adjust(+1));
         minus.ToolTip = "One point fewer";
         plus.ToolTip = "One point more";
-        _markers = HeaderButton("① Order", ToggleMarkers);
-        _markers.ToolTip = "Show or hide the numbers that mark the order of the next points (remembered separately for passives and skills)";
-        _amounts = HeaderButton("+N Points", ToggleAmounts);
-        _amounts.ToolTip = "Show or hide how many points the next step puts into a node (remembered separately for passives and skills)";
-        // Only there when the game's own points are known for this tree: switches between them and the plan.
-        _reset = HeaderButton("game", () => { if (Current() is { } tree) _session.SetPlanView(tree, _session.ShowsActual(tree)); });
         // Which part of the guide the tree follows: a stage by level, or a version of the build.
         _stage = HeaderButton("stage", ChooseStage);
+        // The slider is a tool for planning ahead; it stays put away until asked for.
+        _lookChip = HeaderButton("↔ Look ahead", ToggleLookAhead);
+        _back = HeaderButton("Back to my character", () => { if (Current() is { } tree) { _lookAhead = false; _session.BackToCharacter(tree); Render(); } });
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
         adjust.Children.Add(_stage);
-        adjust.Children.Add(_reset);
-        adjust.Children.Add(_markers);
-        adjust.Children.Add(_amounts);
+        adjust.Children.Add(_lookChip);
         // For a small screen: put the picture away and keep just the tabs and the "next points" line.
         _mini = HeaderButton("mini", () =>
         {
@@ -135,7 +133,7 @@ internal sealed class TreeWindow : Window
         // The slider is always there. It shows how many points the tree is drawn with; moving it asks
         // for the plan at that many points (hover any control for an explanation).
         _sliderRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        foreach (var chip in new[] { _stage, _reset, _markers, _amounts, _mini })
+        foreach (var chip in new[] { _stage, _lookChip, _mini, _back })
         {
             chip.BorderThickness = new Thickness(1);
             chip.CornerRadius = new CornerRadius(10);
@@ -157,10 +155,14 @@ internal sealed class TreeWindow : Window
 
         var body = new StackPanel();
         body.Children.Add(header);
+        _back.Margin = new Thickness(10, 0, 0, 0);
+        var statusRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(2, 6, 2, 2) };
+        statusRow.Children.Add(_status);
+        statusRow.Children.Add(_back);
+        body.Children.Add(statusRow);
         _canvasFrame = new Border { Child = _canvas, Margin = new Thickness(0, 4, 0, 0), Background = Frozen("#12FFFFFF"), CornerRadius = new CornerRadius(7) };
         body.Children.Add(_canvasFrame);
         body.Children.Add(_next);
-        body.Children.Add(_check);
         body.Children.Add(_sliderRow);
 
         Content = _root = new Border
@@ -189,7 +191,7 @@ internal sealed class TreeWindow : Window
     private double Scale()
     {
         var area = SystemParameters.WorkArea;
-        double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (_canvas.Height + 170));
+        double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (_canvas.Height + 200));
         return Math.Clamp(Math.Min(_session.Settings.TreeScale, fit), 0.4, 1);
     }
 
@@ -337,22 +339,34 @@ internal sealed class TreeWindow : Window
     private bool AmountsOn(TreeDef tree) =>
         tree.Kind == TreeDef.PassiveKind ? _session.Settings.ShowAmountPassives : _session.Settings.ShowAmountSkills;
 
-    private void ToggleAmounts()
+    private void ToggleLookAhead()
     {
         if (Current() is not { } tree) return;
-        if (tree.Kind == TreeDef.PassiveKind) _session.Settings.ShowAmountPassives = !_session.Settings.ShowAmountPassives;
-        else _session.Settings.ShowAmountSkills = !_session.Settings.ShowAmountSkills;
-        _session.SaveSettings();
+        bool open = _lookAhead || _session.IsPreviewing(tree);
+        _lookAhead = !open;
+        // Putting the slider away ends the look ahead too.
+        if (open) _session.BackToCharacter(tree);
         Render();
     }
 
-    private void ToggleMarkers()
+    /// <summary>How a read of a tree's points off the game's panel went: placed on the tree, or not.</summary>
+    public void ReadResult(string treeName, bool fit)
     {
-        if (Current() is not { } tree) return;
-        if (tree.Kind == TreeDef.PassiveKind) _session.Settings.ShowOrderPassives = !_session.Settings.ShowOrderPassives;
-        else _session.Settings.ShowOrderSkills = !_session.Settings.ShowOrderSkills;
-        _session.SaveSettings();
-        Render();
+        int before = _readMisses.GetValueOrDefault(treeName);
+        int now = fit ? 0 : before + 1;
+        _readMisses[treeName] = now;
+        // Only crossing the line changes what the window says.
+        if ((before >= ReadTroubleAfter) != (now >= ReadTroubleAfter)) Render();
+    }
+
+    private bool ReadTrouble(TreeDef tree) => _readMisses.GetValueOrDefault(tree.Name) >= ReadTroubleAfter;
+
+    /// <summary>The tree was closed: next time it opens on the character, with the slider put away.</summary>
+    public void ResetView()
+    {
+        _lookAhead = false;
+        _readMisses.Clear();
+        _signature = null;
     }
 
     /// <summary>Switches to the given tab (if it is not the one showing).</summary>
@@ -394,7 +408,8 @@ internal sealed class TreeWindow : Window
             Canvas.SetTop(_empty, _canvas.Height / 2 - 40);
             _canvas.Children.Add(_empty);
             _next.Text = "";
-            _check.Visibility = Visibility.Collapsed;
+            _status.Text = "";
+            _back.Visibility = Visibility.Collapsed;
             _sliderRow.Visibility = Visibility.Collapsed;
             return;
         }
@@ -409,6 +424,7 @@ internal sealed class TreeWindow : Window
             string.Join(",", state.Target.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")),
             string.Join(",", state.Next.Select(n => $"{n.Node}+{n.Count}")), string.Join(",", state.OffPlan.OrderBy(n => n)),
             MarkersOn(tree), AmountsOn(tree), _session.HasActual(tree), _session.ActualPoints(tree),
+            _lookAhead, _session.IsPreviewing(tree), ReadTrouble(tree), _session.Settings.ReadPointsFromScreen,
             _session.ActualUpdated is { } read ? Age(read) : "", _session.Profile.Level, _session.Rewards().Passive, _atlas is null,
             _session.Profile.StagePin, build.Variant, _session.Stage?.Name, _session.Settings.TreeMini, _session.WeaverChoice, _session.WeaverChoices.Count, _session.InEndgame);
         bool iconRetryDue = _atlas is null && _atlasTried && DateTime.UtcNow >= _atlasRetryAt;
@@ -444,8 +460,7 @@ internal sealed class TreeWindow : Window
 
         bool passive = tree.Kind == TreeDef.PassiveKind;
         ShowStageChip(build, tree);
-        Chip(_markers, MarkersOn(tree), OrderBlue, OrderTint);
-        Chip(_amounts, AmountsOn(tree), AmountOrange, AmountTint);
+        ShowStatus(tree, state, passive);
         // The same colours as the markers on the nodes: blue for the order, orange for the points.
         _next.Inlines.Clear();
         if (state.Next.Count == 0)
@@ -462,14 +477,18 @@ internal sealed class TreeWindow : Window
                 if (i < state.Next.Count - 1) _next.Inlines.Add(new Run("       "));
             }
         }
-        ShowCheck(passive);
 
-        // Mini: just the tabs, the "next points" line and the switches.
+        // Mini: just the tabs, the status, the "next points" line and the switches.
         bool mini = _session.Settings.TreeMini;
         var whole = mini ? Visibility.Collapsed : Visibility.Visible;
         _canvasFrame.Visibility = whole;
-        if (mini) _check.Visibility = Visibility.Collapsed;
-        foreach (var part in new UIElement[] { _sliderLabel, _minus, _slider, _plus, _sliderValue }) part.Visibility = whole;
+        bool looking = (_lookAhead || _session.IsPreviewing(tree)) && !mini;
+        foreach (var part in new UIElement[] { _sliderLabel, _minus, _slider, _plus, _sliderValue }) part.Visibility = looking ? Visibility.Visible : Visibility.Collapsed;
+        Chip(_lookChip, looking, Gold, Frozen("#33C9A85C"));
+        _lookChip.Visibility = mini ? Visibility.Collapsed : Visibility.Visible;
+        _lookChip.ToolTip = looking
+            ? "Put the slider away and show your character again."
+            : "Take out a slider to see the guide's plan at any number of points - ahead of where you are, or back.";
         ((TextBlock)_mini.Child).Text = mini ? "▣ Full" : "▁ Mini";
         Chip(_mini, mini, Gold, Frozen("#33C9A85C"));
         _mini.ToolTip = mini ? "Show the tree again." : "Hide the picture and keep only the tabs and the next points - for a small screen.";
@@ -488,17 +507,59 @@ internal sealed class TreeWindow : Window
             : "This skill's level = the points it has to spend.")
             + "\nMove it to see the build's plan at that many points.\nClick a node to add a point, right-click to remove one."
             + $"\nBuild stage: {state.Stage} ({state.StagePoints} points)";
+    }
 
-        // "game" = drawn from the points read off the game's panel; click to flip to the plan view and back.
-        bool known = _session.HasActual(tree);
-        _reset.Visibility = known ? Visibility.Visible : Visibility.Collapsed;
-        ((TextBlock)_reset.Child).Text = state.FromGame
-            ? "● game" + (_session.ActualUpdated is { } when ? $" · {Age(when)}" : "")
-            : "○ plan";
-        Chip(_reset, state.FromGame, Green, Frozen("#227BE06A"));
-        _reset.ToolTip = state.FromGame
-            ? "Showing the points your character has in the game" + (state.OffPlan.Count > 0 ? $" ({state.OffPlan.Count} node(s) outside the build, ringed red)" : "") + ".\nClick to see the build's plan instead."
-            : $"Showing the build's plan at {state.Points} points. Click to go back to the points read from the game ({_session.ActualPoints(tree)}).";
+    /// <summary>
+    /// The line at the top: what the picture shows. The player's own points read from the game, the
+    /// guide's plan (because the points could not be read, or have not been yet), or a look ahead.
+    /// </summary>
+    private void ShowStatus(TreeDef tree, TreeState state, bool passive)
+    {
+        _status.Inlines.Clear();
+        bool previewing = _session.IsPreviewing(tree);
+        bool weaver = tree.Kind == TreeDef.WeaverKind;
+        _back.Visibility = previewing ? Visibility.Visible : Visibility.Collapsed;
+        Chip(_back, true, Green, Frozen("#227BE06A"));
+        string what = passive ? "passive points" : weaver ? "Weaver points" : "points";
+        string tips = "";
+        if (previewing)
+        {
+            _status.Inlines.Add(new Run("◐ Looking ahead: ") { Foreground = Gold, FontWeight = FontWeights.SemiBold });
+            _status.Inlines.Add(new Run($"the guide's plan at {state.Points} {what}."));
+        }
+        else if (state.FromGame)
+        {
+            _status.Inlines.Add(new Run("● Your character: ") { Foreground = Green, FontWeight = FontWeights.SemiBold });
+            _status.Inlines.Add(new Run($"{_session.ActualPoints(tree)} {what}, read from the game"
+                                        + (_session.ActualUpdated is { } when ? $" {Age(when)}" : "") + "."));
+            if (state.OffPlan.Count > 0)
+                _status.Inlines.Add(new Run($"  {state.OffPlan.Count} outside the build, ringed red.") { Foreground = Red });
+        }
+        else if (ReadTrouble(tree) && _session.Settings.ReadPointsFromScreen)
+        {
+            _status.Inlines.Add(new Run("○ The guide's plan ") { Foreground = Amber, FontWeight = FontWeights.SemiBold });
+            _status.Inlines.Add(new Run($"{(passive || weaver ? $"at {state.Points} {what}" : $"at skill level {state.Points}")}: your own points on this tree could not be read. "));
+            _status.Inlines.Add(new Run("Check that the game is in Borderless Windowed, in English, and that no overlay window covers the game's tree.") { Foreground = Muted, FontSize = 12 });
+            tips = "\nOnce the points can be read, the tree shows your character instead.";
+        }
+        else
+        {
+            _status.Inlines.Add(new Run("○ The guide's plan ") { Foreground = Muted, FontWeight = FontWeights.SemiBold });
+            _status.Inlines.Add(new Run(passive ? $"for level {_session.Profile.Level}: {state.Points} {what}."
+                : weaver ? $"at {state.Points} {what}." : $"at skill level {state.Points}."));
+            if (_session.Settings.ReadPointsFromScreen)
+                _status.Inlines.Add(new Run("  Open this tree in the game to see your own points here.") { Foreground = Muted, FontSize = 12 });
+        }
+        // The passive total from the level and the quests, for checking against the game's panel.
+        string check = "";
+        if (passive)
+        {
+            int level = _session.Profile.Level, quest = _session.Rewards().Passive, fromLevel = Math.Max(0, level - 2);
+            check = $"\nLevel {level} gives {fromLevel} points + {quest} from quests = {fromLevel + quest} passive points in total (spent + unspent in the game).";
+        }
+        _status.ToolTip = (state.FromGame && !previewing
+            ? "Drawn from the points your character has in the game. Click a node to correct it (right-click removes a point)."
+            : $"Drawn from the guide: {state.Stage} ({state.StagePoints} points by its end).") + tips + check;
     }
 
     private void ShowStageChip(BuildTree build, TreeDef tree)
@@ -586,14 +647,7 @@ internal sealed class TreeWindow : Window
     /// the game itself reports - the level (its log) and the quest rewards (its map). Spent plus
     /// unspent points in the game's passive panel should add up to this.
     /// </summary>
-    private void ShowCheck(bool passive)
-    {
-        _check.Visibility = passive ? Visibility.Visible : Visibility.Collapsed;
-        if (!passive) return;
-        int level = _session.Profile.Level, quest = _session.Rewards().Passive;
-        int fromLevel = Math.Max(0, level - 2);
-        _check.Text = $"Level {level} gives {fromLevel} points + {quest} from quests = {fromLevel + quest} passive points in total (spent + unspent in the game).";
-    }
+
 
     private static string Age(DateTime when)
     {
@@ -681,34 +735,20 @@ internal sealed class TreeWindow : Window
                 }, p.X - 46, p.Y + big / 2 + 7));
 
             if (order < 0) continue;
-            if (showOrder)
-            {
-            // The order: a blue disc at the top left.
+            // One tag at the top: which step this is and how many points it puts here ("1 · +2").
+            var tag = new TextBlock { FontSize = 11, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
+            if (showOrder) tag.Inlines.Add(new Run((order + 1).ToString()) { Foreground = OrderBlue });
+            if (showOrder && showAmount) tag.Inlines.Add(new Run(" · ") { Foreground = Muted });
+            if (showAmount) tag.Inlines.Add(new Run($"+{state.Next[order].Count}") { Foreground = AmountOrange });
             var badge = new Border
             {
-                Width = 20, Height = 20, CornerRadius = new CornerRadius(10), Background = OrderBlue,
-                BorderBrush = Plate, BorderThickness = new Thickness(2),
-                Child = new TextBlock
-                {
-                    Text = (order + 1).ToString(), FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.Black,
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                },
-                IsHitTestVisible = false,
+                Background = Plate, CornerRadius = new CornerRadius(9), Padding = new Thickness(6, 0, 6, 1), Height = 19,
+                BorderBrush = Green, BorderThickness = new Thickness(1.5), IsHitTestVisible = false, Child = tag,
             };
-            if (dense) onTop.Add((badge, p.X - big / 2 - 7, p.Y - big / 2 - 7));
-            else Place(badge, p.X - big / 2 - 7, p.Y - big / 2 - 7);
-            }
-            if (!showAmount) continue;
-
-            // How many points this step puts here: an orange tag at the top right.
-            var add = new Border
-            {
-                Background = AmountOrange, CornerRadius = new CornerRadius(4), Padding = new Thickness(4, 0, 4, 1), Height = 18, IsHitTestVisible = false,
-                BorderBrush = Plate, BorderThickness = new Thickness(2),
-                Child = new TextBlock { Text = $"+{state.Next[order].Count}", FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.Black, VerticalAlignment = VerticalAlignment.Center },
-            };
-            if (dense) onTop.Add((add, p.X + big / 2 - 10, p.Y - big / 2 - 7));
-            else Place(add, p.X + big / 2 - 10, p.Y - big / 2 - 7);
+            badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double left = p.X - badge.DesiredSize.Width / 2, top = p.Y - big / 2 - 21;
+            if (dense) onTop.Add((badge, left, top));
+            else Place(badge, left, top);
         }
         foreach (var (element, left, top) in onTop) Place(element, left, top);
     }
