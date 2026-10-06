@@ -19,7 +19,35 @@ public class LogTests
     public void Parses_ZoneLoad() => Assert.Equal(new SceneLoadEvent("Z12"), LogParser.Parse(ZoneLoad));
 
     [Fact]
-    public void Ignores_AdditiveLoads() => Assert.Null(LogParser.Parse(UiLoad));
+    public void AdditiveLoads_AreNotZones() => Assert.Equal(new EchoLoadEvent("PersistentUI"), LogParser.Parse(UiLoad));
+
+    [Fact]
+    public void TheMonolithsEchoes_AreAdditiveLoads_AndTellTheTimeline()
+    {
+        // As logged on 2026-10-06 around Blood, Frost, and Death's boss echo.
+        string Line(string scene, string mode) => $"2026-10-06T09:38:03.3156405+00:00	Log	Scene {scene} load started: load mode: {mode}";
+        var (guide, scenes) = ShippedDataTests.Load();
+        var dir = Path.Combine(Path.GetTempPath(), $"leh-echo-{Guid.NewGuid():N}");
+        try
+        {
+            var session = new Session(new Storage(dir), guide, scenes, EndgameData.LoadBundled());
+            void Feed(string line) => session.Handle(LogParser.Parse(line)!, true);
+
+            Feed(Line("MonolithHub", "Single"));
+            Feed(Line("M_Rest", "Additive"));
+            Assert.Null(session.EchoTimeline);
+            Feed(Line("R2Q30", "Additive"));
+            Assert.Equal("Blood, Frost, and Death", session.EchoTimeline);
+            // The guide is not moved by an echo.
+            Assert.NotEqual("Blood, Frost, and Death", session.Tracker.CurrentSceneZone);
+            Feed(Line("M_Rest", "Additive"));
+            Assert.Null(session.EchoTimeline);
+            Feed(Line("R2Q30", "Additive"));
+            Feed(Line("EoT", "Single"));
+            Assert.Null(session.EchoTimeline);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
+    }
 
     [Fact]
     public void Parses_CharacterLevel_WithClassAndMastery() =>
@@ -124,7 +152,7 @@ public class ShippedDataTests
     [Fact]
     public void EveryRoute_HasScenesAndTasksForEveryStep_AndStaysWithinTheCaps()
     {
-        var (guide, scenes) = Load();
+        var (guide, scenes) = ShippedDataTests.Load();
 
         Assert.Equal("full", guide.Routes[0].Id);
         Assert.True(guide.Routes.Count >= 3);
@@ -144,7 +172,7 @@ public class ShippedDataTests
     [Fact]
     public void FirstZonesFromARealLog_AdvanceTheGuide()
     {
-        var (guide, scenes) = Load();
+        var (guide, scenes) = ShippedDataTests.Load();
         var tracker = new Tracker(guide.Route("full"), scenes);
 
         tracker.OnSceneLoaded("Z12");
@@ -157,7 +185,7 @@ public class ShippedDataTests
     [Fact]
     public void SkipRoute_FollowsTheDungeonIntoALaterChapter()
     {
-        var (guide, scenes) = Load();
+        var (guide, scenes) = ShippedDataTests.Load();
         var route = guide.Route("sanctum");
         int archive = route.Flat.ToList().FindIndex(f => f.Step.Zone == "The Sanctum Archive");
         var tracker = new Tracker(route, scenes, archive);
@@ -171,7 +199,7 @@ public class ShippedDataTests
     [Fact]
     public void SpeedRoute_WaitsOnTheMonolithStop_UntilTheSanctumEntrance()
     {
-        var (guide, scenes) = Load();
+        var (guide, scenes) = ShippedDataTests.Load();
         var route = guide.Route("speed");
         int catacombs = route.Flat.ToList().FindIndex(f => f.Step.Zone == "The Maj'elkan Catacombs");
         var tracker = new Tracker(route, scenes, catacombs);

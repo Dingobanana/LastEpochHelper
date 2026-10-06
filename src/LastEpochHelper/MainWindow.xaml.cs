@@ -1088,8 +1088,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async void WatchBlessingOffer()
     {
-        string? timeline = _session.Tracker.CurrentSceneZone is { } zone
-            && _session.Endgame.Timelines.Any(t => t.Name.Equals(zone, StringComparison.OrdinalIgnoreCase)) ? zone : null;
+        string? timeline = _session.EchoTimeline;
         var wanted = BlessingAdvice.BuildBlessings(_session.Tree, _session.Stage);
         if (timeline is null || wanted.Count == 0 || !Settings.FollowSkillOnScreen || !_game.GameFocused)
         {

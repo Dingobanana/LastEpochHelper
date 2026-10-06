@@ -35,6 +35,12 @@ public sealed class Session
     public BuildTree? Tree { get; private set; }
     /// <summary>True between entering the world and returning to character select.</summary>
     public bool InGame { get; private set; }
+    /// <summary>The scene last loaded on top of the zone (a Monolith echo, say); null after a zone load.</summary>
+    public string? Echo { get; private set; }
+
+    /// <summary>The timeline whose quest echo the character is in (its boss is in the third); null elsewhere.</summary>
+    public string? EchoTimeline => Echo is { } scene && _scenes.TryGetZone(scene, out var zone)
+        && Endgame.Timelines.Any(t => t.Name.Equals(zone, StringComparison.OrdinalIgnoreCase)) ? zone : null;
     /// <summary>Short note about the last automatic action (profile switch, auto-tick), for the status line.</summary>
     public string? Notice { get; private set; }
 
@@ -276,6 +282,7 @@ public sealed class Session
         {
             case CharacterSelectEvent:
                 InGame = false;
+                Echo = null;
                 _awaitingCharacter = true;
                 _created = null;
                 _pendingScene = null;
@@ -289,6 +296,7 @@ public sealed class Session
 
             case SceneLoadEvent scene:
                 InGame = true;
+                Echo = null;
                 // The scene is logged a moment before the character data that tells us whose it is.
                 if (_awaitingCharacter && _pendingScene is null) _pendingScene = (scene.Scene, live);
                 else
@@ -296,6 +304,10 @@ public sealed class Session
                     FlushPendingScene();
                     ApplyScene(scene.Scene, live);
                 }
+                break;
+
+            case EchoLoadEvent echo:
+                Echo = echo.Scene;
                 break;
 
             case CharacterLevelEvent level:

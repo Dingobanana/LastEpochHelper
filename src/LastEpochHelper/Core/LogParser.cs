@@ -4,6 +4,11 @@ namespace LastEpochHelper.Core;
 
 public abstract record LogEvent;
 public sealed record SceneLoadEvent(string Scene) : LogEvent;
+/// <summary>
+/// A scene loaded on top of the current one. The Monolith loads its echoes this way ("R2Q30" is a
+/// timeline's boss echo); so are UI and sub-scenes, which is why these do not move the campaign guide.
+/// </summary>
+public sealed record EchoLoadEvent(string Scene) : LogEvent;
 /// <summary>Sent by the server on zone entry, level-up and tree changes.</summary>
 public sealed record CharacterLevelEvent(int Level, int ClassId = -1, int Mastery = 0) : LogEvent;
 public sealed record CharacterSelectEvent : LogEvent;
@@ -23,6 +28,9 @@ public static partial class LogParser
     // Zones load with mode "Single"; additive loads are UI and sub-scenes.
     [GeneratedRegex(@"\tScene (\S+) load started: load mode: Single")]
     private static partial Regex SceneLoad();
+
+    [GeneratedRegex(@"\tScene (\S+) load started: load mode: Additive")]
+    private static partial Regex AdditiveLoad();
 
     [GeneratedRegex(@"\| characterLevel \| (\d+) \| classID \| (\d+) \| chosenMastery \| (\d+)")]
     private static partial Regex CharacterLevel();
@@ -44,6 +52,8 @@ public static partial class LogParser
 
         var m = SceneLoad().Match(line);
         if (m.Success) return new SceneLoadEvent(m.Groups[1].Value);
+        m = AdditiveLoad().Match(line);
+        if (m.Success) return new EchoLoadEvent(m.Groups[1].Value);
 
         m = CharacterLevel().Match(line);
         if (m.Success)

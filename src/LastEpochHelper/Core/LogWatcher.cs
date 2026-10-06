@@ -50,6 +50,7 @@ public sealed class LogWatcher : IDisposable
     private void ReadHistory()
     {
         SceneLoadEvent? scene = null;
+        EchoLoadEvent? echo = null;
         CharacterLevelEvent? level = null;
         CharacterCreatedEvent? created = null;
         AccountEvent? account = null;
@@ -61,11 +62,12 @@ public sealed class LogWatcher : IDisposable
                 any = true;
                 switch (e)
                 {
-                    case SceneLoadEvent s: scene = s; break;
+                    case SceneLoadEvent s: scene = s; echo = null; break;
+                    case EchoLoadEvent x: echo = x; break;
                     case CharacterLevelEvent l: level = l; break;
                     case CharacterCreatedEvent c: created = c; break;
                     case AccountEvent a: account = a; break;
-                    case CharacterSelectEvent: scene = null; level = null; created = null; break;
+                    case CharacterSelectEvent: scene = null; echo = null; level = null; created = null; break;
                 }
             });
         }
@@ -76,6 +78,7 @@ public sealed class LogWatcher : IDisposable
         if (any) Raise(new CharacterSelectEvent(), false);
         if (created is not null) Raise(created, false);
         if (scene is not null) Raise(scene, false);
+        if (echo is not null) Raise(echo, false);
         if (level is not null) Raise(level, false);
     }
 
