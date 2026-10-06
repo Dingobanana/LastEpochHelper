@@ -68,7 +68,7 @@ public class ReadinessTests
         Assert.Null(Readiness.GuideBehind("garbage", "1.5"));
         var behind = Readiness.GuideBehind("1.6.0.1", "1.5")!;
         Assert.Equal("guide-for-1.6", behind.Key);
-        Assert.Contains("1.6", behind.Short);
+        Assert.Contains("1.6", behind.Long);
         Assert.NotNull(Readiness.GuideBehind("2.0", "1.5"));
 
         // The real start-up line, through the parser and a session: one alert per game version.
@@ -81,7 +81,7 @@ public class ReadinessTests
             var session = new Session(new Storage(dir), guide, scenes);
             session.Handle(LogParser.Parse(line)!, false);
             Assert.Equal("1.6.0.1", session.GameVersion);
-            Assert.Contains("1.6", session.Alert);
+            Assert.Contains("bigger update", session.Alert);
             Assert.Contains("guide-for-1.6", session.Settings.ReadinessWarned);
 
             var again = new Session(new Storage(dir), guide, scenes);

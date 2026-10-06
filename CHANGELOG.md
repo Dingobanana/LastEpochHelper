@@ -4,7 +4,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 ## 0.7.26 - Ready for the next patch
 
-- When Last Epoch gets a big patch (1.6, say) before the overlay has the new campaign data, the overlay says so once: zones, quests and rewards may have changed until it updates itself. Settings → Following the game → Check shows the game's version next to the guide's.
+- When Last Epoch gets a new major version before the overlay has campaign data for it, the overlay says so once: zones, quests and rewards may have changed until it updates itself. Settings → Following the game → Check shows the game's version next to the guide's.
 
 ## 0.7.25 - Blessing advice, speedleveling route and Last Epoch Tools builds
 

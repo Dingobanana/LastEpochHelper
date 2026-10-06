@@ -168,8 +168,8 @@ dotnet test
 
 The script prints a `WARNING` if a quest step cannot be placed on the full route. After a major or minor patch, also set
 `GAME_VERSION` at the top of the script to the new version: the overlay reads the game's version from its log
-("game version: 1.5.1.2") and, once per version, tells players when the game is newer than the guide's data
-(1.6 against 1.5; a 1.5.x patch says nothing). Zones the overlay meets but does not know are listed in
+and, once per version, tells players when the game is a newer major or minor version than the guide's data (smaller
+patches within a version say nothing). Zones the overlay meets but does not know are listed in
 `%APPDATA%\LastEpochHelper\unknown_scenes.txt`.
 `tools/monolith.json` is the source of the Monolith chapter.
 

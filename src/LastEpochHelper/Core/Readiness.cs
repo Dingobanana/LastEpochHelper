@@ -31,7 +31,7 @@ public static class Readiness
         if (MajorMinor(gameVersion) is not { } game || MajorMinor(guideVersion) is not { } guide || game.CompareTo(guide) <= 0) return null;
         string shown = $"{game.Major}.{game.Minor}";
         return new("guide-for-" + shown,
-            $"Last Epoch is now {shown}, but the campaign guide was made for {guideVersion}: zones, quests and rewards may have changed. The overlay updates itself once new data is out.",
+            "Last Epoch has had a bigger update than the campaign guide's data: zones, quests and rewards may have changed. The overlay updates itself once new data is out.",
             $"Last Epoch is version {gameVersion}, and the campaign guide's data is from {guideVersion}. Zones, quests and rewards may have changed, so the guide can be wrong in places until the overlay has new data; it updates itself when that is released.");
     }
 
