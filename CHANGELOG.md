@@ -2,8 +2,9 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.25 - Speedleveling route and Last Epoch Tools builds
+## 0.7.25 - Blessing advice, speedleveling route and Last Epoch Tools builds
 
+- After a timeline boss, when the game asks you to choose a blessing, a note beside it names the blessing your build takes from that timeline, with its normal and Grand rolls. The game shows the blessings as icons only, so hover them to find it. If the build takes none from that timeline, the note says so. It needs an imported build that lists blessings.
 - keban666's speedleveling guide is now a choice under Route in the settings: "Speedleveling (keban666)".
 - Builds from Last Epoch Tools import directly now: paste the planner link into the Build link box and press Import build. Thanks to Dammitt, who runs Last Epoch Tools, for letting the overlay in.
 - Fixed: opening the Weaver tree in the game could bring up one of the build's skill trees (Warcry, say) instead of the Weaver tab.

@@ -70,6 +70,9 @@ asking, and only zip files from this repository's own releases are downloaded. Y
 - **Automatic ticking.** The game logs the name of some quest steps; those are ticked when the name matches a line.
 - **Boss notes.** Bosses in the zone get a red card with what to watch out for.
 - **Monolith.** After chapter 10 comes a checklist of timelines in a recommended order, quest echoes, bosses and blessings.
+- **Blessing choice.** When the game offers blessings after a timeline boss, a note beside it names the one the
+  imported build takes from that timeline. The overlay knows the timeline from the game's log, so this does not
+  work on GeForce NOW.
 - **Zone maps.** Open the map in the game and press `Ctrl+Shift+S`; the picture is shown whenever you are in that zone.
 - **Time.** Play time per character, time in the current chapter, your best time for that chapter, and deaths.
 - **Choose what you see.** Every part of the box (zone and steps, boss notes, rewards, next zone, reminders, counters,
