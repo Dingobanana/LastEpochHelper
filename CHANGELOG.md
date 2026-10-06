@@ -2,6 +2,10 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.7.28 - Toggle Slider
+
+- The build tree's "Look ahead" button is now called "Toggle Slider": it shows or hides the slider for seeing the plan at any number of points.
+
 ## 0.7.27 - A clearer build tree, and WASD movement
 
 - The build tree says at the top what it shows: "Your character" with the points read off the game's panel, or "The guide's plan". If your points on a tree cannot be read, it says so and what to check, instead of quietly showing the plan.

@@ -98,7 +98,7 @@ asking, and only zip files from this repository's own releases are downloaded. Y
   the build's tree opens beside the game's panel, drawn as in the game, and follows the tab or skill you open.
   The line at the top says what the picture is: your character's points, read off the game's panel, or the guide's
   plan when they cannot be read (with what to check). The next nodes carry a tag like `1 · +2` - the first step puts 2
-  points there. *Look ahead* takes out a slider to see the plan at any number of points; *Back to my character* ends
+  points there. *Toggle Slider* shows a slider to see the plan at any number of points; *Back to my character* ends
   it. The gold box at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to fit, and *Mini*
   leaves just the tabs and the next points. The game's keys are only listened to - they still reach the game.
   Moving with WASD? Enter your skills key under Settings → Following the game, or leave it empty. If a key does

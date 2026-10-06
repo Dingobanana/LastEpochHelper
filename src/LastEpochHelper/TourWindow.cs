@@ -39,7 +39,7 @@ internal sealed class TourWindow : Window
             "Press P or S in the game (or click the \"+\" for unspent points) and the build's tree opens next to the game's own panel, and follows the tab or skill you open.\n\n"
             + "• The line at the top says what you see: your character's points (read off the game's panel), or the guide's plan when they cannot be read.\n"
             + "• The next nodes carry a tag like \"1 · +2\": the first step puts 2 points there.\n"
-            + "• Look ahead (at the bottom) takes out a slider to see the plan at any number of points; Back to my character ends it.\n"
+            + "• Toggle Slider (at the bottom) shows a slider to see the plan at any number of points; Back to my character ends it.\n"
             + "• Click a node to correct it: left adds a point, right removes one.", "tree"),
         new("The planner",
             "Gear, idols and blessings the build wears at each stage, where its uniques drop, ready-made stash search strings (click to copy), "

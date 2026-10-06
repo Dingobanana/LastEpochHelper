@@ -116,7 +116,7 @@ internal sealed class TreeWindow : Window
         // Which part of the guide the tree follows: a stage by level, or a version of the build.
         _stage = HeaderButton("stage", ChooseStage);
         // The slider is a tool for planning ahead; it stays put away until asked for.
-        _lookChip = HeaderButton("↔ Look ahead", ToggleLookAhead);
+        _lookChip = HeaderButton("↔ Toggle Slider", ToggleLookAhead);
         _back = HeaderButton("Back to my character", () => { if (Current() is { } tree) { _lookAhead = false; _session.BackToCharacter(tree); Render(); } });
         var adjust = new StackPanel { Orientation = Orientation.Horizontal };
         adjust.Children.Add(_stage);
