@@ -4,7 +4,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 ## 0.7.25 - Speedleveling route and Last Epoch Tools builds
 
-- keban666's speedleveling guide is now a choice under Route in the settings: "Speedleveling (keban666)". Credit and thanks to keban666 for the route: https://keban666.github.io/Last-Epoch-Speedleveling-Guide/
+- keban666's speedleveling guide is now a choice under Route in the settings: "Speedleveling (keban666)".
 - Builds from Last Epoch Tools import directly now: paste the planner link into the Build link box and press Import build. Thanks to Dammitt, who runs Last Epoch Tools, for letting the overlay in.
 
 ## 0.7.24 - Points per mastery

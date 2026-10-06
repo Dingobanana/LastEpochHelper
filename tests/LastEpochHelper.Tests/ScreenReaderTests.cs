@@ -47,6 +47,16 @@ public class ScreenReaderTests
             return;
         }
 
+        // LEH_OCR_BLESSING: is the blessing choice in a saved picture, and where is its heading.
+        if (Environment.GetEnvironmentVariable("LEH_OCR_BLESSING") is not null && Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } offerShot)
+        {
+            var read = await new ScreenReader().ReadFileAsync(offerShot);
+            var heading = LastEpochHelper.Core.BlessingAdvice.FindOffer(read);
+            File.WriteAllLines(output, new[] { heading is null ? "no offer" : $"offer: '{heading.Text}' @{heading.X:0},{heading.Y:0} w{heading.Width:0}" }
+                .Concat(read.Select(l => $"{l.Height,5:0} @{l.X,6:0},{l.Y,6:0} w{l.Width,4:0}  {l.Text}")));
+            return;
+        }
+
         // LEH_OCR_FILE reads a saved picture word by word instead of the live screen.
         if (Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } picture)
         {

@@ -27,6 +27,14 @@ public class DialogRenderTests
                 Draw(new ChangelogWindow(new[] { new ChangelogEntry(new Version(0, 7, 20), "Ready for everyone", "- One thing\n- Another thing\n  - nested") }, "Updated to 0.7.20"), "dialog-changelog.png", output);
                 Draw(new BugReportWindow((_, _, _) => "", (_, _) => Task.FromResult<string?>(null), true, "0.7.20"), "dialog-report.png", output);
                 Draw(Sample(), "dialog-controls.png", output);
+                var endgame = EndgameData.LoadBundled();
+                var blessings = new[] { "Grand Winds of Fortune", "Grand Resolve of Grael", "Grand Protection of Heorot" };
+                foreach (var (timeline, file) in new[] { ("Fall of the Outcasts", "blessing-one.png"), ("The Stolen Lance", "blessing-none.png"), ((string?)null, "blessing-all.png") })
+                {
+                    var note = new BlessingWindow { Width = 420 };
+                    note.Fill(BlessingAdvice.For(endgame, blessings, timeline)!);
+                    Draw(note, file, output);
+                }
             }
             catch (Exception e) { failure = e; }
         });

@@ -44,6 +44,8 @@ public partial class MainWindow : Window
     private HotkeyManager? _hotkeys;
     private Tray? _tray;
     private MapWindow? _mapWindow;
+    private BlessingWindow? _blessingWindow;
+    private DateTime _lastBlessingLook = DateTime.MinValue;
     private SettingsWindow? _settingsWindow;
     private TreeWindow? _treeWindow;
     private PlannerWindow? _plannerWindow;
@@ -150,7 +152,7 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
-        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); UpdateHover(); };
+        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); UpdateHover(); WatchBlessingOffer(); };
         _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
@@ -1079,6 +1081,68 @@ public partial class MainWindow : Window
         catch (IOException) { }
     }
 
+    /// <summary>
+    /// After a timeline boss the game offers three blessings by icon only. While the character is in
+    /// one of a timeline's quest echoes (the boss is in the third), look at the middle of the game
+    /// window now and then for that choice, and put the build's blessing for the timeline beside it.
+    /// </summary>
+    private async void WatchBlessingOffer()
+    {
+        string? timeline = _session.Tracker.CurrentSceneZone is { } zone
+            && _session.Endgame.Timelines.Any(t => t.Name.Equals(zone, StringComparison.OrdinalIgnoreCase)) ? zone : null;
+        var wanted = BlessingAdvice.BuildBlessings(_session.Tree, _session.Stage);
+        if (timeline is null || wanted.Count == 0 || !Settings.FollowSkillOnScreen || !_game.GameFocused)
+        {
+            if (_blessingWindow is { IsVisible: true }) _blessingWindow.Hide();
+            return;
+        }
+        if (_reading || DateTime.UtcNow - _lastBlessingLook < TimeSpan.FromSeconds(1.5)) return;
+        _screenReader ??= new ScreenReader();
+        if (!_screenReader.Available) return;
+        _lastBlessingLook = DateTime.UtcNow;
+
+        var game = _game.GameBounds;
+        int width = game.Right - game.Left, height = game.Bottom - game.Top;
+        if (width < 400 || height < 300) return;
+        // The choice sits in the middle of the game window and is about half as wide as it is tall.
+        int bandWidth = Math.Min(width, height);
+        var band = new Native.RECT
+        {
+            Left = game.Left + (width - bandWidth) / 2, Right = game.Left + (width + bandWidth) / 2,
+            Top = game.Top, Bottom = game.Bottom - height / 6,
+        };
+        _reading = true;
+        try
+        {
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+            if (_blessingWindow is not null) masks.Add(ScreenRect(_blessingWindow));
+            var lines = await _screenReader.ReadAsync(band, masks);
+            var heading = BlessingAdvice.FindOffer(lines);
+            if (heading is null || BlessingAdvice.For(_session.Endgame, wanted, timeline) is not { } advice)
+            {
+                if (_blessingWindow is { IsVisible: true }) _blessingWindow.Hide();
+                ActivityLog.Change("blessing", "no blessing choice on screen");
+                return;
+            }
+            ActivityLog.Change("blessing", $"blessing choice in {timeline}: suggesting {(advice.Wanted.Count == 0 ? "none (the build takes none here)" : string.Join(", ", advice.Wanted.Select(w => w.Name)))}");
+
+            // Beside the game's window: it reaches about 1.4 widths of "TIMELINE STABILIZED" (or 2.3 of
+            // "Choose a Blessing") either side of the heading's centre. Right of it, or left if no room.
+            double centre = heading.X + heading.Width / 2;
+            double half = heading.Width * (heading.Text.Contains("timeline", StringComparison.OrdinalIgnoreCase) ? 1.4 : 2.3);
+            var fromDevice = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+            var right = fromDevice.Transform(new Point(centre + half + 16, heading.Y));
+            var left = fromDevice.Transform(new Point(centre - half - 16, heading.Y));
+            _blessingWindow ??= new BlessingWindow();
+            double noteWidth = _blessingWindow.MaxWidth;
+            var screenRight = fromDevice.Transform(new Point(game.Right, 0)).X;
+            _blessingWindow.Display(advice, right.X + noteWidth <= screenRight ? right : new Point(Math.Max(0, left.X - noteWidth), left.Y));
+        }
+        finally { _reading = false; }
+    }
+
     private static Native.RECT ScreenRect(Window window)
     {
         if (!window.IsVisible) return default;
@@ -1719,6 +1783,7 @@ public partial class MainWindow : Window
         _tray?.Dispose();
         _followTimer.Stop();
         _mapWindow?.Close();
+        _blessingWindow?.Close();
         _treeWindow?.Close();
         _plannerWindow?.Close();
         _keyboard?.Dispose();
