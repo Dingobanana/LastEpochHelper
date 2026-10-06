@@ -652,8 +652,9 @@ public sealed class Session
         }
         if (!changed) return false;
         actual.Fetched = DateTime.Now;
-        // More points seen in the game than the tree was thought to have: remember that.
-        if (ActualPoints(tree) > RememberedPoints(tree)) Remember(tree, ActualPoints(tree));
+        // More points seen in the game than the tree was thought to have: remember that - unless the
+        // player is looking at the plan at another number with the slider, which a read must not undo.
+        if (ActualPoints(tree) > RememberedPoints(tree) && !Previewing(tree)) Remember(tree, ActualPoints(tree));
         TickSpecializationReminders(actual);
         Save();
         Changed?.Invoke();
@@ -702,6 +703,13 @@ public sealed class Session
     /// <summary>True when this tree shows hand-set (or imported) points instead of the plan's assumption.</summary>
     public bool HasActual(TreeDef tree) => Profile.Actual is { } actual &&
         (tree.Kind == TreeDef.PassiveKind ? actual.Passives.Count > 0 || _passivesTaken : actual.Skills.ContainsKey(BuildTree.SkillKey(tree)));
+
+    /// <summary>
+    /// The player moved this tree's slider to look at the plan at another number. The game's panel keeps
+    /// being read meanwhile, and taking its numbers would snap the slider straight back (bug report
+    /// 2026-10-06: "from 13 to 14 ... reverts immediately back to 13"). Closing the tree ends it.
+    /// </summary>
+    private bool Previewing(TreeDef tree) => Profile.PlanViewTrees.Contains(ViewKey(tree));
 
     private static string ViewKey(TreeDef tree) => tree.Kind == TreeDef.PassiveKind ? "passives" : BuildTree.SkillKey(tree);
 
@@ -848,7 +856,7 @@ public sealed class Session
     /// </summary>
     public void SetSkillLevel(TreeDef tree, int level)
     {
-        if (tree.Kind == TreeDef.PassiveKind || level is < 1 or > 40 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == level) return;
+        if (tree.Kind == TreeDef.PassiveKind || level is < 1 or > 40 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == level || Previewing(tree)) return;
         Profile.SkillPoints[tree.Name] = level;
         Save();
         Changed?.Invoke();
@@ -857,7 +865,7 @@ public sealed class Session
     /// <summary>A skill or Weaver tree's points as the game prints them (the Weaver tree's "COMPLETION 2/53"), remembered for next time.</summary>
     public void SetReadPoints(TreeDef tree, int points)
     {
-        if (tree.Kind == TreeDef.PassiveKind || points is < 0 or > 200 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == points) return;
+        if (tree.Kind == TreeDef.PassiveKind || points is < 0 or > 200 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == points || Previewing(tree)) return;
         Profile.SkillPoints[tree.Name] = points;
         Save();
         Changed?.Invoke();

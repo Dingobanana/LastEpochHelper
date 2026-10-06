@@ -2,8 +2,9 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
-## 0.7.27 - WASD movement
+## 0.7.27 - WASD movement and a steady slider
 
+- Fixed: moving the points slider in the build tree (to see the plan at 14 points, say) jumped straight back to the number read off the game's panel. While the tree is open, the slider now keeps the number you chose. Close the tree and it follows the game again.
 - Moving with WASD no longer pops the skill tree up with every step down. If S (or the passives key) does not open its panel in the game three times in a row, the overlay stops reacting to that key and says where to enter the game's own key. It still notices the panel when it opens. In Settings → Following the game, a key can also be left empty to not follow it.
 
 ## 0.7.26 - Ready for the next patch

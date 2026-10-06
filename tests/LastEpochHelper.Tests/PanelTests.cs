@@ -499,6 +499,30 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void TheSlider_IsNotUndoneByTheGamesNumbers_WhileTheTreeIsOpen()
+    {
+        var session = Make();
+        var passives = session.Tree!.Trees[0];
+        var rive = session.Tree.Trees[1];
+        session.SetSkillLevel(rive, 2);                        // "LEVEL 2" under the skill's heading
+
+        session.SetTreePoints(rive, 3);                        // the player looks one point ahead
+        session.SetSkillLevel(rive, 2);                        // the next look at the panel says 2 again
+        session.SetReadPoints(rive, 2);
+        Assert.Equal(3, session.TreeState(rive).Points);
+
+        session.SetReadPoints(passives, new Dictionary<int, int> { [1] = 1, [7] = 2 });
+        session.SetTreePoints(passives, 1);                    // back in time: the plan at 1 point
+        session.SetReadPoints(passives, new Dictionary<int, int> { [1] = 1, [7] = 2, [2] = 1 });
+        Assert.Equal(1, session.TreeState(passives).Points);
+
+        // Closing the tree ends the look ahead: the game's numbers count again.
+        session.ClearPlanViews();
+        session.SetSkillLevel(rive, 2);
+        Assert.Equal(2, session.TreeState(rive).Points);
+    }
+
+    [Fact]
     public void AnIncompleteReadOfTheGame_DoesNotTakePointsAway()
     {
         var session = Make();
