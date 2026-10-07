@@ -591,7 +591,7 @@ public sealed class Session
             if (actual.Passives.Count == 0 && !_passivesTaken)
             {
                 // Passive points are one pool across all tabs, so seed every tab from the plan.
-                int have = BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset;
+                int have = BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + PassiveCorrection;
                 foreach (var tab in Tree.Trees.Where(t => t.Kind == TreeDef.PassiveKind))
                     foreach (var (id, count) in Tree.State(tab, have, Profile.Level).Allocated)
                         actual.Passives[id] = count;
@@ -692,11 +692,11 @@ public sealed class Session
     {
         points = Math.Max(0, points);
         // The number before the first move of the slider, for "Back to my character".
-        if (!Previewing(tree)) _beforePreview[ViewKey(tree)] = tree.Kind == TreeDef.PassiveKind ? Profile.PassiveOffset : Profile.SkillPoints.GetValueOrDefault(tree.Name);
+        if (!Previewing(tree)) _beforePreview[ViewKey(tree)] = tree.Kind == TreeDef.PassiveKind ? PassiveCorrection : Profile.SkillPoints.GetValueOrDefault(tree.Name);
         // Choosing a number is asking for the plan at that many points, whatever the game shows.
         Profile.PlanViewTrees.Add(ViewKey(tree));
         if (tree.Kind == TreeDef.PassiveKind)
-            Profile.PassiveOffset = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+            SetPassiveCorrection(points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive));
         else Profile.SkillPoints[tree.Name] = points;
         Save();
         Changed?.Invoke();
@@ -728,7 +728,7 @@ public sealed class Session
         if (!Profile.PlanViewTrees.Remove(key)) return;
         if (_beforePreview.Remove(key, out int before))
         {
-            if (tree.Kind == TreeDef.PassiveKind) Profile.PassiveOffset = before;
+            if (tree.Kind == TreeDef.PassiveKind) SetPassiveCorrection(before);
             else Profile.SkillPoints[tree.Name] = before;
         }
         Save();
@@ -889,13 +889,35 @@ public sealed class Session
     /// game, for the passives what level and quest rewards give plus the player's own correction.
     /// </summary>
     private int RememberedPoints(TreeDef tree) => tree.Kind == TreeDef.PassiveKind
-        ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + Profile.PassiveOffset
+        ? BuildTree.PassivePoints(Profile.Level, Rewards().Passive) + PassiveCorrection
         : Profile.SkillPoints.GetValueOrDefault(tree.Name);
 
     private void Remember(TreeDef tree, int points)
     {
-        if (tree.Kind == TreeDef.PassiveKind) Profile.PassiveOffset = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+        if (tree.Kind == TreeDef.PassiveKind)
+        {
+            int before = PassiveCorrection, now = points - BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
+            SetPassiveCorrection(now);
+            if (now != before) ActivityLog.Write($"passive points: {points} seen, correction {before:+0;-0;0} -> {now:+0;-0;0} (level {Profile.Level}, {Rewards().Passive} reward points)");
+        }
         else Profile.SkillPoints[tree.Name] = points;
+    }
+
+    /// <summary>
+    /// Passive points beyond what level and quest rewards account for. Mostly it is set by reading the
+    /// game's panel, and a quest's reward point often shows there minutes before the overlay counts the
+    /// quest (or the map's counter shows it). Once the reward is counted, the same point would be
+    /// counted twice (bug report 2026-10-07: 48 points shown, 45 in the game). So rewards counted later
+    /// use up a correction upwards. Taking too much off is harmless: the next read raises it again.
+    /// </summary>
+    private int PassiveCorrection => Profile.PassiveOffset > 0
+        ? Math.Max(0, Profile.PassiveOffset - Math.Max(0, Rewards().Passive - Profile.PassiveOffsetRewards))
+        : Profile.PassiveOffset;
+
+    private void SetPassiveCorrection(int correction)
+    {
+        Profile.PassiveOffset = correction;
+        Profile.PassiveOffsetRewards = Rewards().Passive;
     }
 
     /// <summary>
@@ -925,7 +947,7 @@ public sealed class Session
         {
             // Never let the correction push the total below zero.
             int computed = BuildTree.PassivePoints(Profile.Level, Rewards().Passive);
-            Profile.PassiveOffset = Math.Max(-computed, Profile.PassiveOffset + delta);
+            SetPassiveCorrection(Math.Max(-computed, PassiveCorrection + delta));
         }
         else Profile.SkillPoints[tree.Name] = Math.Max(0, Profile.SkillPoints.GetValueOrDefault(tree.Name) + delta);
         Save();

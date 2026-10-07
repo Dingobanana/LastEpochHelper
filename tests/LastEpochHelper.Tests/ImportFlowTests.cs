@@ -312,6 +312,34 @@ public sealed class ImportFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task AnExportedTreeSharedBySeveralAbilities_IsTheClasssOwnSkill()
+    {
+        // Maxroll's data has more abilities on one tree than the player can have: Teleport also exists
+        // as monster and shapeshift versions, some with the same name. The export names only the tree.
+        var maxroll = Maxroll();
+        var game = JsonNode.Parse(MaxrollImporterTests.Game)!;
+        var abilities = new JsonObject
+        {
+            ["Wraith Rive"] = JsonNode.Parse("""{ "abilityName": "Rive", "playerAbilityID": "rv" }"""),
+            ["Bear Rive"] = JsonNode.Parse("""{ "abilityName": "Bear Swipe", "playerAbilityID": "rv" }"""),
+        };
+        foreach (var (key, value) in game["abilities"]!.AsObject().ToList()) abilities[key] = value!.DeepClone();
+        game["abilities"] = abilities;
+        maxroll.Pages[Data] = (HttpStatusCode.OK, game.ToJsonString());
+        using var http = new HttpClient(maxroll);
+        const string exported = """
+        { "class": 0, "mastery": 3, "passives": { "history": [1, 1], "position": 2 },
+          "skillTrees": { "rv": { "history": [4, 4, 5], "position": 3 } } }
+        """;
+
+        var result = Assert.Single(await MaxrollImporter.ImportAsync(exported, _dir, http));
+
+        Assert.Equal(new[] { 4, 4, 5 }, result.Tree.Stages[0].Skills["Rive"]);
+        Assert.DoesNotContain("Bear Swipe", result.Tree.Stages[0].Skills.Keys);
+        Assert.Single(result.Text.Split('\n'), l => l.Contains("Specialize"));
+    }
+
+    [Fact]
     public async Task TheWeaverTrees_AreFetchedFromTheirOwnPage_AndShownBesideAnyBuild()
     {
         var maxroll = Maxroll();

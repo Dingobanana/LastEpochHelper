@@ -383,6 +383,37 @@ public sealed class HandSetPointsTests : IDisposable
     }
 
     [Fact]
+    public void AQuestRewardSeenInTheGameBeforeItIsCounted_IsNotCountedTwice()
+    {
+        var session = Make(); // level 5: 3 passive points, no quest rewards counted yet
+        var tree = session.Tree!.Trees[0];
+
+        // The game already shows the reward point of a quest the overlay has not counted: 4 points.
+        session.SetReadPoints(tree, new Dictionary<int, int> { [1] = 3, [2] = 1 });
+        Assert.Equal(4, session.TreeState(tree).Points);
+        // Then the map's counter shows that reward. It is the same point, not a fifth (bug report
+        // 2026-10-07: 48 shown, 45 in the game, after three such rewards).
+        session.SetMapCounters(1, 0);
+        Assert.Equal(4, session.TreeState(tree).Points);
+        // A point the game shows beyond that is taken as before.
+        session.SetReadPoints(tree, new Dictionary<int, int> { [1] = 3, [2] = 2 });
+        Assert.Equal(5, session.TreeState(tree).Points);
+    }
+
+    [Fact]
+    public void ACorrectionDownwards_IsNotUsedUpByRewards()
+    {
+        var session = Make(); // level 5: 3 passive points
+        var tree = session.Tree!.Trees[0];
+
+        // One point fewer than counted, set by hand; a quest reward later is one point more.
+        session.AdjustTreePoints(tree, -1);
+        Assert.Equal(2, session.TreeState(tree).Points);
+        session.SetMapCounters(1, 0);
+        Assert.Equal(3, session.TreeState(tree).Points);
+    }
+
+    [Fact]
     public void AReadPassiveTab_ShowsTheCharactersPointsThere_BeforeTheOtherTabsAreRead()
     {
         var session = Make();

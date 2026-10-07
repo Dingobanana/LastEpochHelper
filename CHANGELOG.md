@@ -7,6 +7,8 @@ Shown inside the app after an update. One section per version: `## <version> - <
 - Fixed: the passive tree only showed your own points once every passive tab had been opened in the game, so it mostly showed the guide's plan. Now each tab you have open shows your points there ("Your character: 10 points in Beastmaster"), with nodes the build does not take ringed red. The next points still follow the guide.
 - The build tree's "Look ahead" button is now called "Toggle Slider": it shows or hides the slider for seeing the plan at any number of points.
 - Fixed: on smaller game windows the points in an open skill tree were often not read, so the tree kept showing the guide's plan. Fewer readable "2/4" labels are needed now, as the game's heading already says which skill is open, and labels are no longer misplaced when Windows' text reader takes the text for slightly tilted.
+- Fixed: the passive point count could creep above the game's. A quest's reward point is often in the game's tree before the overlay counts the quest, and was then counted twice.
+- Fixed: data copied with the Maxroll planner's Export button could not be pasted when the build uses Teleport (or another skill Maxroll keeps several versions of).
 
 ## 0.7.27 - A clearer build tree, and WASD movement
 

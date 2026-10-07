@@ -139,6 +139,8 @@ public sealed class Profile
     public HashSet<string> PlanDone { get; set; } = new();
     /// <summary>Correction to the computed passive point count, set with the tree view's + / - buttons.</summary>
     public int PassiveOffset { get; set; }
+    /// <summary>The quest-reward passives counted when <see cref="PassiveOffset"/> was set (see Session.PassiveCorrection).</summary>
+    public int PassiveOffsetRewards { get; set; }
     /// <summary>Points spent per skill, counted by hand in the tree view (the log does not report them).</summary>
     public Dictionary<string, int> SkillPoints { get; set; } = new();
     public string TreeTab { get; set; } = "";

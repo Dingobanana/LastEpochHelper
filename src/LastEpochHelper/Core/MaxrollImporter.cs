@@ -315,8 +315,13 @@ public static partial class MaxrollImporter
         if (profile["specializedSkills"] is not JsonArray && profile["skillTrees"] is JsonObject trees && game["abilities"] is JsonObject abilities)
         {
             var used = trees.Where(kv => History(kv.Value).Count > 0).Select(kv => kv.Key).ToHashSet();
+            // Several abilities can share one tree (Teleport also exists as monster and shapeshift
+            // versions): take the one the class itself has, else the first.
+            var own = ClassAbilities(game, cls.GetValue<int>());
             var skills = abilities.Where(kv => kv.Value is JsonObject ability && ability["playerAbilityID"].StrOrNull() is { } treeId && used.Contains(treeId))
-                .Select(kv => kv.Key).ToList();
+                .GroupBy(kv => kv.Value!["playerAbilityID"].Str())
+                .Select(tree => (tree.FirstOrDefault(kv => own.Contains(kv.Key)).Key ?? tree.First().Key))
+                .ToList();
             profile["specializedSkills"] = new JsonArray(skills.Select(s => (JsonNode?)JsonValue.Create(s)).ToArray());
             if (profile["activeSkills"] is not JsonArray)
                 profile["activeSkills"] = new JsonArray(skills.Select(s => (JsonNode?)JsonValue.Create(s)).ToArray());
@@ -621,6 +626,18 @@ public static partial class MaxrollImporter
         return Math.Min(hi, lo + Math.Max(1, (int)Math.Ceiling((double)i * (hi - lo) / n)));
     }
 
+    /// <summary>The abilities a class can have: its own, and those of its masteries' trees.</summary>
+    private static HashSet<string> ClassAbilities(JsonNode game, int classIndex)
+    {
+        var own = new HashSet<string>();
+        if (game["classes"] is not JsonArray classes || classIndex < 0 || classIndex >= classes.Count || classes[classIndex] is not JsonObject cls) return own;
+        foreach (var a in cls["unlockableAbilities"] as JsonArray ?? new JsonArray()) if (a?["ability"].StrOrNull() is { } unlockable) own.Add(unlockable);
+        foreach (var a in cls["knownAbilities"] as JsonArray ?? new JsonArray()) if (a.StrOrNull() is { } known) own.Add(known);
+        foreach (var m in cls["masteries"] as JsonArray ?? new JsonArray())
+            foreach (var a in m?["abilities"] as JsonArray ?? new JsonArray()) if (a?["ability"].StrOrNull() is { } mastery) own.Add(mastery);
+        return own;
+    }
+
     internal static Result Convert(string id, string name, JsonNode data, JsonNode game)
     {
         if (data["profiles"] is not JsonArray profiles || profiles.Count == 0 || profiles.Any(p => p is not JsonObject))
@@ -802,8 +819,9 @@ public static partial class MaxrollImporter
                 Name = profile["name"].StrOrNull() ?? $"Level {level}",
                 Level = level,
                 Passives = history,
+                // Two abilities with one name (a planner listing a skill twice) give that name's tree once.
                 Skills = skillHistory.Where(kv => skillTrees.ContainsKey(SkillName(kv.Key)))
-                    .ToDictionary(kv => SkillName(kv.Key), kv => kv.Value),
+                    .GroupBy(kv => SkillName(kv.Key)).ToDictionary(g => g.Key, g => g.First().Value),
             };
             // The Weaver tree is stored like a skill tree: a click history.
             var weaverKnown = game["skillTrees"]?["weaver"]?["nodes"] as JsonObject;
