@@ -23,7 +23,9 @@ public static class ReportSender
         .FirstOrDefault(a => a.Key == "ReportEndpoint")?.Value is { } value && Usable(value) ? value.Trim() : null;
 
     /// <summary>The message beside the zip. The relay in front of the channel checks that it starts like this.</summary>
-    public static string Summary(string version, string description) => $"**Bug report** - version {version}\n{description}";
+    /// <param name="replyId">The report's reply id (ReportReplies), on its own line under the heading.</param>
+    public static string Summary(string version, string description, string? replyId = null) =>
+        $"**Bug report** - version {version}\n{(replyId is null ? "" : $"Reply id: {replyId}\n")}{description}";
 
     /// <summary>A client that says it is the overlay: the relay in front of the channel takes nothing else.</summary>
     public static HttpClient CreateClient(TimeSpan timeout)

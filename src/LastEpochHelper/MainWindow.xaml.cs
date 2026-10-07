@@ -352,11 +352,19 @@ public partial class MainWindow : Window
         catch (IOException) { }
 
         string version = Updater.Display(Updater.Current);
+        string replyId = ReportReplies.NewId();
         Func<string, string, Task<string?>>? send = ReportSender.Endpoint is not { } endpoint ? null : async (zip, description) =>
         {
             using var http = ReportSender.CreateClient(TimeSpan.FromSeconds(60));
-            string? problem = await ReportSender.SendAsync(endpoint, zip, ReportSender.Summary(version, description), http);
-            ActivityLog.Write(problem is null ? "bug report sent" : "bug report not sent: " + problem);
+            string? problem = await ReportSender.SendAsync(endpoint, zip, ReportSender.Summary(version, description, replyId), http);
+            ActivityLog.Write(problem is null ? $"bug report {replyId} sent" : "bug report not sent: " + problem);
+            if (problem is null)
+            {
+                Settings.SentReports.RemoveAll(s => DateTime.Now - s.Sent > ReportReplies.LookFor);
+                Settings.SentReports.Add(new SentReport { Id = replyId, Sent = DateTime.Now });
+                SaveSettings();
+                _lastReplyCheck = DateTime.MinValue; // look for an answer from now on
+            }
             return problem;
         };
         _reportWindow = new BugReportWindow((description, includeShot, folder) =>
@@ -366,6 +374,7 @@ public partial class MainWindow : Window
             var facts = new List<string>
             {
                 $"Version: {version}",
+                $"Reply id: {replyId}",
                 $"Windows: {Environment.OSVersion.VersionString}",
                 $"Primary screen: {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0} (WPF units)",
                 $"Game window: {game.Right - game.Left}x{game.Bottom - game.Top} at {game.Left},{game.Top}",
@@ -391,7 +400,7 @@ public partial class MainWindow : Window
                 buildFiles.Add(BuildTree.PathFor(planFile));
             }
             return BugReport.Create(new BugReportInput(_session.DataDir, description, facts, logPath, includeShot ? shot : null, names, buildFiles), folder);
-        }, send, haveShot, version);
+        }, send, haveShot, version, replyId);
         _reportWindow.Closed += (_, _) => _reportWindow = null;
         _reportWindow.Show();
     }
@@ -491,6 +500,36 @@ public partial class MainWindow : Window
             _session.SaveSettings();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
+    private static readonly TimeSpan ReplyInterval = TimeSpan.FromHours(3);
+    private DateTime _lastReplyCheck = DateTime.MinValue;
+    private readonly List<ReportReply> _replies = new();
+
+    /// <summary>Now and then, while a report sent from here is recent: has anyone answered it?</summary>
+    private async void CheckForRepliesInBackground()
+    {
+        if (DateTime.UtcNow - _lastReplyCheck < ReplyInterval || !ReportReplies.Waiting(Settings.SentReports, DateTime.Now)) return;
+        _lastReplyCheck = DateTime.UtcNow;
+        using var http = Updater.CreateClient();
+        http.Timeout = TimeSpan.FromSeconds(20);
+        if (await ReportReplies.FetchAsync(http) is not { } replies) return;
+        var fresh = ReportReplies.New(Settings.SentReports, replies, Settings.RepliesShown).Where(r => _replies.All(o => o.Key != r.Key)).ToList();
+        if (fresh.Count == 0) return;
+        _replies.AddRange(fresh);
+        ActivityLog.Write($"answer to bug report {string.Join(", ", fresh.Select(r => r.Id))}");
+        Render();
+    }
+
+    private void ReplyText_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (_replies.Count == 0) return;
+        var reply = _replies[0];
+        _replies.RemoveAt(0);
+        Settings.RepliesShown.Add(reply.Key);
+        SaveSettings();
+        new ReplyWindow(reply).Show();
+        Render();
     }
 
     private async void CheckForUpdateInBackground()
@@ -1314,6 +1353,7 @@ public partial class MainWindow : Window
         UpdateVisibility();
         // Checked even while hidden, so the notice is waiting when the game gets focus again.
         CheckForUpdateInBackground();
+        CheckForRepliesInBackground();
         SendCountryInBackground();
         if (!IsVisible) return;
         if (_alertShown && _session.Alert is null) Render(); // the alert ran out
@@ -1399,6 +1439,8 @@ public partial class MainWindow : Window
         AlertText.Text = alert ?? "";
         _alertShown = alert is not null;
         UpdateText.Visibility = AvailableUpdate is null || Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
+        ReplyText.Visibility = _replies.Count == 0 || Settings.Locked ? Visibility.Collapsed : Visibility.Visible;
+        ReplyText.Text = _replies.Count == 1 ? "✉ We answered your bug report - click to read" : $"✉ We answered {_replies.Count} of your bug reports - click to read";
         if (AvailableUpdate is { } update)
             UpdateText.Text = _updating ? $"Downloading version {Updater.Display(update.Version)}..."
                 : $"⬆ Version {Updater.Display(update.Version)} is available - click to install";

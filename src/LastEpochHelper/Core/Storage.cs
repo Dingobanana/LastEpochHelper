@@ -100,6 +100,10 @@ public sealed class Settings
     public bool ReadCountersFromMap { get; set; } = true;
     /// <summary>Size of errors.log when the overlay last looked, to notice errors logged since.</summary>
     public long ErrorLogBytes { get; set; }
+    /// <summary>Bug reports sent from here, by reply id, so an answer to them can be shown (see ReportReplies).</summary>
+    public List<SentReport> SentReports { get; set; } = new();
+    /// <summary>Answers already shown (ReportReply.Key).</summary>
+    public HashSet<string> RepliesShown { get; set; } = new();
     /// <summary>The tour has been offered once; after that it is only in the menu.</summary>
     public bool TourOffered { get; set; }
     /// <summary>Problems with reading the game that were mentioned at start already (<see cref="ReadinessProblem.Key"/>); each is said once.</summary>

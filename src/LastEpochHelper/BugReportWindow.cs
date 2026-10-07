@@ -17,7 +17,8 @@ internal sealed class BugReportWindow : Window
 
     /// <param name="create">Builds the report from (description, include screenshot, folder) and returns the zip's path.</param>
     /// <param name="send">Sends (zip, description); returns null when it arrived, else why not. Null if this build cannot send.</param>
-    public BugReportWindow(Func<string, bool, string, string> create, Func<string, string, Task<string?>>? send, bool screenshotAvailable, string version)
+    /// <param name="replyId">The report's reply id: an answer to it shows up in the overlay.</param>
+    public BugReportWindow(Func<string, bool, string, string> create, Func<string, string, Task<string?>>? send, bool screenshotAvailable, string version, string? replyId = null)
     {
         Title = "Last Epoch Helper - Report a bug";
         Width = 520;
@@ -96,7 +97,8 @@ internal sealed class BugReportWindow : Window
 
                 if (problem is null)
                 {
-                    status.Text = "Sent - thank you. You can close this window.";
+                    status.Text = replyId is null ? "Sent - thank you. You can close this window."
+                        : $"Sent - thank you. If we answer, the answer shows up in the overlay within a few hours (report {replyId}). You can close this window.";
                     description.IsEnabled = false;
                     return;
                 }

@@ -26,6 +26,9 @@ public class DialogRenderTests
                 Draw(new TourWindow(_ => { }), "dialog-tour.png", output);
                 Draw(new ChangelogWindow(new[] { new ChangelogEntry(new Version(0, 7, 20), "Ready for everyone", "- One thing\n- Another thing\n  - nested") }, "Updated to 0.7.20"), "dialog-changelog.png", output);
                 Draw(new BugReportWindow((_, _, _) => "", (_, _) => Task.FromResult<string?>(null), true, "0.7.20"), "dialog-report.png", output);
+                Draw(new ReplyWindow(new ReportReply("K7Q2-9XMB", "2026-10-08",
+                    "Thanks - the skill tree on low game windows is fixed in 0.7.28. If it still says \"no fit\", send a new report with the skill tree open.")),
+                    "dialog-reply.png", output);
                 Draw(Sample(), "dialog-controls.png", output);
                 var endgame = EndgameData.LoadBundled();
                 var blessings = new[] { "Grand Winds of Fortune", "Grand Resolve of Grael", "Grand Protection of Heorot" };

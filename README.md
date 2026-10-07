@@ -122,6 +122,24 @@ activity logs, what it last read off the screen, its settings, the end of the ga
 goes to the maintainers. Account and character names are removed. A build made from this source code has no address
 to send to and saves the report as a zip file on your desktop instead.
 
+Every report gets a random number such as `K7Q2-9XMB`. If we answer, the answer is published under that number in
+[`replies.json`](replies.json), and for 60 days the overlay looks there every few hours: a gold line "We answered
+your bug report" appears, click it to read. Only your computer knows which number is yours, so nobody - including
+us - can tell who an answer is for.
+
+### Answering a report (maintainers)
+
+The number is on the second line of the report's message and in its `report.txt`. Add an entry to `replies.json`
+on the main branch (GitHub's web editor will do) - it is public, so write nothing private in it:
+
+```json
+{ "replies": [
+  { "id": "K7Q2-9XMB", "date": "2026-10-08", "text": "Thanks! Fixed in 0.7.28 - update from the green line." }
+] }
+```
+
+A second answer to the same report needs another date. Old entries can be removed after 60 days.
+
 ## How it works
 
 - The game writes `Scene Z32 load started: load mode: Single` to `Player.log` on every zone change.
