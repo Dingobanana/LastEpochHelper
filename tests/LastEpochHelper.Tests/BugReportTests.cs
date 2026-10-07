@@ -10,7 +10,12 @@ public sealed class BugReportTests : IDisposable
 
     public BugReportTests() => Directory.CreateDirectory(_dir);
 
-    public void Dispose() => Directory.Delete(_dir, recursive: true);
+    public void Dispose()
+    {
+        // The log is shared by every test running at the same time: let go of this folder first.
+        ActivityLog.Stop();
+        Directory.Delete(_dir, recursive: true);
+    }
 
     private static string Read(ZipArchive zip, string entry)
     {

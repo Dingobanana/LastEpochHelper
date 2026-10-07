@@ -25,6 +25,12 @@ public static class ActivityLog
         }
     }
 
+    /// <summary>Stops writing (tests: before their data folder is deleted).</summary>
+    public static void Stop()
+    {
+        lock (Gate) _dir = null;
+    }
+
     public static void Write(string message)
     {
         lock (Gate)
