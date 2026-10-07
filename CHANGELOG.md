@@ -6,7 +6,7 @@ Shown inside the app after an update. One section per version: `## <version> - <
 
 - Fixed: the passive tree only showed your own points once every passive tab had been opened in the game, so it mostly showed the guide's plan. Now each tab you have open shows your points there ("Your character: 10 points in Beastmaster"), with nodes the build does not take ringed red. The next points still follow the guide.
 - The build tree's "Look ahead" button is now called "Toggle Slider": it shows or hides the slider for seeing the plan at any number of points.
-- Fixed: on many screens the points in an open skill tree could not be read, so the skill tree kept showing the guide's plan. Windows' text reader sometimes takes the game's text for slightly tilted and then reported the "2/4" labels tens of pixels away from where they are; the overlay now puts them back in place. A skill tree also needs fewer readable labels now, as the game's heading already says which skill it is.
+- Fixed: on smaller game windows the points in an open skill tree were often not read, so the tree kept showing the guide's plan. Fewer readable "2/4" labels are needed now, as the game's heading already says which skill is open, and labels are no longer misplaced when Windows' text reader takes the text for slightly tilted.
 
 ## 0.7.27 - A clearer build tree, and WASD movement
 

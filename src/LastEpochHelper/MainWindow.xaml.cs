@@ -957,9 +957,10 @@ public partial class MainWindow : Window
             // Another skill was opened meanwhile: this picture may be half one tree, half the other.
             if (_pendingSkillRead is { } now && now != skill) return;
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
-            // The panel's heading named this skill, so the labels only have to be placed on it: on a
-            // low game window the reader catches a third of them, too few to also prove which tree it is.
-            var points = TreeReader.Read(tokens, skill, known: true);
+            // The panel's heading named this skill (and the tree follows it), so the labels only have to
+            // be placed on it: on a low game window the reader catches a third of them, too few to also
+            // prove which tree it is.
+            var points = TreeReader.Read(tokens, skill, known: skill.Name == _gameSkill);
             _treeWindow?.ReadResult(skill.Name, points is not null);
             if (points is not null)
             {
@@ -969,7 +970,8 @@ public partial class MainWindow : Window
             ActivityLog.Change("skill-read:" + skill.Name, points is null
                 ? $"skill labels ({skill.Name}): {tokens.Count} read, no fit"
                 : $"skill labels ({skill.Name}): {tokens.Count} read, {points.Count} of {skill.Nodes.Count(n => n.Max >= 1)} nodes, {points.Values.Sum()} points");
-            WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
+            // A look with no labels at all (the panel just closed) would replace one worth keeping.
+            if (tokens.Count > 0) WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
         }
         finally { _readingLabels = false; }
     }
