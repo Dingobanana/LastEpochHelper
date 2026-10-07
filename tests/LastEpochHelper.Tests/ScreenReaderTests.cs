@@ -24,13 +24,13 @@ public class ScreenReaderTests
             var reads = await new ScreenReader().ReadLabelsFromFileAsync(shot, new System.Drawing.Rectangle(r[0], r[1], r[2], r[3]));
             var tokens2 = LastEpochHelper.Core.TreeReader.Merge(reads.Select(LastEpochHelper.Core.TreeReader.Tokens).ToArray());
             var skill = tree.Trees.First(t => t.Name == parts2[1]);
-            var points = LastEpochHelper.Core.TreeReader.Read(tokens2, skill);
+            var points = LastEpochHelper.Core.TreeReader.Read(tokens2, skill, known: true);
             File.WriteAllLines(output, new[]
             {
                 $"ms={(DateTime.UtcNow - started2).TotalMilliseconds:0} per-read labels={string.Join("/", reads.Select(x => LastEpochHelper.Core.TreeReader.Tokens(x).Count))} merged={tokens2.Count} nodes={skill.Nodes.Count(n => n.Max >= 1)}",
                 points is null ? "NO FIT" : $"matched={points.Count}: " + string.Join(", ", points.Where(kv => kv.Value > 0).Select(kv => $"{skill.Nodes.First(n => n.Id == kv.Key).Name}={kv.Value}")),
                 "labels: " + string.Join("  ", tokens2.Select(t => $"{t.Have}/{t.Max}@{t.X:0},{t.Y:0}")),
-            });
+            }.Concat(reads.Select((x, k) => $"read {k}: " + string.Join("  ", LastEpochHelper.Core.TreeReader.Tokens(x).Select(t => $"{t.Have}/{t.Max}@{t.X:0},{t.Y:0}")))));
             return;
         }
 
@@ -83,5 +83,54 @@ public class ScreenReaderTests
         File.WriteAllLines(output, new[] { $"available={reader.Available} lines={lines.Count} ms={(DateTime.UtcNow - started).TotalMilliseconds:0}" }
             .Concat(lines.Select(l => $"{l.Height,5:0}  {l.Text}")));
         Assert.True(reader.Available);
+    }
+
+    /// <summary>
+    /// Text the reader takes for slightly tilted comes back straightened, its positions turned about
+    /// the picture's centre; they must be turned back to where the words are on the picture.
+    /// </summary>
+    [Fact]
+    public async Task WordsOnATiltedPicture_KeepTheirPlace()
+    {
+        var reader = new ScreenReader();
+        if (!reader.Available) return;
+        var drawn = new List<(string Text, float X, float Y)>();
+        string path = Path.Combine(Path.GetTempPath(), $"leh-tilt-{Guid.NewGuid():N}.png");
+        using (var picture = new System.Drawing.Bitmap(1600, 900))
+        using (var g = System.Drawing.Graphics.FromImage(picture))
+        using (var font = new System.Drawing.Font("Arial", 22, System.Drawing.FontStyle.Bold))
+        {
+            g.Clear(System.Drawing.Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            string[] words = { "Thunder", "Glacier", "Harvest", "Lantern", "Meadow", "Orchard", "Quarry", "Rampart", "Saddle" };
+            for (int i = 0; i < words.Length; i++)
+            {
+                float x = 200 + i % 3 * 600, y = 150 + i / 3 * 300;
+                var size = g.MeasureString(words[i], font);
+                // The whole picture is tilted by 5 degrees: each word turns about its own centre and
+                // sits where the turn of the picture puts it.
+                double turn = 5 * Math.PI / 180, dx = x - 800, dy = y - 450;
+                float cx = (float)(800 + dx * Math.Cos(turn) - dy * Math.Sin(turn)), cy = (float)(450 + dx * Math.Sin(turn) + dy * Math.Cos(turn));
+                g.ResetTransform();
+                g.TranslateTransform(cx, cy);
+                g.RotateTransform(5);
+                g.DrawString(words[i], font, System.Drawing.Brushes.Black, -size.Width / 2, -size.Height / 2);
+                drawn.Add((words[i], cx, cy));
+            }
+            picture.Save(path);
+        }
+        try
+        {
+            var read = await reader.ReadFileAsync(path, words: true, restore: false);
+            foreach (var (text, x, y) in drawn)
+            {
+                var word = read.FirstOrDefault(w => w.Text == text);
+                if (word is null) continue;
+                Assert.InRange(word.X + word.Width / 2, x - 12, x + 12);
+                Assert.InRange(word.Y + word.Height / 2, y - 12, y + 12);
+            }
+            Assert.True(read.Count(w => drawn.Any(d => d.Text == w.Text)) >= 6, string.Join(", ", read.Select(w => w.Text)));
+        }
+        finally { File.Delete(path); }
     }
 }

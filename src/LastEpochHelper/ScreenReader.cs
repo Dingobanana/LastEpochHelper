@@ -159,20 +159,31 @@ internal sealed class ScreenReader
         var decoder = await BitmapDecoder.CreateAsync(stream.AsRandomAccessStream());
         using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
         var result = await _engine!.RecognizeAsync(bitmap);
+        // When the reader takes the text for tilted, it reports positions in the straightened picture,
+        // turned about its centre; turn them back, or labels far from the centre land tens of pixels off.
+        double angle = (result.TextAngle ?? 0) * Math.PI / 180, cos = Math.Cos(angle), sin = Math.Sin(angle);
+        double centreX = bitmap.PixelWidth / 2.0, centreY = bitmap.PixelHeight / 2.0;
+        Windows.Foundation.Rect Upright(Windows.Foundation.Rect r)
+        {
+            if (angle == 0) return r;
+            double x = r.X + r.Width / 2 - centreX, y = r.Y + r.Height / 2 - centreY;
+            return new Windows.Foundation.Rect(centreX + x * cos - y * sin - r.Width / 2, centreY + x * sin + y * cos - r.Height / 2, r.Width, r.Height);
+        }
         foreach (var line in result.Lines)
         {
             if (line.Words.Count == 0) continue;
+            var rects = line.Words.Select(w => Upright(w.BoundingRect)).ToList();
             if (words || _keepWords is not null)
             {
-                foreach (var word in line.Words)
-                    (words ? lines : _keepWords!).Add(new ScreenLine(word.Text, word.BoundingRect.Height / scale,
-                        offsetX + word.BoundingRect.Left / scale, offsetY + word.BoundingRect.Top / scale, word.BoundingRect.Width / scale));
+                for (int i = 0; i < rects.Count; i++)
+                    (words ? lines : _keepWords!).Add(new ScreenLine(line.Words[i].Text, rects[i].Height / scale,
+                        offsetX + rects[i].Left / scale, offsetY + rects[i].Top / scale, rects[i].Width / scale));
                 if (words) continue;
             }
             // Back to screen coordinates, whatever the capture was scaled by.
-            double left = line.Words.Min(w => w.BoundingRect.Left), right = line.Words.Max(w => w.BoundingRect.Right);
-            double top = line.Words.Min(w => w.BoundingRect.Top);
-            lines.Add(new ScreenLine(line.Text, line.Words.Max(w => w.BoundingRect.Height) / scale,
+            double left = rects.Min(r => r.Left), right = rects.Max(r => r.Right);
+            double top = rects.Min(r => r.Top);
+            lines.Add(new ScreenLine(line.Text, rects.Max(r => r.Height) / scale,
                 offsetX + left / scale, offsetY + top / scale, (right - left) / scale));
         }
         return lines;

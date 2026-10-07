@@ -957,7 +957,9 @@ public partial class MainWindow : Window
             // Another skill was opened meanwhile: this picture may be half one tree, half the other.
             if (_pendingSkillRead is { } now && now != skill) return;
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
-            var points = TreeReader.Read(tokens, skill);
+            // The panel's heading named this skill, so the labels only have to be placed on it: on a
+            // low game window the reader catches a third of them, too few to also prove which tree it is.
+            var points = TreeReader.Read(tokens, skill, known: true);
             _treeWindow?.ReadResult(skill.Name, points is not null);
             if (points is not null)
             {
