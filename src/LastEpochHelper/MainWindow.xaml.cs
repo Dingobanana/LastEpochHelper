@@ -168,14 +168,14 @@ public partial class MainWindow : Window
         _watcher.Event += (ev, live) => Dispatcher.BeginInvoke(() => _session.Handle(ev, live));
         _watcher.Start();
 
-        if (Settings.ShowSplash) SplashWindow.Play();
-
         ActivityLog.Start(_session.DataDir);
         ActivityLog.Write($"---- started, version {Updater.Display(Updater.Current)}, screen {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0}, "
                           + $"build '{_session.Profile.BuildPlan}', follow keys={Settings.FollowGameKeys} screen={Settings.FollowSkillOnScreen} points={Settings.ReadPointsFromScreen}");
 
         Render();
         App.OverlayUp = true;
+        // Only now: whatever goes wrong in a greeting must not count as the overlay failing to start.
+        if (Settings.ShowSplash) SplashWindow.Play();
         var whatsNew = ShowWhatsNew();
         MentionNewErrors();
         WarnIfCannotRead();

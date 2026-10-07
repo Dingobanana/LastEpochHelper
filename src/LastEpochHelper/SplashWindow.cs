@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
+using LastEpochHelper.Core;
 
 namespace LastEpochHelper;
 
@@ -23,8 +24,9 @@ internal sealed class SplashWindow : Window
     /// <summary>Shows the greeting; anything going wrong only means there is none.</summary>
     public static void Play()
     {
+        // Nothing depends on it, so no failure of any kind is worth more than a missing greeting.
         try { new SplashWindow().Show(); }
-        catch (Exception e) when (e is InvalidOperationException or ArgumentException or System.ComponentModel.Win32Exception) { }
+        catch (Exception e) { ActivityLog.Write($"no greeting: {e.GetType().Name}: {e.Message}"); }
     }
 
     private SplashWindow()
