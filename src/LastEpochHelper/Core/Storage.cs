@@ -24,6 +24,8 @@ public sealed class Settings
     public string CountrySentFor { get; set; } = "";
     /// <summary>Version that last ran here; a difference triggers the "What's new" window.</summary>
     public string LastRunVersion { get; set; } = "";
+    /// <summary>The short animation when the overlay starts.</summary>
+    public bool ShowSplash { get; set; } = true;
     /// <summary>Only the zone title and counters; for boss fights and small screens.</summary>
     public bool Compact { get; set; }
     /// <summary>One line across the screen instead of the box.</summary>

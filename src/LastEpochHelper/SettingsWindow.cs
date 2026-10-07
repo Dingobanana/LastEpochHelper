@@ -122,7 +122,7 @@ internal sealed class SettingsWindow : Window
         overlayTab.Children.Add(Row("Text size", _fontSize));
         overlayTab.Children.Add(Row("Width", _width));
         overlayTab.Children.Add(Row("Show the box", _boxMode));
-        Boxes(overlayTab, _autoHide);
+        Boxes(overlayTab, _autoHide, Part("A short animation when the overlay starts", s => s.ShowSplash, (s, on) => s.ShowSplash = on));
         overlayTab.Children.Add(Heading("Show in the overlay"));
         Boxes(overlayTab,
             Part("Zone name and the zone's steps", s => s.ShowZone, (s, on) => s.ShowZone = on),

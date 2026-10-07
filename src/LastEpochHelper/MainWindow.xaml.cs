@@ -163,6 +163,8 @@ public partial class MainWindow : Window
         _watcher.Event += (ev, live) => Dispatcher.BeginInvoke(() => _session.Handle(ev, live));
         _watcher.Start();
 
+        if (Settings.ShowSplash) SplashWindow.Play();
+
         ActivityLog.Start(_session.DataDir);
         ActivityLog.Write($"---- started, version {Updater.Display(Updater.Current)}, screen {SystemParameters.PrimaryScreenWidth:0}x{SystemParameters.PrimaryScreenHeight:0}, "
                           + $"build '{_session.Profile.BuildPlan}', follow keys={Settings.FollowGameKeys} screen={Settings.FollowSkillOnScreen} points={Settings.ReadPointsFromScreen}");
