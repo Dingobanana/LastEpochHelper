@@ -34,9 +34,9 @@ Then, in the repository root (both files are ignored by git):
 
 Release as usual; `tools/release.ps1` warns if either file still holds a Discord webhook.
 
-**Use new webhooks for the relay** and delete the old ones in Discord once the release is out: the old
-addresses are inside every exe from 0.7.4 to 0.7.19. Older copies then save bug reports to the desktop
-instead of sending them; the update itself is not affected.
+The relay is live since 0.7.20. The webhooks that versions 0.7.4 to 0.7.19 had built in were deleted on
+2026-10-06; those copies save bug reports to the desktop instead, and their update is not affected. If a
+webhook ever leaks, replace the secret with `npx wrangler secret put` - no release is needed.
 
 ## Watching and testing
 

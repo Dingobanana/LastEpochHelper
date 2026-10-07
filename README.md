@@ -12,7 +12,8 @@ to the game.
 
 1. Set the game to **Borderless Windowed** (nothing can draw over exclusive fullscreen).
 2. Download the latest `LastEpochHelper-x.y.z.zip` under [Releases](https://github.com/Dingobanana/LastEpochHelper/releases),
-   unpack the whole folder somewhere permanent and start `LastEpochHelper.exe`. An "LE" icon appears by the clock.
+   unpack it somewhere permanent and start `LastEpochHelper.exe` (the exe carries everything it needs). An "LE" icon
+   appears by the clock.
    The first time, Windows shows "Windows protected your PC": **More info** → **Run anyway**. Windows says this about
    programs that are not signed with a paid certificate and that few people have run yet. The source is public, each
    release is built from it, and your antivirus can scan the exe like any other.
@@ -99,8 +100,8 @@ asking, and only zip files from this repository's own releases are downloaded. Y
   The line at the top says what the picture is: your character's points, read off the game's panel, or the guide's
   plan when they cannot be read (with what to check). The next nodes carry a tag like `1 · +2` - the first step puts 2
   points there. *Toggle Slider* shows a slider to see the plan at any number of points; *Back to my character* ends
-  it. The gold box at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to fit, and *Mini*
-  leaves just the tabs and the next points. The game's keys are only listened to - they still reach the game.
+  it. The gold box at the bottom chooses the stage or version of the guide. On a small screen the window shrinks to
+  fit, and *Mini* leaves just the tabs and the next points. The game's keys are only listened to - they still reach the game.
   Moving with WASD? Enter your skills key under Settings → Following the game, or leave it empty. If a key does
   not open its panel three times in a row, the overlay stops following it by itself and says so.
 - **Reminders.** The green lines are reminders for your level: new specialization slots, a loot filter, resistances.
@@ -124,7 +125,7 @@ to send to and saves the report as a zip file on your desktop instead.
 ## How it works
 
 - The game writes `Scene Z32 load started: load mode: Single` to `Player.log` on every zone change.
-  `Data/scenes.json` maps scene ids to zone names, and the tracker jumps to the nearest step in that zone
+  A scene list built into the exe (`src/LastEpochHelper/Data/scenes.json`) maps scene ids to zone names, and the tracker jumps to the nearest step in that zone
   (at most a few steps forward or back, so a trip to town does not send you far away).
 - Everything the overlay knows about open panels, your points and tooltips comes from Windows' built-in text
   recognition run on a screenshot of the game window. It can be switched off in Settings → Following the game.
@@ -166,7 +167,7 @@ The route (zone order), the choice of side quests and the tips are written by ha
 the rest is fetched.
 
 ```
-python tools/build_guide.py --refresh    # fetches the pages again and writes Data/guide.json + scenes.json
+python tools/build_guide.py --refresh    # fetches the pages again and writes src/LastEpochHelper/Data/guide.json + scenes.json
 dotnet test
 ```
 
