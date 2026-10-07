@@ -79,6 +79,11 @@ public partial class MainWindow : Window
     private ScreenReader? _labelReader;
     private bool _readingLabels;
     private DateTime _lastLabelRead = DateTime.MinValue;
+    /// <summary>The skill whose labels are being read, since when it shows, how many looks so far, and whether one fitted.</summary>
+    private string? _labelSkill;
+    private DateTime _labelSince, _gameSkillSince = DateTime.UtcNow;
+    private int _labelLooks;
+    private bool _labelFitted;
     private int _mapReadsLeft;
     private DateTime _mapReadAt = DateTime.MinValue;
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(6);
@@ -761,6 +766,8 @@ public partial class MainWindow : Window
                 {
                     ActivityLog.Write($"following: skill {_gameSkill ?? "(none yet)"} -> {skillShown}");
                     _gameSkill = skillShown;
+                    _labelSkill = null; // its labels are read at once, timed from now
+                    _gameSkillSince = DateTime.UtcNow;
                     _treeWindow?.SelectSkill(skillShown);
                 }
                 // The skill's level is printed under its heading: that many points it has. Seen twice, it is taken.
@@ -796,6 +803,7 @@ public partial class MainWindow : Window
                 ActivityLog.Write("tree closed: no panel in two full reads. Largest text: "
                                   + string.Join(" | ", lines.OrderByDescending(l => l.Height).Take(10).Select(l => $"{l.Height:0}px '{l.Text}'")));
                 ShowTree(false);
+                _labelSkill = null; // opened again later, its labels are read and timed afresh
             }
         }
         finally { _reading = false; }
@@ -937,13 +945,17 @@ public partial class MainWindow : Window
     {
         if (_pendingSkillRead is not { } skill || _readingLabels || !_game.GameFocused) return;
         if (_treeWindow is not { IsVisible: true } || _treeWindow.CurrentKind != TreeDef.SkillKind) { _pendingSkillRead = null; return; }
-        if (DateTime.UtcNow - _lastLabelRead < TimeSpan.FromSeconds(2.5)) return;
+        // A skill just opened is read at once; after that every few seconds.
+        bool newSkill = skill.Name != _labelSkill;
+        if (!newSkill && DateTime.UtcNow - _lastLabelRead < TimeSpan.FromSeconds(2.5)) return;
         // Its own reader, so that following the open panel carries on while this slower read runs.
         _labelReader ??= new ScreenReader();
         if (!_labelReader.Available) return;
         _pendingSkillRead = null;
         _lastLabelRead = DateTime.UtcNow;
         _readingLabels = true;
+        if (newSkill) (_labelSkill, _labelSince, _labelLooks, _labelFitted) = (skill.Name, skill.Name == _gameSkill ? _gameSkillSince : DateTime.UtcNow, 0, false);
+        _labelLooks++;
         try
         {
             // The game's panel is centred; on an ultrawide the sides are just the game world.
@@ -969,9 +981,17 @@ public partial class MainWindow : Window
                 var agreed = _stableReads.Confirm("skill:" + skill.Name, points);
                 _session.SetReadPoints(skill, _session.HasActual(skill) ? agreed : points);
             }
-            ActivityLog.Change("skill-read:" + skill.Name, points is null
+            string outcome = points is null
                 ? $"skill labels ({skill.Name}): {tokens.Count} read, no fit"
-                : $"skill labels ({skill.Name}): {tokens.Count} read, {points.Count} of {skill.Nodes.Count(n => n.Max >= 1)} nodes, {points.Values.Sum()} points");
+                : $"skill labels ({skill.Name}): {tokens.Count} read, {points.Count} of {skill.Nodes.Count(n => n.Max >= 1)} nodes, {points.Values.Sum()} points";
+            // Until the first fit, every look is logged with how long the skill has been showing: "the
+            // points come late" (2026-10-07) can then be followed look by look in a report.
+            if (!_labelFitted && skill.Name == _labelSkill)
+            {
+                ActivityLog.Write($"{outcome} (look {_labelLooks}, {(DateTime.UtcNow - _labelSince).TotalSeconds:0.0} s after the skill showed)");
+                _labelFitted = points is not null;
+            }
+            else ActivityLog.Change("skill-read:" + skill.Name, outcome);
             // A look with no labels at all (the panel just closed) would replace one worth keeping.
             if (tokens.Count > 0) WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
         }
