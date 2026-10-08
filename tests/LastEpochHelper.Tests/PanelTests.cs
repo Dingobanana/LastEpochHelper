@@ -49,8 +49,12 @@ public class PanelDetectorTests
         // Three placed of five unlocked.
         var later = weaver.Select(l => l.Text == "2/53" ? l with { Text = "5/53" } : l).ToList();
         Assert.Equal(3, PanelDetector.Detect(later, Tabs, Skills).WeaverPlaced);
-        // Every point spent: no unspent line at all.
-        Assert.Equal(2, PanelDetector.Detect(weaver.Where(l => !l.Text.Contains("UNSPENT")).ToList(), Tabs, Skills).WeaverPlaced);
+        // Every point spent: the game says "0 UNSPENT POINTS" (screenshot 2026-10-08, 16/53).
+        var spent = weaver.Select(l => l.Text.Contains("UNSPENT") ? l with { Text = "0 UNSPENT POINTS" } : l).ToList();
+        Assert.Equal(2, PanelDetector.Detect(spent, Tabs, Skills).WeaverPlaced);
+        // The unspent line not read: the game always shows it, so the points placed are not known
+        // (taking it for none unspent made the count jump between two numbers and never settle).
+        Assert.Null(PanelDetector.Detect(weaver.Where(l => !l.Text.Contains("UNSPENT")).ToList(), Tabs, Skills).WeaverPlaced);
         // Just the heading band (the quick look): the panel, but no guess at its points.
         var band = PanelDetector.Detect(weaver.Where(l => l.Y < 200).ToList(), Tabs, Skills, strict: true);
         Assert.Equal((GamePanel.Weaver, (int?)null), (band.Panel, band.WeaverPlaced));

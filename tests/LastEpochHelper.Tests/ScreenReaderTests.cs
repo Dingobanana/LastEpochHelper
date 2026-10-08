@@ -34,6 +34,36 @@ public class ScreenReaderTests
             return;
         }
 
+        // LEH_OCR_WEAVER = weaver.json: the Weaver tree's labels in a saved picture, as the overlay reads them.
+        // LEH_OCR_MASK = "left,top,right,bottom" blacks out the overlay's own tree window in the picture first.
+        if (Environment.GetEnvironmentVariable("LEH_OCR_WEAVER") is { } weaverFile && Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } weaverShot
+            && LastEpochHelper.Core.WeaverSet.Load(weaverFile) is { } weaver)
+        {
+            string weaverCopy = Path.Combine(Path.GetTempPath(), $"leh-weaver-{Guid.NewGuid():N}.png");
+            System.Drawing.Rectangle whole;
+            using (var loaded = new System.Drawing.Bitmap(weaverShot))
+            using (var copy = loaded.Clone(new System.Drawing.Rectangle(0, 0, loaded.Width, loaded.Height), System.Drawing.Imaging.PixelFormat.Format24bppRgb))
+            {
+                if (Environment.GetEnvironmentVariable("LEH_OCR_MASK")?.Split(',').Select(int.Parse).ToArray() is { Length: 4 } m)
+                    using (var g = System.Drawing.Graphics.FromImage(copy)) g.FillRectangle(System.Drawing.Brushes.Black, m[0], m[1], m[2] - m[0], m[3] - m[1]);
+                copy.Save(weaverCopy);
+                whole = new System.Drawing.Rectangle(0, 0, copy.Width, copy.Height);
+            }
+            try
+            {
+                var started3 = DateTime.UtcNow;
+                var (reads, shot3) = await new ScreenReader().ReadLabelsAndPictureFromFileAsync(weaverCopy, whole);
+                var tokens3 = LastEpochHelper.Core.TreeReader.Merge(reads.Select(LastEpochHelper.Core.TreeReader.Tokens).ToArray());
+                var byText = LastEpochHelper.Core.TreeReader.Read(tokens3, weaver.Tree, known: true) ?? new Dictionary<int, int>();
+                var all = LastEpochHelper.Core.TreeReader.ReadClosely(tokens3, shot3, weaver.Tree, known: true);
+                File.WriteAllLines(output, new[] { $"ms={(DateTime.UtcNow - started3).TotalMilliseconds:0} labels={tokens3.Count} by text={byText.Count} in all={all?.Count.ToString() ?? "NO FIT"}" }
+                    .Concat((all ?? new Dictionary<int, int>()).OrderBy(kv => kv.Key)
+                        .Select(kv => $"{weaver.Tree.Nodes.First(n => n.Id == kv.Key).Name} = {kv.Value}{(byText.ContainsKey(kv.Key) ? "" : "  (digit by digit)")}")));
+            }
+            finally { File.Delete(weaverCopy); }
+            return;
+        }
+
         // LEH_OCR_DETECT: which panel (and skill or tab) the detector sees in a saved picture.
         if (Environment.GetEnvironmentVariable("LEH_OCR_DETECT") is not null && Environment.GetEnvironmentVariable("LEH_OCR_FILE") is { } panelShot
             && Environment.GetEnvironmentVariable("LEH_TREE_SAMPLE") is { } buildFile && LastEpochHelper.Core.BuildTree.Load(buildFile) is { } shownBuild)

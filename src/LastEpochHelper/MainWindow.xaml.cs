@@ -68,7 +68,9 @@ public partial class MainWindow : Window
     private GamePanel _expectedPanel;
     /// <summary>Opened by hand (hotkey or menu), so it stays until closed by hand.</summary>
     private bool _treePinned;
-    private TreeDef? _pendingSkillRead;
+    private TreeDef? _pendingSkillRead, _pendingWeaverRead;
+    /// <summary>Since the Weaver panel opened: its count has been taken once, its labels read once.</summary>
+    private bool _weaverCountTaken, _weaverLabelsRead;
     private readonly StableReads _stableReads = new();
     private DateTime _lastIdleLook = DateTime.MinValue;
     /// <summary>The tree was closed by hand while the game's panel was open; do not reopen it for that panel.</summary>
@@ -160,7 +162,7 @@ public partial class MainWindow : Window
 
         _timer.Tick += (_, _) => OnTimer();
         _timer.Start();
-        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadMapCounters(); UpdateHover(); WatchBlessingOffer(); };
+        _followTimer.Tick += (_, _) => { WatchPanel(); ReadSkillLabels(); ReadWeaverLabels(); ReadMapCounters(); UpdateHover(); WatchBlessingOffer(); };
         _followTimer.Start();
 
         string logPath = string.IsNullOrWhiteSpace(Settings.LogPath) ? LogWatcher.DefaultPath : Settings.LogPath;
@@ -681,6 +683,7 @@ public partial class MainWindow : Window
         {
             _panelRegion = null; _panelMisses = 0; _gameKind = _gameSkill = _gameTab = null;
             _tabTitleRead = false;
+            _weaverCountTaken = _weaverLabelsRead = false;
             _stableReads.ForgetAnswers();
             // A plan preview (the slider) lasts while the tree is open; next time it mirrors the game again.
             _session.ClearPlanViews();
@@ -825,9 +828,19 @@ public partial class MainWindow : Window
                             _treeWindow?.SelectTab(tabTree);
                     }
                 }
-                // The Weaver panel's nodes carry no names, so its labels are not read; its total is.
-                if (kind == _gameKind && reading.WeaverPlaced is { } placed && weaverTab is not null && _stableReads.Twice("weaver", placed.ToString()))
-                    _session.SetReadPoints(weaverTab, placed);
+                // The Weaver panel's total ("COMPLETION" less unspent) is taken at once when the panel
+                // opens; a change after that has to be seen twice. Its nodes carry no names: their labels
+                // are placed by their pattern, as a skill tree's are (see ReadWeaverLabels).
+                if (kind == _gameKind && reading.WeaverPlaced is { } placed && weaverTab is not null)
+                {
+                    bool steady = _stableReads.Twice("weaver", placed.ToString());
+                    if (steady || !_weaverCountTaken)
+                    {
+                        _weaverCountTaken = true;
+                        _session.SetReadPoints(weaverTab, placed);
+                    }
+                }
+                if (weaverTab is not null) _pendingWeaverRead = weaverTab;
                 if (!quick && reading.Panel != GamePanel.Weaver) ReadNodePoints(words, reading);
             }
             else if (quick)
@@ -881,7 +894,8 @@ public partial class MainWindow : Window
     private async void IdleLook()
     {
         if (_treeWanted || _reading || _session.Tree is null || _screenReader is null) return;
-        if (DateTime.UtcNow - _lastIdleLook < TimeSpan.FromSeconds(2)) return;
+        // A look at the heading strip takes some 50 ms, even on an ultrawide.
+        if (DateTime.UtcNow - _lastIdleLook < TimeSpan.FromSeconds(1)) return;
         _lastIdleLook = DateTime.UtcNow;
         _reading = true;
         try
@@ -1033,6 +1047,47 @@ public partial class MainWindow : Window
             else ActivityLog.Change("skill-read:" + skill.Name, outcome);
             // A look with no labels at all (the panel just closed) would replace one worth keeping.
             if (tokens.Count > 0) WriteSkillTreeDiagnostics(reads.SelectMany(r => r).ToList(), tokens, skill, points);
+        }
+        finally { _readingLabels = false; }
+    }
+
+    /// <summary>
+    /// The Weaver tree's labels, read like a skill tree's but over the whole game window, which the
+    /// tree fills. The tree pans and zooms, so every read places the labels afresh, and only the
+    /// nodes on screen change. The text reader misses about half of these small labels; those are
+    /// read digit by digit from the same picture (LabelGlyphs).
+    /// </summary>
+    private async void ReadWeaverLabels()
+    {
+        if (_pendingWeaverRead is not { } weaver || _readingLabels || !_game.GameFocused) return;
+        if (!Settings.ReadPointsFromScreen || _treeWindow is not { IsVisible: true } || _treeWindow.CurrentKind != TreeDef.WeaverKind) { _pendingWeaverRead = null; return; }
+        // The panel just opened: read at once; after that every few seconds.
+        if (_weaverLabelsRead && DateTime.UtcNow - _lastLabelRead < TimeSpan.FromSeconds(2.5)) return;
+        _labelReader ??= new ScreenReader();
+        if (!_labelReader.Available) return;
+        _pendingWeaverRead = null;
+        _lastLabelRead = DateTime.UtcNow;
+        _weaverLabelsRead = true;
+        _readingLabels = true;
+        try
+        {
+            var masks = new List<Native.RECT> { ScreenRect(this) };
+            if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
+            if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
+            var (reads, picture) = await _labelReader.ReadLabelsAndPictureAsync(_game.GameBounds, masks);
+            // Closed meanwhile: the picture may be half the game world.
+            if (_treeWindow is not { IsVisible: true } || _treeWindow.CurrentKind != TreeDef.WeaverKind) return;
+            var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
+            var points = TreeReader.ReadClosely(tokens, picture, weaver, known: true);
+            _treeWindow.ReadResult(weaver.Name, points is not null);
+            if (points is not null)
+            {
+                var agreed = _stableReads.Confirm("weaver-nodes", points);
+                _session.SetReadPoints(weaver, _session.HasActual(weaver) ? agreed : points);
+            }
+            ActivityLog.Change("weaver-read", points is null
+                ? $"weaver labels: {tokens.Count} read, no fit"
+                : $"weaver labels: {tokens.Count} read, {points.Count} nodes placed, {points.Values.Sum()} points on them");
         }
         finally { _readingLabels = false; }
     }

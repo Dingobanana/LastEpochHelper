@@ -846,7 +846,10 @@ public sealed class Session
         // What was read off the game's panel is only shown when it accounts for at least as many points
         // as the tree is known to have. Reading misses nodes (a tooltip in the way, small print), and a
         // tree drawn from half of its points would look as if the character had gone backwards.
-        if (ShowsActual(tree) && ActualPoints(tree) >= points && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
+        // The Weaver tree is the exception: the game shows it a part at a time, so the nodes seen are
+        // shown as they are, and the window says how many of the points they account for.
+        if (ShowsActual(tree) && (ActualPoints(tree) >= points || tree.Kind == TreeDef.WeaverKind)
+            && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
         var plan = Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
         // The game shows the passives one tab at a time, so all of them are rarely read together. A tab
         // that has been read shows its own points; the next steps still come from the plan, since they
@@ -935,11 +938,29 @@ public sealed class Session
     /// <summary>A skill or Weaver tree's points as the game prints them (the Weaver tree's "COMPLETION 2/53"), remembered for next time.</summary>
     public void SetReadPoints(TreeDef tree, int points)
     {
-        if (tree.Kind == TreeDef.PassiveKind || points is < 0 or > 200 || Profile.SkillPoints.GetValueOrDefault(tree.Name) == points || Previewing(tree)) return;
-        Profile.SkillPoints[tree.Name] = points;
+        if (tree.Kind == TreeDef.PassiveKind || points is < 0 or > 200 || Previewing(tree)) return;
+        bool changed = false;
+        // Fewer Weaver points than the nodes read before hold: a respec, or points taken back before
+        // confirming. Those nodes no longer hold; the next reads of the panel fill them in afresh.
+        if (tree.Kind == TreeDef.WeaverKind && ActualPoints(tree) > points && Profile.Actual?.Skills.Remove(BuildTree.SkillKey(tree)) == true)
+            changed = true;
+        if (Profile.SkillPoints.GetValueOrDefault(tree.Name) != points)
+        {
+            Profile.SkillPoints[tree.Name] = points;
+            changed = true;
+        }
+        if (!changed) return;
         Save();
         Changed?.Invoke();
     }
+
+    /// <summary>
+    /// The Weaver tree's own points known to be more than those seen on its nodes: the game's tree pans
+    /// and zooms, so its nodes are seen a part at a time.
+    /// </summary>
+    public (int Seen, int Placed)? WeaverSeen(TreeDef tree) =>
+        tree.Kind == TreeDef.WeaverKind && ShowsActual(tree) && ActualPoints(tree) < RememberedPoints(tree)
+            ? (ActualPoints(tree), RememberedPoints(tree)) : null;
 
     public void AdjustTreePoints(TreeDef tree, int delta)
     {

@@ -40,10 +40,14 @@ internal sealed class ScreenReader
     /// Reads small boxed labels (the "2/4" under skill nodes), which the plain read mostly misses:
     /// once enlarged, and once enlarged as black-on-white. Positions are screen pixels.
     /// </summary>
-    public async Task<List<ScreenLine>[]> ReadLabelsAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks)
+    public async Task<List<ScreenLine>[]> ReadLabelsAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks) =>
+        (await ReadLabelsAndPictureAsync(bounds, masks)).Reads;
+
+    /// <summary>The same reads, and the picture they were made from (masks blacked out), for a closer look at single labels.</summary>
+    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks)
     {
         int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
-        if (_engine is null || width < 200 || height < 200) return Array.Empty<List<ScreenLine>>();
+        if (_engine is null || width < 200 || height < 200) return (Array.Empty<List<ScreenLine>>(), null);
         try
         {
             using var shot = new Drawing.Bitmap(width, height, Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -55,22 +59,39 @@ internal sealed class ScreenReader
             using (var g = Drawing.Graphics.FromImage(shot))
                 foreach (var mask in masks)
                     g.FillRectangle(Drawing.Brushes.Black, mask.Left - bounds.Left, mask.Top - bounds.Top, mask.Right - mask.Left, mask.Bottom - mask.Top);
-            return await ReadLabelsAsync(shot, bounds.Left, bounds.Top);
+            return (await ReadLabelsAsync(shot, bounds.Left, bounds.Top), Picture(shot, bounds.Left, bounds.Top));
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
                                       or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)
         {
-            return Array.Empty<List<ScreenLine>>();
+            return (Array.Empty<List<ScreenLine>>(), null);
         }
     }
 
-    /// <summary>The same two reads on a saved picture, for testing against real screenshots.</summary>
-    public async Task<List<ScreenLine>[]> ReadLabelsFromFileAsync(string path, Drawing.Rectangle region)
+    /// <summary>A 24-bit picture's pixels, copied out.</summary>
+    private static ScreenPicture Picture(Drawing.Bitmap shot, double left, double top)
     {
-        if (_engine is null) return Array.Empty<List<ScreenLine>>();
+        var area = new Drawing.Rectangle(0, 0, shot.Width, shot.Height);
+        var data = shot.LockBits(area, Drawing.Imaging.ImageLockMode.ReadOnly, Drawing.Imaging.PixelFormat.Format24bppRgb);
+        try
+        {
+            var pixels = new byte[data.Stride * shot.Height];
+            System.Runtime.InteropServices.Marshal.Copy(data.Scan0, pixels, 0, pixels.Length);
+            return new ScreenPicture(shot.Width, shot.Height, data.Stride, pixels, left, top);
+        }
+        finally { shot.UnlockBits(data); }
+    }
+
+    /// <summary>The same two reads on a saved picture, for testing against real screenshots.</summary>
+    public async Task<List<ScreenLine>[]> ReadLabelsFromFileAsync(string path, Drawing.Rectangle region) =>
+        (await ReadLabelsAndPictureFromFileAsync(path, region)).Reads;
+
+    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureFromFileAsync(string path, Drawing.Rectangle region)
+    {
+        if (_engine is null) return (Array.Empty<List<ScreenLine>>(), null);
         using var image = new Drawing.Bitmap(path);
         using var crop = image.Clone(region, Drawing.Imaging.PixelFormat.Format24bppRgb);
-        return await ReadLabelsAsync(crop, region.Left, region.Top);
+        return (await ReadLabelsAsync(crop, region.Left, region.Top), Picture(crop, region.Left, region.Top));
     }
 
     private async Task<List<ScreenLine>[]> ReadLabelsAsync(Drawing.Bitmap shot, double offsetX, double offsetY)

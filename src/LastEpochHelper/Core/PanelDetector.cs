@@ -8,7 +8,8 @@ public enum GamePanel { None, Passives, Skills, Weaver }
 /// <param name="Level">The level printed under an open skill tree's heading ("LEVEL 7"): the points that skill has.</param>
 /// <param name="WeaverPlaced">
 /// Points placed in the Weaver tree: its "COMPLETION 2/53" (points unlocked) less its "2 UNSPENT POINTS".
-/// Null when the completion count was not read (the quick look sees only the heading). No unspent line means none unspent.
+/// Null when the completion count or the unspent line was not read (the quick look sees only the heading).
+/// The game always shows the unspent line, "0 UNSPENT POINTS" too.
 /// </param>
 public sealed record PanelReading(GamePanel Panel, string? Skill = null, ScreenLine? Anchor = null, string? Tab = null, int? Level = null,
     int? WeaverPlaced = null);
@@ -44,7 +45,7 @@ public static class PanelDetector
             .Select(t => t.Line).OrderBy(l => l.Y).FirstOrDefault() ?? SplitWeaverHeading(text);
         if (weaverHeading is not null && !text.Any(t => t.Letters == "passives"))
             return new PanelReading(GamePanel.Weaver, Anchor: weaverHeading,
-                WeaverPlaced: WeaverUnlocked(lines) is { } unlocked && (Unspent(lines) ?? 0) is var unspent && unspent <= unlocked ? unlocked - unspent : null);
+                WeaverPlaced: WeaverUnlocked(lines) is { } unlocked && Unspent(lines) is { } unspent && unspent <= unlocked ? unlocked - unspent : null);
 
         // The game's own headings are the best evidence (1.5): "PASSIVES" on the passive panel,
         // "SKILLS & SPECIALIZATIONS" on the skill overview. ("N UNSPENT POINTS" is no evidence: a
@@ -189,7 +190,7 @@ public static class PanelDetector
         return null;
     }
 
-    /// <summary>"N UNSPENT POINTS"; null when there is no such line (the game shows none when every point is spent).</summary>
+    /// <summary>"N UNSPENT POINTS"; null when there is no such line.</summary>
     private static int? Unspent(IReadOnlyList<ScreenLine> lines)
     {
         foreach (var line in lines)

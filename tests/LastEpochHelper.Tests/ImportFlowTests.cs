@@ -392,6 +392,22 @@ public sealed class ImportFlowTests : IDisposable
         Assert.Equal(1, state.Allocated[2]);
         Assert.Equal(2, state.Next[0].Node); // one more point into node 2
 
+        // Read off the game's panel: 3 points placed, but only node 2 was on screen. The nodes seen are
+        // shown as they are, and the window can say how many of the points they account for.
+        session.SetReadPoints(tab, 3);
+        session.SetReadPoints(tab, new Dictionary<int, int> { [2] = 2 });
+        state = session.TreeState(tab);
+        Assert.True(state.FromGame);
+        Assert.Equal(2, state.Allocated[2]);
+        Assert.False(state.Allocated.ContainsKey(1));
+        Assert.Equal((2, 3), session.WeaverSeen(tab));
+        session.SetReadPoints(tab, new Dictionary<int, int> { [1] = 1 });
+        Assert.Null(session.WeaverSeen(tab)); // all three accounted for
+        // A respec in the game: fewer points than the nodes read hold, so those reads are let go.
+        session.SetReadPoints(tab, 1);
+        Assert.False(session.HasActual(tab));
+        Assert.False(session.TreeState(tab).FromGame);
+
         // The tab is for the endgame only.
         Assert.False(session.InEndgame);
         session.Handle(new CharacterLevelEvent(60, 0, 3), live: false);

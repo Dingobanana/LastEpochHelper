@@ -9,8 +9,8 @@ namespace LastEpochHelper.Core;
 /// </summary>
 public static partial class TreeReader
 {
-    /// <summary>A "have/max" label and the centre of where it was on screen.</summary>
-    public sealed record Token(double X, double Y, int Have, int Max);
+    /// <summary>A "have/max" label, the centre of where it was on screen, and the height of its print.</summary>
+    public sealed record Token(double X, double Y, int Have, int Max, double Height = 0);
 
     private const double PairTolerance = 10, MatchTolerance = 14;
     private const int MinMatches = 4;
@@ -32,7 +32,7 @@ public static partial class TreeReader
             // "78/78" is the mana globe, not a node. A node can stand well over its limit ("5/4", even
             // "10/5"): some items add points to one node. Beyond double it is not a node label.
             if (max is < 1 or > 15 || have > max * 2 + 2) continue;
-            tokens.Add(new Token(word.X + word.Width / 2, word.Y + word.Height / 2, have, max));
+            tokens.Add(new Token(word.X + word.Width / 2, word.Y + word.Height / 2, have, max, word.Height));
         }
         return tokens;
     }
@@ -71,14 +71,53 @@ public static partial class TreeReader
         return best;
     }
 
-    private sealed record Match(Dictionary<int, int> Points);
+    /// <summary>Where the tree lies on screen: a node at (x, y) has its label at (x * Scale + ShiftX, y * Scale + ShiftY).</summary>
+    public sealed record Placement(Dictionary<int, int> Points, double Scale, double ShiftX, double ShiftY);
 
-    private static Match? Fit(IReadOnlyList<Token> tokens, TreeDef tree, bool known = false)
+    /// <summary>The points read, and where the tree lies on screen; null when the labels do not fit it.</summary>
+    public static Placement? Place(IReadOnlyList<Token> tokens, TreeDef tree, bool known = false) => Fit(tokens, tree, known);
+
+    /// <summary>
+    /// Like <see cref="Read"/>, and then the labels the text reader missed are read digit by digit from
+    /// the picture itself (see <see cref="LabelGlyphs"/>). For the Weaver tree, whose small labels the
+    /// reader catches only about half of.
+    /// </summary>
+    public static Dictionary<int, int>? ReadClosely(IReadOnlyList<Token> tokens, ScreenPicture? picture, TreeDef tree, bool known = false)
+    {
+        if (Fit(tokens, tree, known) is not { } placement) return null;
+        var points = new Dictionary<int, int>(placement.Points);
+        var heights = tokens.Where(t => t.Height > 0).Select(t => t.Height).OrderBy(h => h).ToList();
+        if (picture is null || heights.Count == 0) return points;
+        foreach (var (node, have) in LabelGlyphs.Read(picture, Spots(placement, tokens, tree), placement.Points, heights[heights.Count / 2]))
+            points.TryAdd(node, have);
+        return points;
+    }
+
+    /// <summary>
+    /// Where each node's label should be on screen, for the nodes the reader did not catch. The fit
+    /// rests on one pair of labels; the average offset of all labels it placed puts the rest right.
+    /// </summary>
+    private static List<LabelGlyphs.Spot> Spots(Placement placement, IReadOnlyList<Token> tokens, TreeDef tree)
+    {
+        var nodes = tree.Nodes.Where(n => n.Max >= 1).ToList();
+        double Ax(TreeNode n) => n.X * placement.Scale + placement.ShiftX;
+        double Ay(TreeNode n) => n.Y * placement.Scale + placement.ShiftY;
+        var offsets = new List<(double X, double Y)>();
+        foreach (var token in tokens)
+            if (nodes.Where(n => n.Max == token.Max).OrderBy(n => Math.Pow(Ax(n) - token.X, 2) + Math.Pow(Ay(n) - token.Y, 2)).FirstOrDefault() is { } node
+                && Math.Abs(Ax(node) - token.X) < MatchTolerance && Math.Abs(Ay(node) - token.Y) < MatchTolerance)
+                offsets.Add((token.X - Ax(node), token.Y - Ay(node)));
+        double dx = offsets.Count > 0 ? offsets.Average(o => o.X) : 0, dy = offsets.Count > 0 ? offsets.Average(o => o.Y) : 0;
+        return nodes.Select(n => new LabelGlyphs.Spot(n.Id, n.Max, Ax(n) + dx, Ay(n) + dy)).ToList();
+    }
+
+    private static Placement? Fit(IReadOnlyList<Token> tokens, TreeDef tree, bool known = false)
     {
         var nodes = tree.Nodes.Where(n => n.Max >= 1).ToList();
         if (tokens.Count < MinMatches || nodes.Count < MinMatches) return null;
 
         Dictionary<int, int>? best = null;
+        double bestScale = 0, bestShiftX = 0, bestShiftY = 0;
         for (int i = 0; i < tokens.Count; i++)
         for (int j = 0; j < tokens.Count; j++)
         {
@@ -103,14 +142,14 @@ public static partial class TreeReader
 
                     double shiftX = tokens[i].X - p.X * scale, shiftY = tokens[i].Y - p.Y * scale;
                     var points = Assign(tokens, nodes, scale, shiftX, shiftY);
-                    if (best is null || points.Count > best.Count) best = points;
+                    if (best is null || points.Count > best.Count) (best, bestScale, bestShiftX, bestShiftY) = (points, scale, shiftX, shiftY);
                 }
             }
         }
         // Most labels must fall on a node, and a fair share of the tree must be accounted for:
         // a handful of coincidences is not a tree, and a wrong fit would report its points as zero.
         return best is not null && best.Count >= MinMatches && best.Count * 10 >= tokens.Count * 6 && (known || best.Count * 5 >= nodes.Count * 2)
-            ? new Match(best) : null;
+            ? new Placement(best, bestScale, bestShiftX, bestShiftY) : null;
     }
 
     private static Dictionary<int, int> Assign(IReadOnlyList<Token> tokens, List<TreeNode> nodes, double scale, double shiftX, double shiftY)
