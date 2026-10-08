@@ -52,7 +52,7 @@ public class ScreenReaderTests
             try
             {
                 var started3 = DateTime.UtcNow;
-                var (reads, shot3) = await new ScreenReader().ReadLabelsAndPictureFromFileAsync(weaverCopy, whole);
+                var (reads, shot3) = await new ScreenReader().ReadLabelsAndPictureFromFileAsync(weaverCopy, whole, single: true);
                 var tokens3 = LastEpochHelper.Core.TreeReader.Merge(reads.Select(LastEpochHelper.Core.TreeReader.Tokens).ToArray());
                 var byText = LastEpochHelper.Core.TreeReader.Read(tokens3, weaver.Tree, known: true) ?? new Dictionary<int, int>();
                 var all = LastEpochHelper.Core.TreeReader.ReadClosely(tokens3, shot3, weaver.Tree, known: true);

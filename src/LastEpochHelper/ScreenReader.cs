@@ -44,7 +44,8 @@ internal sealed class ScreenReader
         (await ReadLabelsAndPictureAsync(bounds, masks)).Reads;
 
     /// <summary>The same reads, and the picture they were made from (masks blacked out), for a closer look at single labels.</summary>
-    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks)
+    /// <param name="single">Only the high-contrast read: about 40% quicker, for when the picture fills in the labels missed.</param>
+    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureAsync(Native.RECT bounds, IReadOnlyList<Native.RECT> masks, bool single = false)
     {
         int width = bounds.Right - bounds.Left, height = bounds.Bottom - bounds.Top;
         if (_engine is null || width < 200 || height < 200) return (Array.Empty<List<ScreenLine>>(), null);
@@ -59,7 +60,7 @@ internal sealed class ScreenReader
             using (var g = Drawing.Graphics.FromImage(shot))
                 foreach (var mask in masks)
                     g.FillRectangle(Drawing.Brushes.Black, mask.Left - bounds.Left, mask.Top - bounds.Top, mask.Right - mask.Left, mask.Bottom - mask.Top);
-            return (await ReadLabelsAsync(shot, bounds.Left, bounds.Top), Picture(shot, bounds.Left, bounds.Top));
+            return (await ReadLabelsAsync(shot, bounds.Left, bounds.Top, single), Picture(shot, bounds.Left, bounds.Top));
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
                                       or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)
@@ -86,15 +87,15 @@ internal sealed class ScreenReader
     public async Task<List<ScreenLine>[]> ReadLabelsFromFileAsync(string path, Drawing.Rectangle region) =>
         (await ReadLabelsAndPictureFromFileAsync(path, region)).Reads;
 
-    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureFromFileAsync(string path, Drawing.Rectangle region)
+    public async Task<(List<ScreenLine>[] Reads, ScreenPicture? Picture)> ReadLabelsAndPictureFromFileAsync(string path, Drawing.Rectangle region, bool single = false)
     {
         if (_engine is null) return (Array.Empty<List<ScreenLine>>(), null);
         using var image = new Drawing.Bitmap(path);
         using var crop = image.Clone(region, Drawing.Imaging.PixelFormat.Format24bppRgb);
-        return (await ReadLabelsAsync(crop, region.Left, region.Top), Picture(crop, region.Left, region.Top));
+        return (await ReadLabelsAsync(crop, region.Left, region.Top, single), Picture(crop, region.Left, region.Top));
     }
 
-    private async Task<List<ScreenLine>[]> ReadLabelsAsync(Drawing.Bitmap shot, double offsetX, double offsetY)
+    private async Task<List<ScreenLine>[]> ReadLabelsAsync(Drawing.Bitmap shot, double offsetX, double offsetY, bool single = false)
     {
         int limit = (int)OcrEngine.MaxImageDimension;
         double Factor(double wanted) => Math.Max(1, Math.Min(wanted, Math.Min((double)limit / shot.Width, (double)limit / shot.Height)));
@@ -102,7 +103,10 @@ internal sealed class ScreenReader
         // White text on a dark plate -> black on white, the form the reader copes with best.
         using var contrast = await Task.Run(() => Threshold(shot, 190));
         var reads = new List<List<ScreenLine>>();
-        foreach (var (image, factor) in new[] { (contrast, Factor(3)), (shot, Factor(2)) })
+        // The high-contrast read alone catches nearly as many as both (measured on Weaver panels); the
+        // plain one adds a few more labels on a skill tree, where every label has to come from the reader.
+        var passes = single ? new[] { (contrast, Factor(3)) } : new[] { (contrast, Factor(3)), (shot, Factor(2)) };
+        foreach (var (image, factor) in passes)
         {
             // Enlarging a picture this size takes a while: keep it off the thread that draws the overlay.
             using var stream = await Task.Run(() =>

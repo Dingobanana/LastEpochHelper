@@ -927,6 +927,8 @@ public partial class MainWindow : Window
             if (reading.Panel == GamePanel.Weaver && WeaverTab() is null) return;
 
             ActivityLog.Write($"noticed {reading.Panel}{(reading.Skill is null ? "" : " / " + reading.Skill)} without a key press: opening the tree");
+            // The Weaver tree's labels take a while to read: start on them at once.
+            if (reading.Panel == GamePanel.Weaver) _pendingWeaverRead = WeaverTab();
             _expectedPanel = reading.Panel;
             _verifyUntil = DateTime.UtcNow.AddSeconds(2.5);
             _forceFullRead = true;
@@ -1067,6 +1069,7 @@ public partial class MainWindow : Window
         if (!_labelReader.Available) return;
         _pendingWeaverRead = null;
         _lastLabelRead = DateTime.UtcNow;
+        bool first = !_weaverLabelsRead;
         _weaverLabelsRead = true;
         _readingLabels = true;
         try
@@ -1074,7 +1077,7 @@ public partial class MainWindow : Window
             var masks = new List<Native.RECT> { ScreenRect(this) };
             if (_treeWindow is not null) masks.Add(ScreenRect(_treeWindow));
             if (_plannerWindow is not null) masks.Add(ScreenRect(_plannerWindow));
-            var (reads, picture) = await _labelReader.ReadLabelsAndPictureAsync(_game.GameBounds, masks);
+            var (reads, picture) = await _labelReader.ReadLabelsAndPictureAsync(_game.GameBounds, masks, single: true);
             // Closed meanwhile: the picture may be half the game world.
             if (_treeWindow is not { IsVisible: true } || _treeWindow.CurrentKind != TreeDef.WeaverKind) return;
             var tokens = TreeReader.Merge(reads.Select(TreeReader.Tokens).ToArray());
@@ -1085,9 +1088,12 @@ public partial class MainWindow : Window
                 var agreed = _stableReads.Confirm("weaver-nodes", points);
                 _session.SetReadPoints(weaver, _session.HasActual(weaver) ? agreed : points);
             }
-            ActivityLog.Change("weaver-read", points is null
+            string outcome = points is null
                 ? $"weaver labels: {tokens.Count} read, no fit"
-                : $"weaver labels: {tokens.Count} read, {points.Count} nodes placed, {points.Values.Sum()} points on them");
+                : $"weaver labels: {tokens.Count} read, {points.Count} nodes placed, {points.Values.Sum()} points on them";
+            // How long the first read after the panel opened took: on a busy machine it is the wait for the tree.
+            if (first) ActivityLog.Write($"{outcome} (first read, {(DateTime.UtcNow - _lastLabelRead).TotalSeconds:0.0} s)");
+            else ActivityLog.Change("weaver-read", outcome);
         }
         finally { _readingLabels = false; }
     }
