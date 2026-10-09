@@ -214,7 +214,7 @@ public sealed class BuildTree
         // Skills: skill points do not follow character level closely, so go by the level bracket,
         // but move on once the pointer has run past the end of that stage's order.
         TreeStage stage = pin ?? (passive
-            ? Stages.FirstOrDefault(s => s.Passives.Count > points) ?? Stages[^1]
+            ? PassiveStage(points)
             : Stages.FirstOrDefault(s => s.Level >= level && History(s).Count > points)
               ?? Stages.FirstOrDefault(s => History(s).Count > points)
               ?? Stages.LastOrDefault(s => History(s).Count > 0) ?? Stages[^1]);
@@ -234,6 +234,37 @@ public sealed class BuildTree
             else next.Add(new NextRun(node, 1));
         }
         return new TreeState(allocated, target, next, taken, history.Count, stage.Name);
+    }
+
+    private TreeStage PassiveStage(int points) => Stages.FirstOrDefault(s => s.Passives.Count > points) ?? Stages[^1];
+
+    /// <summary>
+    /// The next passive points when some tabs have been read off the game. In a read tab what the
+    /// character really has counts, so a node the plan had by now but the character skipped is still
+    /// due (and the nodes after it, which the game keeps locked until it has its points, wait). In the
+    /// tabs not read, the plan's order up to the points the character has is assumed, as usual.
+    /// </summary>
+    public IReadOnlyList<NextRun> PassiveNext(int points, IReadOnlyDictionary<int, int> read, Func<int, bool> inReadTab,
+        int nextCount = 3, TreeStage? pin = null)
+    {
+        if (Stages.Count == 0) return Array.Empty<NextRun>();
+        var history = (pin ?? PassiveStage(Math.Max(0, points))).Passives;
+        var remaining = new Dictionary<int, int>(read);
+        var next = new List<NextRun>();
+        for (int i = 0; i < history.Count; i++)
+        {
+            int node = history[i];
+            bool covered = inReadTab(node) ? remaining.GetValueOrDefault(node) > 0 : i < points;
+            if (covered)
+            {
+                if (inReadTab(node)) remaining[node]--;
+                continue;
+            }
+            if (next.Count > 0 && next[^1].Node == node) next[^1] = next[^1] with { Count = next[^1].Count + 1 };
+            else if (next.Count == nextCount) break;
+            else next.Add(new NextRun(node, 1));
+        }
+        return next;
     }
 
     /// <summary>

@@ -852,12 +852,18 @@ public sealed class Session
             && Tree!.State(tree, Profile.Actual!, Profile.Level, pin: PinnedStage) is { } real) return real;
         var plan = Tree!.State(tree, points, Profile.Level, pin: PinnedStage);
         // The game shows the passives one tab at a time, so all of them are rarely read together. A tab
-        // that has been read shows its own points; the next steps still come from the plan, since they
-        // depend on the tabs not read yet.
-        if (tree.Kind == TreeDef.PassiveKind && Tree.Trees.Count(t => t.Kind == TreeDef.PassiveKind) > 1 && ShowsActual(tree) && TabRead(tree))
+        // that has been read shows its own points. The next steps, the same in every tab, go by what was
+        // read in the tabs read and by the plan's order in the others: a node skipped in a read tab is
+        // still next, rather than the node after it, which the game keeps locked.
+        if (tree.Kind == TreeDef.PassiveKind && Tree.Trees.Count(t => t.Kind == TreeDef.PassiveKind) > 1
+            && Tree.Trees.Where(t => t.Kind == TreeDef.PassiveKind && ShowsActual(t) && TabRead(t)).ToList() is { Count: > 0 } readTabs)
         {
+            var readNodes = readTabs.SelectMany(t => t.Nodes.Select(n => n.Id)).ToHashSet();
+            var read = Profile.Actual!.Passives.Where(kv => readNodes.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            plan = plan with { Next = Tree.PassiveNext(points, read, readNodes.Contains, pin: PinnedStage) };
+            if (!readTabs.Contains(tree)) return plan;
             var mine = tree.Nodes.Select(n => n.Id).ToHashSet();
-            var allocated = Profile.Actual!.Passives.Where(kv => kv.Value > 0 && mine.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var allocated = read.Where(kv => kv.Value > 0 && mine.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
             var offPlan = allocated.Where(kv => kv.Value > plan.Target.GetValueOrDefault(kv.Key)).Select(kv => kv.Key).ToHashSet();
             return plan with { Allocated = allocated, FromGame = true, OffPlan = offPlan };
         }

@@ -102,9 +102,11 @@ internal sealed class TreeWindow : Window
         DockPanel.SetDock(close, Dock.Right);
         header.Children.Add(close);
         header.Children.Add(_tabs);
-        header.MouseLeftButtonDown += (_, e) =>
+        // The window is moved by any part of it that is not a button or a node (those handle the click
+        // themselves): with many tabs the header alone leaves little to take hold of.
+        MouseLeftButtonDown += (_, e) =>
         {
-            if (e.ButtonState != MouseButtonState.Pressed) return;
+            if (e.Handled || e.ButtonState != MouseButtonState.Pressed) return;
             DragMove();
             Moved?.Invoke();
         };
@@ -175,10 +177,11 @@ internal sealed class TreeWindow : Window
             Child = body,
         };
         SourceInitialized += (_, _) => Native.ApplyOverlayStyle(new WindowInteropHelper(this).Handle, clickThrough: false);
-        // Growing or shrinking (another tab, mini, another size) must not leave part of it off the screen.
+        // Growing or shrinking (another tab, mini, another size) must not leave part of it off the screen
+        // it is on (not the main screen: the game may be on another).
         SizeChanged += (_, _) =>
         {
-            var area = SystemParameters.WorkArea;
+            var area = WorkArea();
             if (Left + ActualWidth > area.Right) Left = Math.Max(area.Left, area.Right - ActualWidth);
             if (Top + ActualHeight > area.Bottom) Top = Math.Max(area.Top, area.Bottom - ActualHeight);
         };
@@ -190,9 +193,20 @@ internal sealed class TreeWindow : Window
     /// </summary>
     private double Scale()
     {
-        var area = SystemParameters.WorkArea;
+        var area = WorkArea();
         double fit = Math.Min((area.Width - 16) / (CanvasWidth + 50), (area.Height - 16) / (_canvas.Height + 200));
         return Math.Clamp(Math.Min(_session.Settings.TreeScale, fit), 0.4, 1);
+    }
+
+    /// <summary>The usable part of the screen the window is on, in the window's own units.</summary>
+    private Rect WorkArea()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero || PresentationSource.FromVisual(this)?.CompositionTarget is not { } target)
+            return SystemParameters.WorkArea;
+        var pixels = System.Windows.Forms.Screen.FromHandle(handle).WorkingArea;
+        var fromDevice = target.TransformFromDevice;
+        return new Rect(fromDevice.Transform(new Point(pixels.Left, pixels.Top)), fromDevice.Transform(new Point(pixels.Right, pixels.Bottom)));
     }
 
     private static Brush Frozen(string hex)

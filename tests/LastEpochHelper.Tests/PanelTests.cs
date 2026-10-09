@@ -433,9 +433,40 @@ public sealed class HandSetPointsTests : IDisposable
         Assert.Equal(2, read.Allocated[9]);
         Assert.Contains(10, read.OffPlan);
         Assert.Equal(3, session.ActualPointsInTab(mastery));
-        // The tab not read yet still shows the plan, and the next steps come from the plan.
+        // The tab not read yet still shows the plan; with every planned point in place nothing is next in either.
         Assert.False(session.TreeState(session.Tree.Trees[0]).FromGame);
         Assert.Equal(session.TreeState(session.Tree.Trees[0]).Next, read.Next);
+    }
+
+    [Fact]
+    public void AReadPassiveTab_KeepsANodeTheCharacterSkippedNext_InsteadOfTheLockedOneAfterIt()
+    {
+        // Reddit 2026-10-09 (Flame Reave Spellblade): the plan goes Burning Hands -> Flame Drinker -> Blade
+        // Weaver, and the game keeps Blade Weaver locked until Flame Drinker has a point. The overlay
+        // counted more points than the character had, so by count Flame Drinker was done, and the read
+        // tab showed it at 0 while "next" said Blade Weaver.
+        var session = Make();
+        var mastery = new TreeDef
+        {
+            Name = "Spellblade",
+            Nodes =
+            {
+                new TreeNode { Id = 8, Name = "Burning Hands", Max = 5 },
+                new TreeNode { Id = 9, Name = "Flame Drinker", Max = 6 },
+                new TreeNode { Id = 10, Name = "Blade Weaver", Max = 10, Requires = { 9 } },
+            },
+        };
+        session.Tree!.Trees.Insert(1, mastery);
+        session.Tree.Stages[0].Passives.AddRange(new[] { 8, 8, 9, 9, 10, 10 });
+        session.Handle(new CharacterLevelEvent(11, 2, 0), live: false); // 9 passive points: by count, Flame Drinker 2/2 and Blade Weaver 0/2
+
+        session.SetReadPoints(mastery, new Dictionary<int, int> { [8] = 2 });
+        var read = session.TreeState(mastery);
+        Assert.True(read.FromGame);
+        Assert.Equal(new[] { new NextRun(9, 2), new NextRun(10, 2) }, read.Next);
+        // The class tab, not read, is still taken as the plan has it, and shows the same next steps.
+        Assert.False(session.TreeState(session.Tree.Trees[0]).FromGame);
+        Assert.Equal(read.Next, session.TreeState(session.Tree.Trees[0]).Next);
     }
 
     [Fact]
