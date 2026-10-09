@@ -2,6 +2,15 @@
 
 Shown inside the app after an update. One section per version: `## <version> - <title>`.
 
+## 0.9.0 - Release candidate for 1.0
+
+- A short greeting when the overlay starts: a rift opening in a rune circle, under two seconds. It never takes focus and can be switched off in Settings → Overlay.
+- A skill tree you open is read at once instead of after a pause, so your own points show sooner.
+- The Weaver tree shows your own nodes, not just the guide's: the overlay reads the game's Weaver panel label by label, also the small ones Windows' text reader cannot make out, and its point count comes faster.
+- Fixed: on a passive tab the overlay has read, "Next" now goes by your real points there. A node you have not taken yet stays next, instead of the locked node after it (Flame Drinker before Blade Weaver).
+- The tree window can be dragged by any empty part of it, not just the tab row, and stays on the screen it is on when it grows.
+- Bug reports can be answered: every report gets a random number, and if we answer, a gold line in the overlay shows it. Nobody can tell who an answer is for.
+
 ## 0.7.28 - Your own points, read more reliably
 
 - Fixed: the passive tree only showed your own points once every passive tab had been opened in the game, so it mostly showed the guide's plan. Now each tab you have open shows your points there ("Your character: 10 points in Beastmaster"), with nodes the build does not take ringed red. The next points still follow the guide.
