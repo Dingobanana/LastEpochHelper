@@ -854,6 +854,10 @@ public partial class MainWindow : Window
                 _panelMisses = 0;
                 ActivityLog.Write("tree closed: no panel in two full reads. Largest text: "
                                   + string.Join(" | ", lines.OrderByDescending(l => l.Height).Take(10).Select(l => $"{l.Height:0}px '{l.Text}'")));
+                // Most often the panel is still open and one of the overlay's own windows hides its heading:
+                // say so now, while the player sees the tree go, not just every ten minutes (before hiding
+                // the tree, which may be the window in the way).
+                WarnIfCoveringHeadings(treeClosed: true);
                 ShowTree(false);
                 _labelSkill = null; // opened again later, its labels are read and timed afresh
             }
@@ -868,9 +872,10 @@ public partial class MainWindow : Window
     /// windows are blacked out of what the overlay reads, so the tree could not follow - and from the
     /// outside that just looks like the overlay not working.
     /// </summary>
-    private void WarnIfCoveringHeadings()
+    /// <param name="treeClosed">The tree has just closed for want of a panel: explain that at once, whenever the last warning was.</param>
+    private void WarnIfCoveringHeadings(bool treeClosed = false)
     {
-        if (DateTime.UtcNow - _lastCoverWarning < TimeSpan.FromMinutes(10)) return;
+        if (!treeClosed && DateTime.UtcNow - _lastCoverWarning < TimeSpan.FromMinutes(10)) return;
         var game = _game.GameBounds;
         if (game.Bottom - game.Top < 300) return;
         var zone = PanelZone.Headings(game.Left, game.Top, game.Right, game.Bottom);
@@ -881,7 +886,9 @@ public partial class MainWindow : Window
             if (!PanelZone.Hides(zone, at.Left, at.Top, at.Right, at.Bottom)) continue;
             _lastCoverWarning = DateTime.UtcNow;
             ActivityLog.Write($"{name} covers the panel headings: window {at.Left},{at.Top}-{at.Right},{at.Bottom}, headings {zone.Left},{zone.Top}-{zone.Right},{zone.Bottom}");
-            _session.ShowAlert($"Move {name} a little: it lies over the top left of the game's passive / skill panel. The overlay cannot read what its own windows cover, so the build tree may not follow the panel.", 25);
+            _session.ShowAlert(treeClosed
+                ? $"The build tree closed because {name} lies over the top left of the game's panel, where an open skill tree prints its name. The overlay cannot read what its own windows cover. Move {name} down or to the side and the tree will stay open."
+                : $"Move {name} a little: it lies over the top left of the game's passive / skill panel. The overlay cannot read what its own windows cover, so the build tree may not follow the panel.", 25);
             return;
         }
     }

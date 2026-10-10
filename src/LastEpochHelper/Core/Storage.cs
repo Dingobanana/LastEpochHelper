@@ -6,7 +6,8 @@ namespace LastEpochHelper.Core;
 public sealed class Settings
 {
     public double Left { get; set; } = 40;
-    public double Top { get; set; } = 200;
+    /// <summary>Below the game's panel headings on a 2560x1440 screen too (they reach down to 21% of the height).</summary>
+    public double Top { get; set; } = 320;
     public double Width { get; set; } = 380;
     public double Opacity { get; set; } = 0.88;
     public double FontSize { get; set; } = 14;
