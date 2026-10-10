@@ -1,3 +1,9 @@
 {
-  "replies": []
+  "replies": [
+    {
+      "id": "YEKY-C55C",
+      "date": "2026-10-10",
+      "text": "Thanks for the report! The cause is where the overlay's guide box sits: it lies over the top left of the game's skill panel, which is where an open skill tree prints its name and level. The overlay blacks its own windows out of everything it reads, so once you click into a skill it cannot see that a tree is open and closes the build tree. Drag the guide box down a bit or to the side, clear of the panel's top left corner, and the tree should stay open and follow the skill you click. The overlay did warn about this, but only every ten minutes; the next update shows the warning right when the tree closes."
+    }
+  ]
 }
