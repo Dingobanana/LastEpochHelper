@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
 using LastEpochHelper.Core;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
@@ -63,8 +64,10 @@ internal sealed class ScreenReader
             return (await ReadLabelsAsync(shot, bounds.Left, bounds.Top, single), Picture(shot, bounds.Left, bounds.Top));
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
-                                      or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)
+                                      or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException
+                                      or OutOfMemoryException)
         {
+            if (e is OutOfMemoryException) NoteOutOfMemory();
             return (Array.Empty<List<ScreenLine>>(), null);
         }
     }
@@ -109,22 +112,57 @@ internal sealed class ScreenReader
         foreach (var (image, factor) in passes)
         {
             // Enlarging a picture this size takes a while: keep it off the thread that draws the overlay.
-            using var stream = await Task.Run(() =>
-            {
-                using var large = new Drawing.Bitmap((int)(image.Width * factor), (int)(image.Height * factor));
-                using (var g = Drawing.Graphics.FromImage(large))
-                {
-                    g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(image, 0, 0, large.Width, large.Height);
-                }
-                var memory = new MemoryStream();
-                large.Save(memory, Drawing.Imaging.ImageFormat.Bmp);
-                memory.Position = 0;
-                return memory;
-            });
-            reads.Add(await RecognizeAsync(stream, offsetX, offsetY, factor, words: true));
+            using var large = await Task.Run(() => Enlarge(image, factor));
+            reads.Add(await RecognizeAsync(large, offsetX, offsetY, factor, words: true));
         }
+        // A 1440p screen enlarged three times is 130 MB, and these reads come every few seconds: hand the
+        // memory back now rather than whenever the runtime gets round to it (it climbed to 1.4 GB).
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         return reads.ToArray();
+    }
+
+    /// <summary>
+    /// The picture enlarged, drawn straight into the pixels the reader takes. Going through a saved
+    /// bitmap file kept three copies of the enlarged picture alive at once.
+    /// </summary>
+    private static SoftwareBitmap Enlarge(Drawing.Bitmap image, double factor)
+    {
+        int width = (int)(image.Width * factor), height = (int)(image.Height * factor);
+        var pixels = GC.AllocateArray<byte>(width * height * 4, pinned: true);
+        using (var large = new Drawing.Bitmap(width, height, width * 4, Drawing.Imaging.PixelFormat.Format32bppArgb,
+                   System.Runtime.InteropServices.Marshal.UnsafeAddrOfPinnedArrayElement(pixels, 0)))
+        using (var g = Drawing.Graphics.FromImage(large))
+        {
+            g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.DrawImage(image, 0, 0, width, height);
+        }
+        return SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Ignore);
+    }
+
+    /// <summary>A picture's pixels as the reader takes them.</summary>
+    private static SoftwareBitmap ToSoftware(Drawing.Bitmap image)
+    {
+        var area = new Drawing.Rectangle(0, 0, image.Width, image.Height);
+        var data = image.LockBits(area, Drawing.Imaging.ImageLockMode.ReadOnly, Drawing.Imaging.PixelFormat.Format32bppArgb);
+        try
+        {
+            int row = image.Width * 4;
+            var pixels = new byte[row * image.Height];
+            for (int y = 0; y < image.Height; y++)
+                System.Runtime.InteropServices.Marshal.Copy(data.Scan0 + y * data.Stride, pixels, y * row, row);
+            return SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), BitmapPixelFormat.Bgra8, image.Width, image.Height, BitmapAlphaMode.Ignore);
+        }
+        finally { image.UnlockBits(data); }
+    }
+
+    private static DateTime _outOfMemoryNoted;
+
+    /// <summary>Windows had no memory to spare for a read: it is skipped, and the log says so (once a minute at most).</summary>
+    private static void NoteOutOfMemory()
+    {
+        if (DateTime.UtcNow - _outOfMemoryNoted < TimeSpan.FromMinutes(1)) return;
+        _outOfMemoryNoted = DateTime.UtcNow;
+        ActivityLog.Write($"text read skipped: Windows is out of memory (this program holds {Environment.WorkingSet >> 20} MB)");
     }
 
     private static Drawing.Bitmap Threshold(Drawing.Bitmap source, int cut)
@@ -164,25 +202,22 @@ internal sealed class ScreenReader
         using var loaded = new Drawing.Bitmap(path);
         using var image = loaded.Clone(new Drawing.Rectangle(0, 0, loaded.Width, loaded.Height), Drawing.Imaging.PixelFormat.Format32bppArgb);
         if (restore) Levels.Restore(image);
-        using var stream = new MemoryStream();
         double scale = 1;
         int limit = (int)OcrEngine.MaxImageDimension;
+        SoftwareBitmap picture;
         if (image.Width > limit || image.Height > limit)
         {
             scale = Math.Min((double)limit / image.Width, (double)limit / image.Height);
             using var small = new Drawing.Bitmap(image, (int)(image.Width * scale), (int)(image.Height * scale));
-            small.Save(stream, Drawing.Imaging.ImageFormat.Bmp);
+            picture = ToSoftware(small);
         }
-        else image.Save(stream, Drawing.Imaging.ImageFormat.Bmp);
-        stream.Position = 0;
-        return await RecognizeAsync(stream, 0, 0, scale, words);
+        else picture = ToSoftware(image);
+        using (picture) return await RecognizeAsync(picture, 0, 0, scale, words);
     }
 
-    private async Task<List<ScreenLine>> RecognizeAsync(Stream stream, double offsetX, double offsetY, double scale, bool words)
+    private async Task<List<ScreenLine>> RecognizeAsync(SoftwareBitmap bitmap, double offsetX, double offsetY, double scale, bool words)
     {
         var lines = new List<ScreenLine>();
-        var decoder = await BitmapDecoder.CreateAsync(stream.AsRandomAccessStream());
-        using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
         var result = await _engine!.RecognizeAsync(bitmap);
         // When the reader takes the text for tilted, it reports positions in the straightened picture,
         // turned about its centre; turn them back, or labels far from the centre land tens of pixels off.
@@ -235,7 +270,7 @@ internal sealed class ScreenReader
         double scale = 1;
         try
         {
-            using var stream = new MemoryStream();
+            SoftwareBitmap picture;
             using (var shot = new Drawing.Bitmap(width, height))
             {
                 using (var g = Drawing.Graphics.FromImage(shot))
@@ -252,17 +287,18 @@ internal sealed class ScreenReader
                 {
                     scale = Math.Min((double)limit / width, (double)limit / height);
                     using var small = new Drawing.Bitmap(shot, (int)(width * scale), (int)(height * scale));
-                    small.Save(stream, Drawing.Imaging.ImageFormat.Bmp);
+                    picture = ToSoftware(small);
                 }
-                else shot.Save(stream, Drawing.Imaging.ImageFormat.Bmp);
+                else picture = ToSoftware(shot);
             }
-            stream.Position = 0;
-            lines = await RecognizeAsync(stream, bounds.Left, bounds.Top, scale, words);
+            using (picture) lines = await RecognizeAsync(picture, bounds.Left, bounds.Top, scale, words);
         }
         catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception
-                                      or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException)
+                                      or System.Runtime.InteropServices.COMException or ArgumentException or InvalidOperationException
+                                      or OutOfMemoryException)
         {
             // A failed read just means no tab switch this time.
+            if (e is OutOfMemoryException) NoteOutOfMemory();
         }
         return lines;
     }
